@@ -282,7 +282,7 @@ export default function App() {
       {/* Footer (unchanged) */}
       <footer className="relative z-10">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 text-center text-gray-500 text-xs sm:text-sm border-t border-white/10">
-          <p>&copy; {new Date().getFullYear()} Jogo. All Rights Reserved. Made with ❤️ for the game.</p>
+          <p>&copy; {new Date().getFullYear()} Jogo. All Rights Reserved. Made with ❤️ by the jogo team.</p>
         </div>
       </footer>
     </div>
