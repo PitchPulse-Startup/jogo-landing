@@ -82,7 +82,7 @@ export default function App() {
 
   // --- CONTENT DATA & HELPERS ---
   const featureContent = {
-      home: { icon: Wifi, title: "Live Field Activity", content: "Our network of anonymous sensors gives you a real-time view of field occupancy. Never show up to a crowded park again.", screenImage: liveScreenImage },
+      home: { icon: Wifi, title: "Live Field Activity", content: "Jogo uses real-time location data from users to detect activity at local fields. Know when games are happening and avoid empty or overcrowded parks—so you always show up at the right time.", screenImage: liveScreenImage },
       games: { icon: List, title: "Find & Join Games", content: "Discover pickup games organized by the community. Filter by skill, location, and time to find your perfect match.", screenImage: gamesScreenImage },
       community: { icon: MessageSquare, title: "Connect with Players", content: "Join the local soccer chat. Organize games, find new teammates, and talk about the beautiful game.", screenImage: socialScreenImage },
   };
