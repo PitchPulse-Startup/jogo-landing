@@ -1,6 +1,10 @@
+// src/App.jsx
+
+// --- IMPORTS ---
 import React, { useState, useEffect, useRef } from 'react';
-// Added Users icon for the counter
-import { Wifi, List, MessageSquare, CheckCircle, Instagram, Users } from 'lucide-react';
+import { db } from './firebase'; 
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"; 
+import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail } from 'lucide-react'; // Added Mail icon
 
 // --- ASSETS ---
 import jogoLogo from './assets/jogo-logo2.png';
@@ -8,15 +12,18 @@ import jogoVideo from './assets/jogo-video.mp4';
 import liveScreenImage from './assets/live.png';
 import gamesScreenImage from './assets/games.png';
 import socialScreenImage from './assets/social.png';
-import soccerFieldBg from './assets/soccer.jpeg'; // <-- ADDED THIS LINE
+import soccerFieldBg from './assets/soccer.jpeg';
 
 // --- Main App Component ---
 export default function App() {
   // --- STATE MANAGEMENT ---
-  const [hypeCount, setHypeCount] = useState(287); // Initial count for social proof
-  const [isHypeClicked, setIsHypeClicked] = useState(false); // Tracks if user clicked the main CTA
   const [activeFeature, setActiveFeature] = useState('home');
   const [isMobile, setIsMobile] = useState(false);
+
+  // State for the email form
+  const [email, setEmail] = useState('');
+  const [formState, setFormState] = useState('idle'); // 'idle', 'loading', 'success', 'error'
+  const [errorMessage, setErrorMessage] = useState('');
   
   const featureRefs = {
       home: useRef(null),
@@ -24,27 +31,39 @@ export default function App() {
       community: useRef(null),
   };
 
-  // --- "LIVE" COUNTER EFFECT ---
-  // This useEffect hook sets up an interval to slowly increase the counter
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHypeCount(currentCount => currentCount + 1);
-    }, 2500 + Math.random() * 2000); // Increments every 2.5 to 4.5 seconds
+  // --- FORM SUBMISSION HANDLER ---
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setErrorMessage('Please enter a valid email address.');
+      setFormState('error');
+      // Set a timer to clear the error message after a few seconds
+      setTimeout(() => {
+        if(formState === 'error') {
+          setFormState('idle');
+          setErrorMessage('');
+        }
+      }, 3000);
+      return;
+    }
 
-    // Cleanup function to stop the interval when the component is unmounted
-    return () => clearInterval(interval);
-  }, []); // Empty dependency array ensures this runs only once on mount
+    setFormState('loading');
+    setErrorMessage('');
 
-  // --- EVENT HANDLER ---
-  // Handles the main "Hype" button click
-  const handleJoinHypeClick = () => {
-    if (!isHypeClicked) {
-      setIsHypeClicked(true);
-      setHypeCount(currentCount => currentCount + 1); // Give an immediate bump
+    try {
+      await addDoc(collection(db, "early-access-emails"), {
+        email: email,
+        submittedAt: serverTimestamp()
+      });
+      setFormState('success');
+    } catch (error) {
+      console.error("Error adding document to Firestore: ", error);
+      setErrorMessage('Something went wrong. Please try again later.');
+      setFormState('error');
     }
   };
   
-  // --- LAYOUT & SCROLLING EFFECTS ---
+  // --- LAYOUT & SCROLLING EFFECTS (Unchanged) ---
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -78,9 +97,9 @@ export default function App() {
          });
        }
     };
-  }, [isMobile]); // Re-run if isMobile changes
+  }, [isMobile]);
 
-  // --- CONTENT DATA & HELPERS ---
+  // --- CONTENT DATA & HELPERS (Unchanged) ---
   const featureContent = {
       home: { icon: Wifi, title: "Live Field Activity", content: "Jogo uses real-time location data from users to detect activity at local fields. Know when games are happening and avoid empty or overcrowded parks—so you always show up at the right time.", screenImage: liveScreenImage },
       games: { icon: List, title: "Find & Join Games", content: "Discover pickup games organized by the community. Filter by skill, location, and time to find your perfect match.", screenImage: gamesScreenImage },
@@ -102,7 +121,7 @@ export default function App() {
 
   return (
     <div className="bg-black text-gray-200 font-sans antialiased">
-      {/* Styles (unchanged) */}
+      {/* --- STYLES (Unchanged) --- */}
       <style>{`
             @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
             .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
@@ -111,29 +130,15 @@ export default function App() {
             .animation-delay-200 { animation-delay: 0.2s; opacity: 0; }
             .animation-delay-400 { animation-delay: 0.4s; opacity: 0; }
             .animation-delay-4000 { animation-delay: -4s; }
-            
-            @media (max-width: 768px) {
-              .animate-blob { animation: blob 10s infinite; }
-            }
       `}</style>
       
-      {/* --- CORRECTED BACKGROUND SECTION --- */}
-      <div 
-        className="absolute top-0 left-0 w-full h-full z-0 overflow-hidden bg-cover bg-center"
-        style={{ backgroundImage: `url(${soccerFieldBg})` }} // <-- THIS IS THE FIX
-      >
-          {/* This div acts as a dark overlay to ensure text is readable */}
+      {/* --- BACKGROUND & HEADER (Unchanged) --- */}
+      <div className="absolute top-0 left-0 w-full h-full z-0 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${soccerFieldBg})` }}>
           <div className="absolute inset-0 w-full h-full bg-black/60"></div>
-          
-          {/* The original blobs are placed on top of the overlay */}
           <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/50 rounded-full filter blur-3xl animate-blob"></div>
           <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/50 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
-          
-          {/* The top gradient remains to darken the header area */}
           <div className="absolute top-0 left-0 w-full h-screen bg-gradient-to-b from-slate-900 to-transparent"></div>
       </div>
-
-      {/* Header (unchanged) */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/50 backdrop-blur-lg">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center border-b border-white/10">
           <a href="#" className="flex items-center gap-2 sm:gap-3">
@@ -147,7 +152,7 @@ export default function App() {
       </header>
 
       <main className="relative z-10">
-        {/* Hero and Features Sections (unchanged) */}
+        {/* --- HERO & FEATURES SECTIONS (Unchanged) --- */}
         <section className="min-h-screen flex flex-col justify-center items-center text-center pt-16 sm:pt-20 px-4 sm:px-0">
           <div className="container mx-auto px-4 sm:px-6">
              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400 leading-tight mb-4 sm:mb-6 animate-fade-in-up">
@@ -214,58 +219,74 @@ export default function App() {
             </div>
         </section>
 
-        {/* Signup Section (unchanged) */}
+        {/* --- REFINED SIGNUP SECTION --- */}
         <section id="signup" className="py-16 sm:py-20 md:py-32 bg-gradient-to-t from-emerald-900/30 via-emerald-900/10 to-transparent">
           <div className="container mx-auto px-4 sm:px-6 text-center">
             <div className="max-w-xl mx-auto px-4 sm:px-0">
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white">
-                Launching Soon. Join the Hype.
+                Get Early Access
               </h2>
               <p className="text-gray-400 mt-4 sm:mt-5 mb-8 text-base sm:text-lg">
-                Be the first to know when we go live. Hit the button below and follow our journey on Instagram for exclusive updates.
+                Enter your email to be the first to know when Jogo launches. No spam, just a one-time notification.
               </p>
               
               <div className="flex flex-col items-center gap-6">
-                {/* --- HYPE BUTTON AND COUNTER --- */}
-                <div className="flex flex-col items-center gap-4 w-full">
-                  {/* This container prevents layout shift when the button is clicked */}
-                  <div className="h-20 flex flex-col justify-center items-center">
-                    {isHypeClicked ? (
-                      <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 p-4 rounded-lg text-center animate-fade-in-up">
-                        <h3 className="font-bold text-lg flex items-center justify-center gap-2"><CheckCircle size={20} /> You're in! Thanks!</h3>
+                  {/* Container prevents layout shift when switching between form and success message */}
+                  <div className="h-24 flex flex-col justify-center items-center w-full">
+                    
+                    {/* STATE 1: SUCCESS MESSAGE */}
+                    {formState === 'success' ? (
+                      <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 p-4 rounded-lg text-center animate-fade-in-up w-full max-w-sm">
+                        <h3 className="font-bold text-lg flex items-center justify-center gap-2"><CheckCircle size={22} /> You're on the list!</h3>
+                        <p className="text-sm text-emerald-400/80 mt-1">We'll email you on launch day. Thanks for the support!</p>
                       </div>
                     ) : (
+                    
+                    /* STATE 2: EMAIL FORM (handles idle, loading, and error states) */
+                    <form onSubmit={handleEmailSubmit} className="w-full max-w-sm flex flex-col items-center gap-2 animate-fade-in-up">
+                      <div className="relative w-full">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="your.email@example.com"
+                          disabled={formState === 'loading'}
+                          className={`w-full bg-white/5 border text-white placeholder-gray-500 pl-12 pr-4 py-3 rounded-full focus:ring-2 focus:outline-none transition-all duration-300 ${formState === 'error' ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-emerald-500'}`}
+                          required
+                        />
+                      </div>
+
+                      {/* We only show the error message if there is one */}
+                      {formState === 'error' && (
+                        <p className="text-red-400 text-sm mt-1">{errorMessage}</p>
+                      )}
+
                       <button 
-                        onClick={handleJoinHypeClick} 
-                        className="inline-flex items-center justify-center gap-3 bg-emerald-500 text-black font-bold px-8 py-4 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 text-base sm:text-lg transform hover:scale-105"
+                        type="submit"
+                        disabled={formState === 'loading'}
+                        className="mt-4 w-full inline-flex items-center justify-center bg-emerald-500 text-black font-bold px-6 py-3 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 transform hover:scale-105 disabled:bg-emerald-800 disabled:scale-100 disabled:cursor-not-allowed"
                       >
-                        I'm Ready! (Join the Hype)
+                        {formState === 'loading' ? <LoaderCircle size={24} className="animate-spin" /> : 'Get Notified'}
                       </button>
+                    </form>
                     )}
                   </div>
-                  
-                  <div className="flex items-center gap-2 text-emerald-400/80">
-                     <Users size={16} />
-                     <p className="font-semibold text-sm">
-                       <span className="text-white font-bold">{hypeCount}</span> players are already hyped!
-                     </p>
-                  </div>
-                </div>
-
-                {/* --- DIVIDER --- */}
+                
+                {/* --- DIVIDER (Unchanged) --- */}
                 <div className="flex items-center gap-4 w-full max-w-xs">
                   <hr className="w-full border-t border-white/10" />
                   <span className="text-gray-500 text-xs font-medium">OR</span>
                   <hr className="w-full border-t border-white/10" />
                 </div>
                 
-                {/* --- INSTAGRAM BUTTON --- */}
+                {/* --- INSTAGRAM BUTTON (Unchanged) --- */}
                 <div className="flex flex-col items-center gap-3">
                    <p className="text-sm text-gray-400">For live updates & content:</p>
                    <a 
-                    href="https://www.instagram.com/jogo.us/" // IMPORTANT: Set your real URL here
-                    target="_blank" // Opens in a new tab
-                    rel="noopener noreferrer" // Security best practice for new tabs
+                    href="https://www.instagram.com/jogo.us/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/20 text-white font-semibold px-5 py-2 rounded-full hover:bg-white/10 transition-all text-sm"
                    >
                      <Instagram size={16} />
@@ -279,7 +300,7 @@ export default function App() {
         </section>
       </main>
 
-      {/* Footer (unchanged) */}
+      {/* --- FOOTER (Unchanged) --- */}
       <footer className="relative z-10">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 text-center text-gray-500 text-xs sm:text-sm border-t border-white/10">
           <p>&copy; {new Date().getFullYear()} Jogo. All Rights Reserved. Made with ❤️ by the jogo team.</p>
