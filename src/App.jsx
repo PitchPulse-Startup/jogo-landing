@@ -3,8 +3,8 @@
 // --- IMPORTS ---
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase'; 
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"; 
-import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail } from 'lucide-react'; // Added Mail icon
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore"; 
+import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail } from 'lucide-react';
 
 // --- ASSETS ---
 import jogoLogo from './assets/jogo-logo2.png';
@@ -20,46 +20,79 @@ export default function App() {
   const [activeFeature, setActiveFeature] = useState('home');
   const [isMobile, setIsMobile] = useState(false);
 
-  // State for the email form
+  // --- NEW: State for the multi-step form ---
   const [email, setEmail] = useState('');
-  const [formState, setFormState] = useState('idle'); // 'idle', 'loading', 'success', 'error'
+  const [submissionStep, setSubmissionStep] = useState('email'); // 'email', 'source', 'success'
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   
+  // State for the second step
+  const [source, setSource] = useState('');
+  const [otherSource, setOtherSource] = useState('');
+  const [firestoreId, setFirestoreId] = useState(null); // To store the ID for updating
+
   const featureRefs = {
       home: useRef(null),
       games: useRef(null),
       community: useRef(null),
   };
 
-  // --- FORM SUBMISSION HANDLER ---
+  // --- FORM SUBMISSION HANDLER (Step 1: Email) ---
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setErrorMessage('Please enter a valid email address.');
-      setFormState('error');
-      // Set a timer to clear the error message after a few seconds
-      setTimeout(() => {
-        if(formState === 'error') {
-          setFormState('idle');
-          setErrorMessage('');
-        }
-      }, 3000);
+      setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
 
-    setFormState('loading');
+    setLoading(true);
     setErrorMessage('');
 
     try {
-      await addDoc(collection(db, "early-access-emails"), {
+      const docRef = await addDoc(collection(db, "early-access-emails"), {
         email: email,
         submittedAt: serverTimestamp()
       });
-      setFormState('success');
+      setFirestoreId(docRef.id); // Save the document ID
+      setSubmissionStep('source'); // Move to the next step
     } catch (error) {
       console.error("Error adding document to Firestore: ", error);
       setErrorMessage('Something went wrong. Please try again later.');
-      setFormState('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- NEW: FORM SUBMISSION HANDLER (Step 2: Source) ---
+  const handleSourceSubmit = async (e) => {
+    e.preventDefault();
+    if (!source) {
+      setErrorMessage('Please select an option.');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+    if (source === 'Other' && !otherSource.trim()) {
+      setErrorMessage('Please specify where you heard about us.');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      const docToUpdate = doc(db, 'early-access-emails', firestoreId);
+      const finalSource = source === 'Other' ? otherSource.trim() : source;
+      await updateDoc(docToUpdate, {
+        source: finalSource,
+      });
+      setSubmissionStep('success'); // All done, move to success!
+    } catch (error) {
+      console.error("Error updating document in Firestore: ", error);
+      setErrorMessage('Something went wrong. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -219,82 +252,122 @@ export default function App() {
             </div>
         </section>
 
-        {/* --- REFINED SIGNUP SECTION --- */}
+        {/* --- REFINED SIGNUP SECTION (NOW WITH MULTI-STEP) --- */}
         <section id="signup" className="py-16 sm:py-20 md:py-32 bg-gradient-to-t from-emerald-900/30 via-emerald-900/10 to-transparent">
           <div className="container mx-auto px-4 sm:px-6 text-center">
             <div className="max-w-xl mx-auto px-4 sm:px-0">
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white">
-                Get Early Access
+                {submissionStep === 'source' ? "One last question..." : "Get Early Access"}
               </h2>
               <p className="text-gray-400 mt-4 sm:mt-5 mb-8 text-base sm:text-lg">
-                Enter your email to be the first to know when Jogo launches. No spam, just a one-time notification.
+                {submissionStep === 'email' && "Enter your email to be the first to know when Jogo launches. No spam, just a one-time notification."}
+                {submissionStep === 'source' && "We're curious, where did you hear about us? This helps us grow the community!"}
               </p>
               
               <div className="flex flex-col items-center gap-6">
                   {/* Container prevents layout shift when switching between form and success message */}
-                  <div className="h-24 flex flex-col justify-center items-center w-full">
+                  <div className="min-h-[10rem] flex flex-col justify-center items-center w-full">
                     
-                    {/* STATE 1: SUCCESS MESSAGE */}
-                    {formState === 'success' ? (
+                    {/* STEP 3: SUCCESS MESSAGE */}
+                    {submissionStep === 'success' && (
                       <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 p-4 rounded-lg text-center animate-fade-in-up w-full max-w-sm">
                         <h3 className="font-bold text-lg flex items-center justify-center gap-2"><CheckCircle size={22} /> You're on the list!</h3>
                         <p className="text-sm text-emerald-400/80 mt-1">We'll email you on launch day. Thanks for the support!</p>
                       </div>
-                    ) : (
+                    )}
                     
-                    /* STATE 2: EMAIL FORM (handles idle, loading, and error states) */
-                    <form onSubmit={handleEmailSubmit} className="w-full max-w-sm flex flex-col items-center gap-2 animate-fade-in-up">
-                      <div className="relative w-full">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="your.email@example.com"
-                          disabled={formState === 'loading'}
-                          className={`w-full bg-white/5 border text-white placeholder-gray-500 pl-12 pr-4 py-3 rounded-full focus:ring-2 focus:outline-none transition-all duration-300 ${formState === 'error' ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-emerald-500'}`}
-                          required
-                        />
-                      </div>
+                    {/* STEP 1: EMAIL FORM */}
+                    {submissionStep === 'email' && (
+                      <form onSubmit={handleEmailSubmit} className="w-full max-w-sm flex flex-col items-center gap-2 animate-fade-in-up">
+                        <div className="relative w-full">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="your.email@example.com"
+                            disabled={loading}
+                            className={`w-full bg-white/5 border text-white placeholder-gray-500 pl-12 pr-4 py-3 rounded-full focus:ring-2 focus:outline-none transition-all duration-300 ${errorMessage ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-emerald-500'}`}
+                            required
+                          />
+                        </div>
+                        <button 
+                          type="submit"
+                          disabled={loading}
+                          className="mt-4 w-full inline-flex items-center justify-center bg-emerald-500 text-black font-bold px-6 py-3 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 transform hover:scale-105 disabled:bg-emerald-800 disabled:scale-100 disabled:cursor-not-allowed"
+                        >
+                          {loading ? <LoaderCircle size={24} className="animate-spin" /> : 'Get Notified'}
+                        </button>
+                      </form>
+                    )}
 
-                      {/* We only show the error message if there is one */}
-                      {formState === 'error' && (
-                        <p className="text-red-400 text-sm mt-1">{errorMessage}</p>
-                      )}
-
-                      <button 
-                        type="submit"
-                        disabled={formState === 'loading'}
-                        className="mt-4 w-full inline-flex items-center justify-center bg-emerald-500 text-black font-bold px-6 py-3 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 transform hover:scale-105 disabled:bg-emerald-800 disabled:scale-100 disabled:cursor-not-allowed"
-                      >
-                        {formState === 'loading' ? <LoaderCircle size={24} className="animate-spin" /> : 'Get Notified'}
-                      </button>
-                    </form>
+                    {/* STEP 2: SOURCE FORM */}
+                    {submissionStep === 'source' && (
+                        <form onSubmit={handleSourceSubmit} className="w-full max-w-sm flex flex-col items-center gap-2 animate-fade-in-up">
+                           <div className="w-full space-y-2 text-left">
+                                {['Instagram', 'TikTok', 'LinkedIn', 'Reddit', 'Other'].map(option => (
+                                    <label key={option} className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${source === option ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-white/5 border-white/20 hover:bg-white/10'}`}>
+                                        <input
+                                            type="radio"
+                                            name="source"
+                                            value={option}
+                                            checked={source === option}
+                                            onChange={() => setSource(option)}
+                                            className="w-4 h-4 text-emerald-500 bg-transparent border-gray-500 focus:ring-emerald-500 focus:ring-2"
+                                        />
+                                        <span className="ml-3 text-white">{option}</span>
+                                    </label>
+                                ))}
+                                {source === 'Other' && (
+                                    <input
+                                        type="text"
+                                        value={otherSource}
+                                        onChange={(e) => setOtherSource(e.target.value)}
+                                        placeholder="Please specify..."
+                                        className="w-full mt-2 bg-white/5 border border-white/20 text-white placeholder-gray-500 px-4 py-3 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all duration-300"
+                                    />
+                                )}
+                           </div>
+                           <button 
+                             type="submit"
+                             disabled={loading}
+                             className="mt-4 w-full inline-flex items-center justify-center bg-emerald-500 text-black font-bold px-6 py-3 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 transform hover:scale-105 disabled:bg-emerald-800 disabled:scale-100 disabled:cursor-not-allowed"
+                           >
+                             {loading ? <LoaderCircle size={24} className="animate-spin" /> : 'Submit'}
+                           </button>
+                        </form>
                     )}
                   </div>
+                  
+                  {/* We only show the error message if there is one, regardless of step */}
+                  {errorMessage && (
+                    <p className="text-red-400 text-sm mt-1">{errorMessage}</p>
+                  )}
                 
-                {/* --- DIVIDER (Unchanged) --- */}
-                <div className="flex items-center gap-4 w-full max-w-xs">
-                  <hr className="w-full border-t border-white/10" />
-                  <span className="text-gray-500 text-xs font-medium">OR</span>
-                  <hr className="w-full border-t border-white/10" />
-                </div>
-                
-                {/* --- INSTAGRAM BUTTON (Unchanged) --- */}
-                <div className="flex flex-col items-center gap-3">
-                   <p className="text-sm text-gray-400">For live updates & content:</p>
-                   <a 
-                    href="https://www.instagram.com/jogo.us/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/20 text-white font-semibold px-5 py-2 rounded-full hover:bg-white/10 transition-all text-sm"
-                   >
-                     <Instagram size={16} />
-                     Follow on Instagram
-                   </a>
-                </div>
+                {/* --- DIVIDER & INSTAGRAM LINK (Only show if not on success step) --- */}
+                {submissionStep !== 'success' && (
+                    <>
+                        <div className="flex items-center gap-4 w-full max-w-xs">
+                        <hr className="w-full border-t border-white/10" />
+                        <span className="text-gray-500 text-xs font-medium">OR</span>
+                        <hr className="w-full border-t border-white/10" />
+                        </div>
+                        
+                        <div className="flex flex-col items-center gap-3">
+                        <p className="text-sm text-gray-400">For live updates & content:</p>
+                        <a 
+                            href="https://www.instagram.com/jogo.us/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/20 text-white font-semibold px-5 py-2 rounded-full hover:bg-white/10 transition-all text-sm"
+                        >
+                            <Instagram size={16} />
+                            Follow on Instagram
+                        </a>
+                        </div>
+                    </>
+                )}
               </div>
-
             </div>
           </div>
         </section>
