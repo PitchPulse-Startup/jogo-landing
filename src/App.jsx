@@ -67,11 +67,6 @@ export default function App() {
   // --- NEW: FORM SUBMISSION HANDLER (Step 2: Source) ---
   const handleSourceSubmit = async (e) => {
     e.preventDefault();
-    if (!source) {
-      setErrorMessage('Please select an option.');
-      setTimeout(() => setErrorMessage(''), 3000);
-      return;
-    }
     if (source === 'Other' && !otherSource.trim()) {
       setErrorMessage('Please specify where you heard about us.');
       setTimeout(() => setErrorMessage(''), 3000);
@@ -82,11 +77,13 @@ export default function App() {
     setErrorMessage('');
 
     try {
-      const docToUpdate = doc(db, 'early-access-emails', firestoreId);
-      const finalSource = source === 'Other' ? otherSource.trim() : source;
-      await updateDoc(docToUpdate, {
-        source: finalSource,
-      });
+      if (firestoreId && source) {
+        const docToUpdate = doc(db, 'early-access-emails', firestoreId);
+        const finalSource = source === 'Other' ? otherSource.trim() : source;
+        await updateDoc(docToUpdate, {
+          source: finalSource,
+        });
+      }
       setSubmissionStep('success'); // All done, move to success!
     } catch (error) {
       console.error("Error updating document in Firestore: ", error);
@@ -261,7 +258,7 @@ export default function App() {
               </h2>
               <p className="text-gray-400 mt-4 sm:mt-5 mb-8 text-base sm:text-lg">
                 {submissionStep === 'email' && "Enter your email to be the first to know when Jogo launches. No spam, just a one-time notification."}
-                {submissionStep === 'source' && "We're curious, where did you hear about us? This helps us grow the community!"}
+                {submissionStep === 'source' && "We're curious, where did you hear about us? (This is optional!)"}
               </p>
               
               <div className="flex flex-col items-center gap-6">
@@ -328,13 +325,22 @@ export default function App() {
                                     />
                                 )}
                            </div>
-                           <button 
-                             type="submit"
-                             disabled={loading}
-                             className="mt-4 w-full inline-flex items-center justify-center bg-emerald-500 text-black font-bold px-6 py-3 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 transform hover:scale-105 disabled:bg-emerald-800 disabled:scale-100 disabled:cursor-not-allowed"
-                           >
-                             {loading ? <LoaderCircle size={24} className="animate-spin" /> : 'Submit'}
-                           </button>
+                           <div className="flex gap-2 w-full mt-4">
+                               <button
+                                 type="button"
+                                 onClick={() => setSubmissionStep('success')}
+                                 className="w-1/2 inline-flex items-center justify-center bg-white/10 text-white font-bold px-6 py-3 rounded-full hover:bg-white/20 transition-all"
+                               >
+                                 Skip
+                               </button>
+                               <button
+                                 type="submit"
+                                 disabled={loading || !source}
+                                 className="w-1/2 inline-flex items-center justify-center bg-emerald-500 text-black font-bold px-6 py-3 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 transform hover:scale-105 disabled:bg-emerald-800 disabled:text-gray-400 disabled:scale-100 disabled:cursor-not-allowed"
+                               >
+                                 {loading ? <LoaderCircle size={24} className="animate-spin" /> : 'Submit'}
+                               </button>
+                           </div>
                         </form>
                     )}
                   </div>
