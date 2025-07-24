@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase'; 
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore"; 
-import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail } from 'lucide-react';
+import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail, ChevronDown, ChevronUp } from 'lucide-react';
 
 // --- ASSETS ---
 import jogoLogo from './assets/jogo-logo2.png';
@@ -31,11 +31,42 @@ export default function App() {
   const [otherSource, setOtherSource] = useState('');
   const [firestoreId, setFirestoreId] = useState(null); // To store the ID for updating
 
+  // --- NEW: FAQ State ---
+  const [openFAQ, setOpenFAQ] = useState(null);
+
   const featureRefs = {
       home: useRef(null),
       games: useRef(null),
       community: useRef(null),
   };
+
+  // --- FAQ DATA ---
+  const faqData = [
+    {
+      question: "How will it know if the fields are packed?",
+      answer: "We use a method called geofencing which pings to our database and lets us know when a player is in the field. This gives us an accurate score of how many people are currently there."
+    },
+    {
+      question: "What if I'm not good or just coming back to playing soccer?",
+      answer: "We have filters for what kind of level you are and what kind of game you're looking for. You can also filter by gender preferences - whether you're looking to play with women only, coed, or men's games."
+    },
+    {
+      question: "How will I know who is going?",
+      answer: "Our app has a game detail room where you can see how many people are going, where the game is located, and there's even a game chat to communicate with other players."
+    },
+    {
+      question: "What if someone gets hurt?",
+      answer: "If someone gets hurt, Jogo is not responsible for this. You are going to pickup games at your own will, knowing the risks of participating. Whoever causes an injury will be responsible for that."
+    },
+    {
+      question: "Will there be goals, pennies, cones, or soccer balls provided?",
+      answer: "In the game detail screen, you can volunteer to bring any of those items very easily. If you volunteer to bring something, we'll make it known in the game detail screen with an icon that lights up when the need is met. However, these items are not mandatory."
+    },
+    {
+      question: "How do I know where the field is located?",
+      answer: "We created a directions feature where you can just click on it and it will give you directions on your phone with whatever navigation service you use for directions."
+    }
+  ];
 
   // --- FORM SUBMISSION HANDLER (Step 1: Email) ---
   const handleEmailSubmit = async (e) => {
@@ -91,6 +122,11 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // --- FAQ TOGGLE HANDLER ---
+  const toggleFAQ = (index) => {
+    setOpenFAQ(openFAQ === index ? null : index);
   };
   
   // --- LAYOUT & SCROLLING EFFECTS (Unchanged) ---
@@ -373,6 +409,65 @@ export default function App() {
                         </div>
                     </>
                 )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --- NEW: FAQ SECTION --- */}
+        <section id="faq" className="py-16 sm:py-20 md:py-32 bg-gradient-to-t from-slate-900/50 to-transparent">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12 sm:mb-16">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
+                  Frequently Asked Questions
+                </h2>
+                <p className="text-base sm:text-lg text-gray-400 max-w-2xl mx-auto">
+                  Got questions? We've got answers. Here's everything you need to know about Jogo.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                {faqData.map((faq, index) => (
+                  <div key={index} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm">
+                    <button
+                      onClick={() => toggleFAQ(index)}
+                      className="w-full px-6 py-4 sm:px-8 sm:py-6 text-left flex justify-between items-center hover:bg-white/5 transition-all duration-300"
+                    >
+                      <h3 className="text-lg sm:text-xl font-semibold text-white pr-4">
+                        {faq.question}
+                      </h3>
+                      {openFAQ === index ? (
+                        <ChevronUp className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                      )}
+                    </button>
+                    
+                    {openFAQ === index && (
+                      <div className="px-6 pb-4 sm:px-8 sm:pb-6">
+                        <div className="pt-4 border-t border-white/10">
+                          <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                            {faq.answer}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="text-center mt-12 sm:mt-16">
+                <p className="text-gray-400 mb-4">Still have questions?</p>
+                <a 
+                  href="https://www.instagram.com/jogo.us/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold px-6 py-3 rounded-full hover:bg-emerald-500/20 transition-all text-sm sm:text-base"
+                >
+                  <Instagram size={18} />
+                  Message us on Instagram
+                </a>
               </div>
             </div>
           </div>
