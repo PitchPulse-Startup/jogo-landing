@@ -43,28 +43,28 @@ export default function App() {
   // --- FAQ DATA ---
   const faqData = [
     {
-      question: "How will it know if the fields are packed?",
-      answer: "We use a method called geofencing which pings to our database and lets us know when a player is in the field. This gives us an accurate score of how many people are currently there."
+      question: "How will Jogo know if the fields are packed?",
+      answer: "We use location-based alerts to know when a player arrives at the field. This helps us keep an accurate count of how many people are currently there."
     },
     {
-      question: "What if I'm not good or just coming back to playing soccer?",
-      answer: "We have filters for what kind of level you are and what kind of game you're looking for. You can also filter by gender preferences - whether you're looking to play with women only, coed, or men's games."
+      question: "What if I'm new to soccer?",
+      answer: "You can filter by skill level and game type — even choose between coed, women’s, or men’s games."
     },
     {
       question: "How will I know who is going?",
-      answer: "Our app has a game detail room where you can see how many people are going, where the game is located, and there's even a game chat to communicate with other players."
+      answer: "Each game will have details showing who's going, the location, and a chat to talk with other players."
     },
     {
       question: "What if someone gets hurt?",
-      answer: "If someone gets hurt, Jogo is not responsible for this. You are going to pickup games at your own will, knowing the risks of participating. Whoever causes an injury will be responsible for that."
+      answer: "Please note that participation in pickup games is voluntary and at your own risk. Jogo is not liable for any injuries or accidents that may occur during games."
     },
     {
       question: "Will there be goals, pennies, cones, or soccer balls provided?",
-      answer: "In the game detail screen, you can volunteer to bring any of those items very easily. If you volunteer to bring something, we'll make it known in the game detail screen with an icon that lights up when the need is met. However, these items are not mandatory."
+      answer: "Players can easily volunteer to bring optional items through the game detail screen. Once fulfilled, an icon will indicate the need has been met."
     },
     {
       question: "How do I know where the field is located?",
-      answer: "We created a directions feature where you can just click on it and it will give you directions on your phone with whatever navigation service you use for directions."
+      answer: "Our directions feature lets you tap and get instant navigation using your preferred map app."
     }
   ];
 
@@ -208,10 +208,10 @@ export default function App() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/50 backdrop-blur-lg">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center border-b border-white/10">
           <a href="#" className="flex items-center gap-2 sm:gap-3">
-            <img src={jogoLogo} alt="Jogo Logo" className="h-7 sm:h-9 w-auto" />
-            <span className="text-xl sm:text-2xl font-bold text-white tracking-tight">jogo</span>
+            <img src={jogoLogo} alt="Jogo Logo" className="h-20 sm:h-20 w-auto" />
+            <span className="text-xl sm:text-2xl font-bold text-white tracking-tight"></span>
           </a>
-          <a href="#signup" className="bg-white text-black font-semibold px-3 sm:px-5 py-2 rounded-full hover:bg-gray-200 transition-all text-xs sm:text-sm">
+          <a href="#signup" className="bg-white text-black font-semibold px-3 sm:px-5 py-2 rounded-full hover:bg-emerald-400 transition-all text-xs sm:text-sm">
             Get Early Access
           </a>
         </div>
