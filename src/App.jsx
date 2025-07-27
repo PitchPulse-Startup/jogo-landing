@@ -293,7 +293,7 @@ export default function App() {
                 {submissionStep === 'source' ? "One last question..." : "Get Early Access"}
               </h2>
               <p className="text-gray-400 mt-4 sm:mt-5 mb-8 text-base sm:text-lg">
-                {submissionStep === 'email' && "Enter your email to be the first to know when Jogo launches. No spam, just a one-time notification."}
+                {submissionStep === 'email' && "Enter your email to be the first to know when Jogo launches. No spam — just occasional updates, early access, and exclusive insider info."}
                 {submissionStep === 'source' && "We're curious, where did you hear about us? (This is optional!)"}
               </p>
               
