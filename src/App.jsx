@@ -212,7 +212,7 @@ export default function App() {
             <span className="text-xl sm:text-2xl font-bold text-white tracking-tight"></span>
           </a>
           <a href="#signup" className="bg-white text-black font-semibold px-3 sm:px-5 py-2 rounded-full hover:bg-emerald-400 transition-all text-xs sm:text-sm">
-            Get Early Access
+            Get Notified
           </a>
         </div>
       </header>
