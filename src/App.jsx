@@ -316,7 +316,7 @@ export default function App() {
               <div className="flex flex-wrap justify-center gap-6 text-gray-400">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span>100% Free Forever</span>
+                  <span>100% Free Local Games</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
