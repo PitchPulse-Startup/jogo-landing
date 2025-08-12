@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight } from 'lucide-react';
 import jogoLogo from './assets/jogo-logo2.png';
 import soccerBackground from './assets/soccer.jpeg';
 
 const Blog = ({ onBackToMain }) => {
   const [selectedPost, setSelectedPost] = useState(null);
+
+  // Scroll to top when blog component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const blogPosts = [
     {
@@ -247,7 +252,7 @@ const Blog = ({ onBackToMain }) => {
 
           {/* Blog Posts Grid */}
           <div className="grid gap-8 lg:gap-12 max-w-4xl mx-auto">
-            {blogPosts.map((post, index) => (
+            {blogPosts.map((post) => (
               <article 
                 key={post.id}
                 className="glass-card p-6 sm:p-8 rounded-3xl border border-white/10 hover-lift cursor-pointer group"
