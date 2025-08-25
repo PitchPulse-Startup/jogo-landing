@@ -2,6 +2,7 @@
 
 // --- IMPORTS ---
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { db } from './firebase'; 
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore"; 
 import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail, ChevronDown, ChevronUp } from 'lucide-react';
@@ -14,11 +15,15 @@ import gamesScreenImage from './assets/games.png';
 import socialScreenImage from './assets/social.png';
 import soccerFieldBg from './assets/soccer.jpeg';
 
+// --- COMPONENTS ---
+import AnimatedBackdrop from './components/AnimatedBackdrop';
+
 // --- Main App Component ---
 export default function App() {
   // --- STATE MANAGEMENT ---
   const [activeFeature, setActiveFeature] = useState('home');
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // --- NEW: State for the multi-step form ---
   const [email, setEmail] = useState('');
@@ -196,32 +201,149 @@ export default function App() {
             .animation-delay-200 { animation-delay: 0.2s; opacity: 0; }
             .animation-delay-400 { animation-delay: 0.4s; opacity: 0; }
             .animation-delay-4000 { animation-delay: -4s; }
+            
+            @keyframes slideDown {
+              from {
+                opacity: 0;
+                transform: translateY(-20px);
+                max-height: 0;
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+                max-height: 300px;
+              }
+            }
+            
+            @keyframes slideUp {
+              from {
+                opacity: 1;
+                transform: translateY(0);
+                max-height: 300px;
+              }
+              to {
+                opacity: 0;
+                transform: translateY(-20px);
+                max-height: 0;
+              }
+            }
+            
+            .mobile-menu-enter {
+              animation: slideDown 0.3s ease-out forwards;
+            }
+            
+            .mobile-menu-exit {
+              animation: slideUp 0.3s ease-in forwards;
+            }
+            
+            .mobile-menu-item {
+              opacity: 0;
+              transform: translateY(10px);
+              animation: fade-in-up 0.4s ease-out forwards;
+            }
+            
+            .mobile-menu-item:nth-child(1) { animation-delay: 0.1s; }
+            .mobile-menu-item:nth-child(2) { animation-delay: 0.15s; }
+            .mobile-menu-item:nth-child(3) { animation-delay: 0.2s; }
+            .mobile-menu-item:nth-child(4) { animation-delay: 0.25s; }
       `}</style>
       
-      {/* --- BACKGROUND & HEADER (Unchanged) --- */}
+      {/* --- ANIMATED BACKDROP --- */}
+      <AnimatedBackdrop />
+      
+      {/* --- BACKGROUND & HEADER --- */}
       <div className="absolute top-0 left-0 w-full h-full z-0 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${soccerFieldBg})` }}>
-          <div className="absolute inset-0 w-full h-full bg-black/60"></div>
-          <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/50 rounded-full filter blur-3xl animate-blob"></div>
-          <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/50 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
-          <div className="absolute top-0 left-0 w-full h-screen bg-gradient-to-b from-slate-900 to-transparent"></div>
+          <div className="absolute inset-0 w-full h-full bg-black/70"></div>
+          <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/30 rounded-full filter blur-3xl animate-blob"></div>
+          <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/30 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute top-0 left-0 w-full h-screen bg-gradient-to-b from-slate-900/80 to-transparent"></div>
       </div>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/50 backdrop-blur-lg">
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center border-b border-white/10">
-          <a href="#" className="flex items-center gap-2 sm:gap-3">
-            <img src={jogoLogo} alt="Jogo Logo" className="h-20 sm:h-20 w-auto" />
-            <span className="text-xl sm:text-2xl font-bold text-white tracking-tight"></span>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-emerald-500/20">
+        <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-3 flex justify-between items-center">
+          <a href="#" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
+            <img src={jogoLogo} alt="Jogo Logo" className="h-14 sm:h-16 w-auto" />
           </a>
-          <a href="#signup" className="bg-white text-black font-semibold px-3 sm:px-5 py-2 rounded-full hover:bg-emerald-400 transition-all text-xs sm:text-sm">
-            Get Notified
-          </a>
+          
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
+            <a href="#features" className="text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium">
+              Features
+            </a>
+            <a href="#faq" className="text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium">
+              FAQ
+            </a>
+            <Link to="/blog" className="text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium">
+              Blog
+            </Link>
+            <Link to="/media" className="text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium">
+              Media
+            </Link>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-300 hover:text-emerald-400 transition-colors"
+              aria-label="Toggle mobile menu"
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+            
+            <a href="#signup" className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-4 sm:px-6 py-2 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/25 text-xs sm:text-sm">
+              Get Early Access
+            </a>
+          </div>
         </div>
+        
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-black/95 backdrop-blur-lg border-t border-emerald-500/20 mobile-menu-enter overflow-hidden">
+            <div className="container mx-auto px-4 py-4 space-y-4">
+              <a 
+                href="#features" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium py-2 mobile-menu-item"
+              >
+                Features
+              </a>
+              <a 
+                href="#faq" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium py-2 mobile-menu-item"
+              >
+                FAQ
+              </a>
+              <Link 
+                to="/blog" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium py-2 mobile-menu-item"
+              >
+                Blog
+              </Link>
+              <Link 
+                to="/media" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium py-2 mobile-menu-item"
+              >
+                Media
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="relative z-10">
         {/* --- HERO & FEATURES SECTIONS (Unchanged) --- */}
         <section className="min-h-screen flex flex-col justify-center items-center text-center pt-16 sm:pt-20 px-4 sm:px-0">
           <div className="container mx-auto px-4 sm:px-6">
-             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400 leading-tight mb-4 sm:mb-6 animate-fade-in-up">
+             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400 leading-tight mb-8 sm:mb-12 pb-2 animate-fade-in-up">
                Stop Searching. <br /> Start Playing.
              </h1>
              <p className="max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-gray-400 mb-8 sm:mb-10 px-4 sm:px-0 animate-fade-in-up animation-delay-200">
@@ -386,7 +508,7 @@ export default function App() {
                     <p className="text-red-400 text-sm mt-1">{errorMessage}</p>
                   )}
                 
-                {/* --- DIVIDER & INSTAGRAM LINK (Only show if not on success step) --- */}
+                {/* --- DIVIDER & MEDIA LINK (Only show if not on success step) --- */}
                 {submissionStep !== 'success' && (
                     <>
                         <div className="flex items-center gap-4 w-full max-w-xs">
@@ -397,15 +519,13 @@ export default function App() {
                         
                         <div className="flex flex-col items-center gap-3">
                         <p className="text-sm text-gray-400">For live updates & content:</p>
-                        <a 
-                            href="https://www.instagram.com/jogo.us/"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <Link 
+                            to="/media"
                             className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/20 text-white font-semibold px-5 py-2 rounded-full hover:bg-white/10 transition-all text-sm"
                         >
                             <Instagram size={16} />
-                            Follow on Instagram
-                        </a>
+                            Follow on Social Media
+                        </Link>
                         </div>
                     </>
                 )}
@@ -459,15 +579,13 @@ export default function App() {
               
               <div className="text-center mt-12 sm:mt-16">
                 <p className="text-gray-400 mb-4">Still have questions?</p>
-                <a 
-                  href="https://www.instagram.com/jogo.us/"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link 
+                  to="/media"
                   className="inline-flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold px-6 py-3 rounded-full hover:bg-emerald-500/20 transition-all text-sm sm:text-base"
                 >
                   <Instagram size={18} />
-                  Message us on Instagram
-                </a>
+                  Connect with us on Social Media
+                </Link>
               </div>
             </div>
           </div>

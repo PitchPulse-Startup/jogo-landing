@@ -233,19 +233,19 @@ const Blog = ({ onBackToMain }) => {
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
           {/* Blog Header */}
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full text-sm font-medium text-blue-400 mb-6 border border-blue-500/30">
+            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full text-sm font-medium text-blue-400 mb-6 border border-blue-500/30 animate-fade-in-up">
               <Sparkles className="w-4 h-4" />
               Latest Updates
             </div>
             
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 animate-fade-in-up animation-delay-200">
               <span className="bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
                 The Jogo Journal
               </span>
               <span className="text-yellow-400 ml-2">✏️</span>
             </h1>
             
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto animate-fade-in-up animation-delay-400">
               Stay updated with the latest news, insights, and behind-the-scenes stories from the Jogo team as we revolutionize pickup soccer.
             </p>
           </div>
@@ -329,6 +329,14 @@ const Blog = ({ onBackToMain }) => {
 
   // CSS for prose styling
   const styles = `
+    @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
+    @keyframes blob { 0% { transform: translate(0px, 0px) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0px, 0px) scale(1); } }
+    .animate-blob { animation: blob 7s infinite; }
+    .animation-delay-200 { animation-delay: 0.2s; opacity: 0; }
+    .animation-delay-400 { animation-delay: 0.4s; opacity: 0; }
+    .animation-delay-4000 { animation-delay: -4s; }
+    
     .glass-card {
       background: rgba(255, 255, 255, 0.03);
       backdrop-filter: blur(20px);
