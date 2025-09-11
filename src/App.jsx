@@ -24,6 +24,7 @@ export default function App() {
   const [activeFeature, setActiveFeature] = useState('home');
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
 
   // --- NEW: State for the multi-step form ---
   const [email, setEmail] = useState('');
@@ -133,12 +134,36 @@ export default function App() {
   const toggleFAQ = (index) => {
     setOpenFAQ(openFAQ === index ? null : index);
   };
+
+  // --- MENU CLOSE HANDLER ---
+  const closeMenu = () => {
+    setMenuClosing(true);
+    setTimeout(() => {
+      setMobileMenuOpen(false);
+      setMenuClosing(false);
+    }, 300);
+  };
+
+  const toggleMenu = () => {
+    if (mobileMenuOpen) {
+      closeMenu();
+    } else {
+      setMobileMenuOpen(true);
+    }
+  };
   
-  // --- LAYOUT & SCROLLING EFFECTS (Unchanged) ---
+  // --- LAYOUT & SCROLLING EFFECTS ---
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
+
+    // Click outside to close menu
+    const handleClickOutside = (event) => {
+      if (mobileMenuOpen && !event.target.closest('.menu-container')) {
+        closeMenu();
+      }
+    };
 
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -146,6 +171,10 @@ export default function App() {
             document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
         });
     });
+
+    if (mobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
 
     let observer;
     if (!isMobile) {
@@ -162,13 +191,14 @@ export default function App() {
     
     return () => {
        window.removeEventListener('resize', checkMobile);
+       document.removeEventListener('mousedown', handleClickOutside);
        if (observer) {
          Object.values(featureRefs).forEach(ref => {
              if (ref.current) observer.unobserve(ref.current);
          });
        }
     };
-  }, [isMobile]);
+  }, [isMobile, mobileMenuOpen]);
 
   // --- CONTENT DATA & HELPERS (Unchanged) ---
   const featureContent = {
@@ -205,35 +235,31 @@ export default function App() {
             @keyframes slideDown {
               from {
                 opacity: 0;
-                transform: translateY(-20px);
-                max-height: 0;
+                transform: translateY(-10px) scale(0.95);
               }
               to {
                 opacity: 1;
-                transform: translateY(0);
-                max-height: 300px;
+                transform: translateY(0) scale(1);
               }
             }
             
             @keyframes slideUp {
               from {
                 opacity: 1;
-                transform: translateY(0);
-                max-height: 300px;
+                transform: translateY(0) scale(1);
               }
               to {
                 opacity: 0;
-                transform: translateY(-20px);
-                max-height: 0;
+                transform: translateY(-10px) scale(0.95);
               }
             }
             
-            .mobile-menu-enter {
-              animation: slideDown 0.3s ease-out forwards;
+            .menu-enter {
+              animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             }
             
-            .mobile-menu-exit {
-              animation: slideUp 0.3s ease-in forwards;
+            .menu-exit {
+              animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             }
             
             .mobile-menu-item {
@@ -264,26 +290,11 @@ export default function App() {
             <img src={jogoLogo} alt="Jogo Logo" className="h-14 sm:h-16 w-auto" />
           </a>
           
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-            <a href="#features" className="text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium">
-              Features
-            </a>
-            <a href="#faq" className="text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium">
-              FAQ
-            </a>
-            <Link to="/blog" className="text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium">
-              Blog
-            </Link>
-            <Link to="/media" className="text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium">
-              Media
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 menu-container relative">
             <button 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-300 hover:text-emerald-400 transition-colors"
-              aria-label="Toggle mobile menu"
+              onClick={toggleMenu}
+              className="p-3 text-gray-300 hover:text-emerald-400 transition-all duration-300 bg-white/5 backdrop-blur-sm rounded-full border border-white/10 hover:bg-white/10"
+              aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -302,35 +313,35 @@ export default function App() {
           </div>
         </div>
         
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-black/95 backdrop-blur-lg border-t border-emerald-500/20 mobile-menu-enter overflow-hidden">
-            <div className="container mx-auto px-4 py-4 space-y-4">
+        {/* Dropdown Menu */}
+        {(mobileMenuOpen || menuClosing) && (
+          <div className={`absolute top-full right-4 mt-2 w-48 bg-black/95 backdrop-blur-lg rounded-2xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden z-50 ${menuClosing ? 'menu-exit' : 'menu-enter'}`}>
+            <div className="p-2 space-y-1">
               <a 
                 href="#features" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium py-2 mobile-menu-item"
+                onClick={closeMenu}
+                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
               >
                 Features
               </a>
               <a 
                 href="#faq" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium py-2 mobile-menu-item"
+                onClick={closeMenu}
+                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
               >
                 FAQ
               </a>
               <Link 
                 to="/blog" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium py-2 mobile-menu-item"
+                onClick={closeMenu}
+                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
               >
                 Blog
               </Link>
               <Link 
                 to="/media" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-300 hover:text-emerald-400 transition-colors text-sm font-medium py-2 mobile-menu-item"
+                onClick={closeMenu}
+                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
               >
                 Media
               </Link>
@@ -412,10 +423,10 @@ export default function App() {
           <div className="container mx-auto px-4 sm:px-6 text-center">
             <div className="max-w-xl mx-auto px-4 sm:px-0">
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white">
-                {submissionStep === 'source' ? "One last question..." : "Get Early Access"}
+                {submissionStep === 'source' ? "One last question..." : "Get Early Access!"}
               </h2>
               <p className="text-gray-400 mt-4 sm:mt-5 mb-8 text-base sm:text-lg">
-                {submissionStep === 'email' && "Enter your email to be the first to know when Jogo launches. No spam — just occasional updates, early access, and exclusive insider info."}
+                {submissionStep === 'email' && "Enter your email and we’ll send you instructions soon on how to gain early access, along with additional insider details."}
                 {submissionStep === 'source' && "We're curious, where did you hear about us? (This is optional!)"}
               </p>
               
