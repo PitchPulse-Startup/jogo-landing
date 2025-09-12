@@ -11,7 +11,7 @@ import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail, 
 import jogoLogo from './assets/jogo-logo2.png';
 import jogoVideo from './assets/jogo-video.mp4';
 import liveScreenImage from './assets/Homejogo.png';
-import gamesScreenImage from './assets/Gamejogo.png';
+import gamesScreenImage from './assets/Gamesjogo.png';
 import socialScreenImage from './assets/social.png';
 import soccerFieldBg from './assets/soccer.jpeg';
 
