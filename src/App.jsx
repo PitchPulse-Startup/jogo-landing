@@ -10,8 +10,8 @@ import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail, 
 // --- ASSETS ---
 import jogoLogo from './assets/jogo-logo2.png';
 import jogoVideo from './assets/jogo-video.mp4';
-import liveScreenImage from './assets/live.png';
-import gamesScreenImage from './assets/games.png';
+import liveScreenImage from './assets/Homejogo.png';
+import gamesScreenImage from './assets/Gamejogo.png';
 import socialScreenImage from './assets/social.png';
 import soccerFieldBg from './assets/soccer.jpeg';
 
