@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.jsx'
 import Blog from './Blog.jsx'
 import Media from './Media.jsx'
+import Policy from './Policy.jsx'
+import Terms from './Terms.jsx'
+import Feedback from './Feedback.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -20,6 +23,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/" element={<App />} />
         <Route path="/blog" element={<Blog onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/media" element={<Media onBackToMain={() => window.location.href = '/'} />} />
+        <Route path="/policy" element={<Policy onBackToMain={() => window.location.href = '/'} />} />
+        <Route path="/terms" element={<Terms onBackToMain={() => window.location.href = '/'} />} />
+        <Route path="/feedback" element={<Feedback onBackToMain={() => window.location.href = '/'} />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

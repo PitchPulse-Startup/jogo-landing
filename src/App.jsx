@@ -1,7 +1,7 @@
 // src/App.jsx
 
 // --- IMPORTS ---
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from './firebase'; 
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore"; 
@@ -17,6 +17,7 @@ import soccerFieldBg from './assets/soccer.jpeg';
 
 // --- COMPONENTS ---
 import AnimatedBackdrop from './components/AnimatedBackdrop';
+import FloatingSparkles from './components/FloatingSparkles';
 
 // --- Main App Component ---
 export default function App() {
@@ -272,9 +273,12 @@ export default function App() {
             .mobile-menu-item:nth-child(2) { animation-delay: 0.15s; }
             .mobile-menu-item:nth-child(3) { animation-delay: 0.2s; }
             .mobile-menu-item:nth-child(4) { animation-delay: 0.25s; }
+            .mobile-menu-item:nth-child(5) { animation-delay: 0.3s; }
+            .mobile-menu-item:nth-child(6) { animation-delay: 0.35s; }
+            .mobile-menu-item:nth-child(7) { animation-delay: 0.4s; }
       `}</style>
       
-      {/* --- ANIMATED BACKDROP --- */}
+      {/* --- ANIMATED BACKDROPS --- */}
       <AnimatedBackdrop />
       
       {/* --- BACKGROUND & HEADER --- */}
@@ -345,6 +349,27 @@ export default function App() {
               >
                 Media
               </Link>
+              <Link
+                to="/policy"
+                onClick={closeMenu}
+                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
+              >
+                Policy
+              </Link>
+              <Link
+                to="/terms"
+                onClick={closeMenu}
+                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
+              >
+                Terms of Service
+              </Link>
+              <Link
+                to="/feedback"
+                onClick={closeMenu}
+                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
+              >
+                Feedback
+              </Link>
             </div>
           </div>
         )}
@@ -353,16 +378,28 @@ export default function App() {
       <main className="relative z-10">
         {/* --- HERO & FEATURES SECTIONS (Unchanged) --- */}
         <section className="min-h-screen flex flex-col justify-center items-center text-center pt-16 sm:pt-20 px-4 sm:px-0">
+          <FloatingSparkles />
           <div className="container mx-auto px-4 sm:px-6">
-             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400 leading-tight mb-8 sm:mb-12 pb-2 animate-fade-in-up">
-               Stop Searching. <br /> Start Playing.
+             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium border border-emerald-400/20 mb-6 animate-fade-in-up">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+                  The Future of Pickup Soccer
+                </span>
+              </div>
+             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400 leading-tight mb-6 sm:mb-8 pb-2 animate-fade-in-up animation-delay-200">
+               Stop Searching. <br /> <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text">Start Playing.</span>
              </h1>
-             <p className="max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-gray-400 mb-8 sm:mb-10 px-4 sm:px-0 animate-fade-in-up animation-delay-200">
+             <p className="max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-gray-400 mb-8 sm:mb-10 px-4 sm:px-0 animate-fade-in-up animation-delay-400">
                Jogo is the first app to show you live field traffic, connect you to pickup games, and build your local soccer community.
              </p>
-             <a href="#features" className="bg-emerald-500 text-black font-bold px-6 sm:px-8 py-3 rounded-full hover:bg-emerald-400 transition-transform transform hover:scale-105 shadow-2xl shadow-emerald-500/20 animate-fade-in-up animation-delay-400 text-sm sm:text-base">
-               See How It Works
-             </a>
+             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-fade-in-up animation-delay-600">
+                <a href="#signup" className="w-full sm:w-auto bg-emerald-500 text-black font-bold px-8 py-4 rounded-full hover:bg-emerald-400 transition-transform transform hover:scale-105 shadow-2xl shadow-emerald-500/20 text-base">
+                  Get Early Access
+                </a>
+                <a href="#features" className="w-full sm:w-auto bg-white/5 border border-white/20 text-white font-medium px-8 py-4 rounded-full hover:bg-white/10 transition-all text-base">
+                  See How It Works
+                </a>
+             </div>
           </div>
         </section>
 
@@ -606,7 +643,13 @@ export default function App() {
       {/* --- FOOTER (Unchanged) --- */}
       <footer className="relative z-10">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 text-center text-gray-500 text-xs sm:text-sm border-t border-white/10">
-          <p>&copy; {new Date().getFullYear()} Jogo. All Rights Reserved. Made with ❤️ by the jogo team.</p>
+          <p>&copy; {new Date().getFullYear()} Jogo. All Rights Reserved. Made with ❤️ by the jogo team.
+            <span className="mx-2">|</span>
+            <Link to="/policy" className="hover:text-emerald-400 transition-colors">Privacy Policy</Link>
+            <span className="mx-2">|</span>
+            <Link to="/terms" className="hover:text-emerald-400 transition-colors">Terms of Service</Link><span className="mx-2">|</span>
+            <Link to="/feedback" className="hover:text-emerald-400 transition-colors">Feedback</Link>
+          </p>
         </div>
       </footer>
     </div>
