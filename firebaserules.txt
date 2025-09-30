@@ -22,13 +22,24 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // --- NEW RULE FOR ACCOUNT DELETION REQUESTS ---
+    // Allow anyone to create a document for account deletion requests.
+    // Only admins can read/update/delete requests to protect user privacy.
+    match /account-deletion-requests/{requestId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     // --- EXISTING APP RULES (UNCHANGED) ---
 
     // TEMPORARY: Admins by hardcoded email
     function isAdmin() {
       return request.auth != null &&
         (request.auth.token.email == "chrisvpopoca@gmail.com" ||
-         request.auth.token.email == "adrianajaltam@gmail.com");
+         request.auth.token.email == "adrianajaltam@gmail.com" ||
+         request.auth.token.email == "cv298@njit.edu" ||
+         request.auth.token.email == "israelram5112@gmail.com" ||
+         request.auth.token.email == "jimmy91215@gmail.com");
     }
 
     function isAuthenticated() {
@@ -307,13 +318,18 @@ service cloud.firestore {
         && request.resource.data.members.size() > 0
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0;
-      allow update: if isSquadMember(squadId)
-        && resource.data.createdBy in request.resource.data.members
-        && (
-          (request.resource.data.name == resource.data.name
-            && request.resource.data.imageUrl == resource.data.imageUrl)
-          || isSquadCreator(squadId)
-        );
+      allow update: if isAuthenticated() && (
+        // Squad creator can update most fields
+        isSquadCreator(squadId) ||
+        // Squad members can update if they're only changing the members array (for leaving)
+        (isSquadMember(squadId) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) &&
+         resource.data.createdBy in request.resource.data.members) ||
+        // Squad members can update for adding/removing members while keeping creator in members
+        (isSquadMember(squadId) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'updatedAt']) &&
+         resource.data.createdBy in request.resource.data.members)
+      );
       allow delete: if isSquadCreator(squadId) ||
         // Allow deletion of direct messages by any original member
         (exists(/databases/$(database)/documents/squads/$(squadId)) &&

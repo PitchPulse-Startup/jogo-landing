@@ -370,6 +370,13 @@ export default function App() {
               >
                 Feedback
               </Link>
+              <Link
+                to="/delete-account"
+                onClick={closeMenu}
+                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
+              >
+                Delete Account
+              </Link>
             </div>
           </div>
         )}
@@ -648,7 +655,8 @@ export default function App() {
             <Link to="/policy" className="hover:text-emerald-400 transition-colors">Privacy Policy</Link>
             <span className="mx-2">|</span>
             <Link to="/terms" className="hover:text-emerald-400 transition-colors">Terms of Service</Link><span className="mx-2">|</span>
-            <Link to="/feedback" className="hover:text-emerald-400 transition-colors">Feedback</Link>
+            <Link to="/feedback" className="hover:text-emerald-400 transition-colors">Feedback</Link><span className="mx-2">|</span>
+            <Link to="/delete-account" className="hover:text-emerald-400 transition-colors">Delete Account</Link>
           </p>
         </div>
       </footer>
