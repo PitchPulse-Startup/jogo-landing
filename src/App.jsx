@@ -110,7 +110,7 @@ export default function App() {
   // Stats Data
   const stats = [
     { icon: Zap, value: "Real-Time", label: "Live Updates" },
-    { icon: Users, value: "1000+", label: "Active Players" },
+    { icon: Users, value: "200+", label: "Active Players" },
     { icon: MapPin, value: "50+", label: "Fields Tracked" },
     { icon: TrendingUp, value: "24/7", label: "Game Discovery" }
   ];
