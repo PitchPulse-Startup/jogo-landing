@@ -14,9 +14,93 @@ const Blog = ({ onBackToMain }) => {
 
   const blogPosts = [
     {
+      id: 4,
+      title: "Beta Launch Success: 170+ Users in Just Days!",
+      date: "January 7, 2025",
+      readTime: "3 min read",
+      category: "Launch Update",
+      excerpt: "We've officially launched our beta on the web, and the response has been incredible! In just a few days, over 170 players have joined the Jogo community. Here's what this milestone means and what's coming next.",
+      content: `
+        <p>We're absolutely blown away! 🎉</p>
+
+        <p>Just days ago, we opened up <strong>Jogo Beta</strong> to the public on the web, and the response has exceeded every expectation. We're thrilled to announce that <strong>over 170 users</strong> have already joined our platform and started finding pickup games!</p>
+
+        <h3>The Numbers Tell a Story</h3>
+
+        <p>When we hit the launch button, we hoped for a positive response. What we got was extraordinary:</p>
+
+        <ul>
+          <li><strong>170+ active users</strong> in just a few days</li>
+          <li>Games created in <strong>dozens of cities</strong> across the country</li>
+          <li>Real-time field activity tracking being used daily</li>
+          <li>Countless connections made between local players</li>
+          <li>Incredible feedback and feature requests pouring in</li>
+        </ul>
+
+        <h3>Thank You to Our Community</h3>
+
+        <p>To every single one of you who signed up, created a profile, posted a game, or joined our community chat—<strong>THANK YOU</strong>. You're not just users; you're the founding members of what we believe will become the largest pickup soccer community in the country.</p>
+
+        <p>Your trust in us during this beta phase means everything. Every bug report, every feature suggestion, every word of encouragement fuels our passion to make Jogo the best it can be.</p>
+
+        <h3>What We're Hearing</h3>
+
+        <p>The feedback has been amazing. Here's what players are saying:</p>
+
+        <ul>
+          <li>"Finally, an app that actually helps me find games near me!"</li>
+          <li>"The live field tracking is genius—no more showing up to empty fields."</li>
+          <li>"I've met more soccer players in 3 days than I did in 3 months."</li>
+          <li>"This is exactly what the pickup soccer community needed."</li>
+        </ul>
+
+        <h3>We're Just Getting Started</h3>
+
+        <p>While we're celebrating this incredible milestone, our team is <strong>working harder than ever</strong> to make Jogo even better. Here's what we're focused on:</p>
+
+        <ul>
+          <li><strong>Performance improvements:</strong> Making the app faster and smoother</li>
+          <li><strong>New features:</strong> Based on your feedback, we're building exciting new tools</li>
+          <li><strong>Mobile apps:</strong> iOS and Android versions are in active development</li>
+          <li><strong>More cities:</strong> Expanding our field database nationwide</li>
+          <li><strong>Enhanced matching:</strong> Smarter algorithms to connect you with the perfect games</li>
+          <li><strong>Community tools:</strong> Better ways to organize, communicate, and play together</li>
+        </ul>
+
+        <h3>This is Your Platform</h3>
+
+        <p>Jogo isn't just our app—it's <strong>yours</strong>. We built it for the pickup soccer community, and we're building it <em>with</em> the community. Your feedback shapes every feature, your stories inspire every improvement, and your passion drives us forward.</p>
+
+        <p>We're in this together, and we're committed to making Jogo the platform you deserve.</p>
+
+        <h3>What's Next?</h3>
+
+        <p>Over the coming weeks and months, you'll see:</p>
+
+        <ul>
+          <li>Regular updates with new features and improvements</li>
+          <li>More cities and fields added to the platform</li>
+          <li>Enhanced social features to grow your soccer network</li>
+          <li>Special events and community challenges</li>
+          <li>Mobile apps launching for iOS and Android</li>
+        </ul>
+
+        <h3>Join Us!</h3>
+
+        <p>If you haven't joined yet, what are you waiting for? Head over to <strong>JogoUs.app</strong> and become part of the revolution. Find games, meet players, and experience pickup soccer the way it was meant to be.</p>
+
+        <p>To our 170+ beta users: you're legends. To everyone joining from here forward: welcome to the family. Together, we're building something special.</p>
+
+        <p>Let's keep the momentum going! ⚽🚀</p>
+
+        <p><strong>— The Jogo Team</strong></p>
+      `,
+      image: null
+    },
+    {
       id: 3,
       title: "Early Access is Back! Reopening Due to Popular Demand",
-      date: "September 11, 2024",
+      date: "September 11, 2025",
       readTime: "2 min read",
       category: "Community Update",
       excerpt: "Due to overwhelming requests from our community, we're excited to announce that early access signups are open once again. Your feedback has been incredible, and we can't wait to build this amazing product together.",
@@ -63,7 +147,7 @@ const Blog = ({ onBackToMain }) => {
     {
       id: 2,
       title: "The Home Stretch: 90% Complete and Big News Coming Soon",
-      date: "August 8, 2024",
+      date: "August 8, 2025",
       readTime: "3 min read",
       category: "Development Update",
       excerpt: "We're in the final stretch! The Jogo team has reached a major milestone with 90% completion of our core features. Here's what we've been working on and what's coming next.",
@@ -109,8 +193,8 @@ const Blog = ({ onBackToMain }) => {
     {
       id: 1,
       title: "Early Access Closed: Thank You to Our Amazing Community!",
-      date: "August 1, 2024",
-      readTime: "2 min read", 
+      date: "August 1, 2025",
+      readTime: "2 min read",
       category: "Community Update",
       excerpt: "We've officially closed our early access program after receiving an overwhelming response from soccer enthusiasts across the country. Here's what this milestone means for Jogo.",
       content: `

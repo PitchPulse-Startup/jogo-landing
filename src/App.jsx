@@ -1,15 +1,35 @@
 // src/App.jsx
 
 // --- IMPORTS ---
-import React, { useState, useEffect, useRef, Fragment } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { db } from './firebase'; 
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore"; 
-import { Wifi, List, MessageSquare, CheckCircle, Instagram, LoaderCircle, Mail, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Zap,
+  Users,
+  MapPin,
+  TrendingUp,
+  Sparkles,
+  Play,
+  Check,
+  ArrowRight,
+  Instagram,
+  ChevronDown,
+  ChevronUp,
+  Globe,
+  Smartphone,
+  Target,
+  BarChart3,
+  MessageCircle,
+  Clock,
+  Shield,
+  Award,
+  Volume2,
+  VolumeX
+} from 'lucide-react';
 
 // --- ASSETS ---
 import jogoLogo from './assets/jogo-logo2.png';
-import jogoVideo from './assets/jogo-video.mp4';
+import howItWorksVideo from './assets/howitworks.mp4';
 import liveScreenImage from './assets/Homejogo.png';
 import gamesScreenImage from './assets/Gamesjogo.png';
 import socialScreenImage from './assets/social.png';
@@ -21,122 +41,103 @@ import FloatingSparkles from './components/FloatingSparkles';
 
 // --- Main App Component ---
 export default function App() {
-  // --- STATE MANAGEMENT ---
-  const [activeFeature, setActiveFeature] = useState('home');
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
-
-  // --- NEW: State for the multi-step form ---
-  const [email, setEmail] = useState('');
-  const [submissionStep, setSubmissionStep] = useState('email'); // 'email', 'source', 'success'
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  
-  // State for the second step
-  const [source, setSource] = useState('');
-  const [otherSource, setOtherSource] = useState('');
-  const [firestoreId, setFirestoreId] = useState(null); // To store the ID for updating
-
-  // --- NEW: FAQ State ---
   const [openFAQ, setOpenFAQ] = useState(null);
+  const [activeFeature, setActiveFeature] = useState(0);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef(null);
 
-  const featureRefs = {
-      home: useRef(null),
-      games: useRef(null),
-      community: useRef(null),
-  };
-
-  // --- FAQ DATA ---
+  // FAQ Data
   const faqData = [
     {
-      question: "How will Jogo know if the fields are packed?",
-      answer: "We use location-based alerts to know when a player arrives at the field. This helps us keep an accurate count of how many people are currently there."
+      question: "How does live field tracking work?",
+      answer: "We use privacy-focused location technology to detect player activity at fields. When users arrive at a location, our system updates the field's activity status in real-time, so you always know where the action is."
     },
     {
-      question: "What if I'm new to soccer?",
-      answer: "You can filter by skill level and game type — even choose between coed, women’s, or men’s games."
+      question: "Is Jogo really free?",
+      answer: "Yes! Jogo is 100% free to use. No subscriptions, no hidden fees, no paywalls. We believe soccer should be accessible to everyone."
     },
     {
-      question: "How will I know who is going?",
-      answer: "Each game will have details showing who's going, the location, and a chat to talk with other players."
+      question: "What if I'm new to pickup soccer?",
+      answer: "Perfect! Filter games by skill level—from beginner-friendly kickabouts to competitive matches. You can also see who's attending and chat before you go."
     },
     {
-      question: "What if someone gets hurt?",
-      answer: "Please note that participation in pickup games is voluntary and at your own risk. Jogo is not liable for any injuries or accidents that may occur during games."
+      question: "How do I organize a game?",
+      answer: "Creating a game takes seconds. Choose your field, set the time and skill level, and share with the community. Players can join, chat, and coordinate all within the app."
     },
     {
-      question: "Will there be goals, pennies, cones, or soccer balls provided?",
-      answer: "Players can easily volunteer to bring optional items through the game detail screen. Once fulfilled, an icon will indicate the need has been met."
+      question: "What cities is Jogo available in?",
+      answer: "Jogo is expanding rapidly! We're currently live in select cities and adding new locations based on user demand. Check the app to see fields near you."
     },
     {
-      question: "How do I know where the field is located?",
-      answer: "Our directions feature lets you tap and get instant navigation using your preferred map app."
+      question: "How do you protect user privacy?",
+      answer: "Privacy is paramount. We only track location when you're actively using the app, and all data is anonymized. You control what information you share."
     }
   ];
 
-  // --- FORM SUBMISSION HANDLER (Step 1: Email) ---
-  const handleEmailSubmit = async (e) => {
-    e.preventDefault();
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      setErrorMessage('Please enter a valid email address.');
-      setTimeout(() => setErrorMessage(''), 3000);
-      return;
+  // Features Data
+  const features = [
+    {
+      icon: MapPin,
+      title: "Live Field Intelligence",
+      description: "See real-time activity at every field in your area. Know exactly where games are happening before you leave.",
+      color: "from-emerald-400 to-teal-400"
+    },
+    {
+      icon: Users,
+      title: "Smart Matchmaking",
+      description: "Find games that match your skill level, location, and schedule. Our AI connects you with the perfect pickup game.",
+      color: "from-blue-400 to-cyan-400"
+    },
+    {
+      icon: MessageCircle,
+      title: "Built-In Chat",
+      description: "Coordinate with players before, during, and after games. Build your soccer community effortlessly.",
+      color: "from-purple-400 to-pink-400"
+    },
+    {
+      icon: Target,
+      title: "Advanced Filters",
+      description: "Filter by skill level, game type, distance, and more. Find exactly what you're looking for, every time.",
+      color: "from-orange-400 to-red-400"
     }
+  ];
 
-    setLoading(true);
-    setErrorMessage('');
+  // Stats Data
+  const stats = [
+    { icon: Zap, value: "Real-Time", label: "Live Updates" },
+    { icon: Users, value: "1000+", label: "Active Players" },
+    { icon: MapPin, value: "50+", label: "Fields Tracked" },
+    { icon: TrendingUp, value: "24/7", label: "Game Discovery" }
+  ];
 
-    try {
-      const docRef = await addDoc(collection(db, "early-access-emails"), {
-        email: email,
-        submittedAt: serverTimestamp()
-      });
-      setFirestoreId(docRef.id); // Save the document ID
-      setSubmissionStep('source'); // Move to the next step
-    } catch (error) {
-      console.error("Error adding document to Firestore: ", error);
-      setErrorMessage('Something went wrong. Please try again later.');
-    } finally {
-      setLoading(false);
+  // How It Works Data
+  const howItWorks = [
+    {
+      step: "01",
+      title: "Open the App",
+      description: "Launch Jogo and see live activity at nearby fields instantly",
+      icon: Smartphone
+    },
+    {
+      step: "02",
+      title: "Find Your Game",
+      description: "Browse pickup games or check which fields have active players",
+      icon: Target
+    },
+    {
+      step: "03",
+      title: "Show Up & Play",
+      description: "Head to the field and jump into the action. It's that simple.",
+      icon: Play
     }
-  };
+  ];
 
-  // --- NEW: FORM SUBMISSION HANDLER (Step 2: Source) ---
-  const handleSourceSubmit = async (e) => {
-    e.preventDefault();
-    if (source === 'Other' && !otherSource.trim()) {
-      setErrorMessage('Please specify where you heard about us.');
-      setTimeout(() => setErrorMessage(''), 3000);
-      return;
-    }
-
-    setLoading(true);
-    setErrorMessage('');
-
-    try {
-      if (firestoreId && source) {
-        const docToUpdate = doc(db, 'early-access-emails', firestoreId);
-        const finalSource = source === 'Other' ? otherSource.trim() : source;
-        await updateDoc(docToUpdate, {
-          source: finalSource,
-        });
-      }
-      setSubmissionStep('success'); // All done, move to success!
-    } catch (error) {
-      console.error("Error updating document in Firestore: ", error);
-      setErrorMessage('Something went wrong. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --- FAQ TOGGLE HANDLER ---
-  const toggleFAQ = (index) => {
-    setOpenFAQ(openFAQ === index ? null : index);
-  };
-
-  // --- MENU CLOSE HANDLER ---
+  // Menu handlers
   const closeMenu = () => {
     setMenuClosing(true);
     setTimeout(() => {
@@ -152,494 +153,862 @@ export default function App() {
       setMobileMenuOpen(true);
     }
   };
-  
-  // --- LAYOUT & SCROLLING EFFECTS ---
+
+  const toggleFAQ = (index) => {
+    setOpenFAQ(openFAQ === index ? null : index);
+  };
+
+  // Mouse tracking for parallax effects
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth) * 2 - 1,
+        y: (e.clientY / window.innerHeight) * 2 - 1
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Feature rotation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % features.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Carousel auto-rotation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveCarouselIndex((prev) => (prev + 1) % 3);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Mobile detection
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
 
-    // Click outside to close menu
     const handleClickOutside = (event) => {
       if (mobileMenuOpen && !event.target.closest('.menu-container')) {
         closeMenu();
       }
     };
 
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
-        });
-    });
-
     if (mobileMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
-    let observer;
-    if (!isMobile) {
-      observer = new IntersectionObserver(
-          (entries) => entries.forEach(entry => {
-              if (entry.isIntersecting) setActiveFeature(entry.target.dataset.feature);
-          }),
-          { rootMargin: '-40% 0px -40% 0px', threshold: 0 }
-      );
-      Object.values(featureRefs).forEach(ref => {
-          if(ref.current) observer.observe(ref.current);
-      });
-    }
-    
     return () => {
-       window.removeEventListener('resize', checkMobile);
-       document.removeEventListener('mousedown', handleClickOutside);
-       if (observer) {
-         Object.values(featureRefs).forEach(ref => {
-             if (ref.current) observer.unobserve(ref.current);
-         });
-       }
+      window.removeEventListener('resize', checkMobile);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isMobile, mobileMenuOpen]);
 
-  // --- CONTENT DATA & HELPERS (Unchanged) ---
-  const featureContent = {
-      home: { icon: Wifi, title: "Live Field Activity", content: "Jogo uses real-time location data from users to detect activity at local fields. Know when games are happening and avoid empty or overcrowded parks—so you always show up at the right time.", screenImage: liveScreenImage },
-      games: { icon: List, title: "Find & Join Games", content: "Discover pickup games organized by the community. Filter by skill, location, and time to find your perfect match.", screenImage: gamesScreenImage },
-      community: { icon: MessageSquare, title: "Connect with Players", content: "Join the local soccer chat. Organize games, find new teammates, and talk about the beautiful game.", screenImage: socialScreenImage },
-  };
-
-  const renderFeatureContent = (key) => {
-      const { icon: Icon, title, content } = featureContent[key];
-      return (
-          <>
-              <div className={`inline-flex items-center justify-center w-10 sm:w-12 h-10 sm:h-12 bg-white/5 rounded-xl mb-4 sm:mb-6 border border-white/10 transition-all duration-300 ${activeFeature === key ? 'bg-emerald-500/20 border-emerald-500/30 scale-110' : ''}`}>
-                  <Icon className={`w-5 sm:w-6 h-5 sm:h-6 transition-colors duration-300 ${activeFeature === key ? 'text-emerald-400' : 'text-gray-400'}`} />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">{title}</h3>
-              <p className="text-gray-400 text-sm sm:text-base leading-relaxed max-w-md mx-auto">{content}</p>
-          </>
-      );
-  };
-
   return (
-    <div className="bg-black text-gray-200 font-sans antialiased">
-      {/* --- STYLES (Unchanged) --- */}
+    <div className="bg-black text-gray-200 font-sans antialiased overflow-x-hidden">
+      {/* --- ENHANCED STYLES --- */}
       <style>{`
-            @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-            .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
-            @keyframes blob { 0% { transform: translate(0px, 0px) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0px, 0px) scale(1); } }
-            .animate-blob { animation: blob 7s infinite; }
-            .animation-delay-200 { animation-delay: 0.2s; opacity: 0; }
-            .animation-delay-400 { animation-delay: 0.4s; opacity: 0; }
-            .animation-delay-4000 { animation-delay: -4s; }
-            
-            @keyframes slideDown {
-              from {
-                opacity: 0;
-                transform: translateY(-10px) scale(0.95);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-              }
-            }
-            
-            @keyframes slideUp {
-              from {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-              }
-              to {
-                opacity: 0;
-                transform: translateY(-10px) scale(0.95);
-              }
-            }
-            
-            .menu-enter {
-              animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-            }
-            
-            .menu-exit {
-              animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-            }
-            
-            .mobile-menu-item {
-              opacity: 0;
-              transform: translateY(10px);
-              animation: fade-in-up 0.4s ease-out forwards;
-            }
-            
-            .mobile-menu-item:nth-child(1) { animation-delay: 0.1s; }
-            .mobile-menu-item:nth-child(2) { animation-delay: 0.15s; }
-            .mobile-menu-item:nth-child(3) { animation-delay: 0.2s; }
-            .mobile-menu-item:nth-child(4) { animation-delay: 0.25s; }
-            .mobile-menu-item:nth-child(5) { animation-delay: 0.3s; }
-            .mobile-menu-item:nth-child(6) { animation-delay: 0.35s; }
-            .mobile-menu-item:nth-child(7) { animation-delay: 0.4s; }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+
+        @keyframes pulse-glow {
+          0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+          50% { opacity: 0.8; box-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
+        }
+
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slide-in-left {
+          from { opacity: 0; transform: translateX(-50px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slide-in-right {
+          from { opacity: 0; transform: translateX(50px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes scale-in {
+          from { opacity: 0; transform: scale(0.8); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes gradient-shift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        @keyframes border-flow {
+          0%, 100% { border-color: rgba(16, 185, 129, 0.5); }
+          50% { border-color: rgba(59, 130, 246, 0.5); }
+        }
+
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .animate-slide-up { animation: slide-up 0.6s ease-out forwards; }
+        .animate-slide-in-left { animation: slide-in-left 0.8s ease-out forwards; }
+        .animate-slide-in-right { animation: slide-in-right 0.8s ease-out forwards; }
+        .animate-scale-in { animation: scale-in 0.5s ease-out forwards; }
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient-shift 8s ease infinite;
+        }
+        .animate-border-flow { animation: border-flow 3s ease infinite; }
+
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+        .delay-500 { animation-delay: 0.5s; }
+        .delay-600 { animation-delay: 0.6s; }
+
+        .glass-effect {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-text {
+          background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6);
+          background-size: 200% 200%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradient-shift 8s ease infinite;
+        }
+
+        .hover-lift {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .hover-lift:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+        }
+
+        .card-glow {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .card-glow::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .card-glow:hover::before {
+          opacity: 1;
+        }
+
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes slideUp {
+          from { opacity: 1; transform: translateY(0) scale(1); }
+          to { opacity: 0; transform: translateY(-10px) scale(0.95); }
+        }
+
+        .menu-enter { animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .menu-exit { animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        .mobile-menu-item {
+          opacity: 0;
+          transform: translateY(10px);
+          animation: slide-up 0.4s ease-out forwards;
+        }
+
+        .mobile-menu-item:nth-child(1) { animation-delay: 0.1s; }
+        .mobile-menu-item:nth-child(2) { animation-delay: 0.15s; }
+        .mobile-menu-item:nth-child(3) { animation-delay: 0.2s; }
+        .mobile-menu-item:nth-child(4) { animation-delay: 0.25s; }
+        .mobile-menu-item:nth-child(5) { animation-delay: 0.3s; }
+        .mobile-menu-item:nth-child(6) { animation-delay: 0.35s; }
+        .mobile-menu-item:nth-child(7) { animation-delay: 0.4s; }
+        .mobile-menu-item:nth-child(8) { animation-delay: 0.45s; }
+
+        /* 3D Carousel Styles */
+        .carousel-container {
+          perspective: 1200px;
+          perspective-origin: 50% 50%;
+        }
+
+        .carousel-card {
+          transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-style: preserve-3d;
+          backface-visibility: hidden;
+        }
+
+        .carousel-card-active {
+          transform: translateX(0) translateZ(0) scale(1) rotateY(0deg);
+          opacity: 1;
+          z-index: 30;
+        }
+
+        .carousel-card-prev {
+          transform: translateX(-40%) translateZ(-200px) scale(0.85) rotateY(25deg);
+          opacity: 0.6;
+          z-index: 20;
+        }
+
+        .carousel-card-next {
+          transform: translateX(40%) translateZ(-200px) scale(0.85) rotateY(-25deg);
+          opacity: 0.6;
+          z-index: 20;
+        }
+
+        .carousel-card-hidden {
+          transform: translateX(0) translateZ(-400px) scale(0.7);
+          opacity: 0;
+          pointer-events: none;
+          z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+          .carousel-card-prev {
+            transform: translateX(-80%) translateZ(-150px) scale(0.75) rotateY(15deg);
+            opacity: 0.3;
+          }
+
+          .carousel-card-next {
+            transform: translateX(80%) translateZ(-150px) scale(0.75) rotateY(-15deg);
+            opacity: 0.3;
+          }
+        }
+
+        @keyframes indicator-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+        }
+
+        .indicator-active {
+          animation: indicator-pulse 2s ease-in-out infinite;
+        }
       `}</style>
-      
-      {/* --- ANIMATED BACKDROPS --- */}
-      <AnimatedBackdrop />
-      
-      {/* --- BACKGROUND & HEADER --- */}
-      <div className="absolute top-0 left-0 w-full h-full z-0 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${soccerFieldBg})` }}>
-          <div className="absolute inset-0 w-full h-full bg-black/70"></div>
-          <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/30 rounded-full filter blur-3xl animate-blob"></div>
-          <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/30 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
-          <div className="absolute top-0 left-0 w-full h-screen bg-gradient-to-b from-slate-900/80 to-transparent"></div>
-      </div>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-emerald-500/20">
-        <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-3 flex justify-between items-center">
-          <a href="#" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
-            <img src={jogoLogo} alt="Jogo Logo" className="h-14 sm:h-16 w-auto" />
-          </a>
-          
-          <div className="flex items-center gap-3 menu-container relative">
-            <button 
-              onClick={toggleMenu}
-              className="p-3 text-gray-300 hover:text-emerald-400 transition-all duration-300 bg-white/5 backdrop-blur-sm rounded-full border border-white/10 hover:bg-white/10"
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
-            
-            <a href="#signup" className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-4 sm:px-6 py-2 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/25 text-xs sm:text-sm">
-              Get Early Access
-            </a>
-          </div>
+
+      {/* --- ANIMATED BACKGROUND --- */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${soccerFieldBg})` }}>
+          <div className="absolute inset-0 bg-gradient-to-br from-black via-black/95 to-emerald-950/30"></div>
         </div>
-        
-        {/* Dropdown Menu */}
-        {(mobileMenuOpen || menuClosing) && (
-          <div className={`absolute top-full right-4 mt-2 w-48 bg-black/95 backdrop-blur-lg rounded-2xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden z-50 ${menuClosing ? 'menu-exit' : 'menu-enter'}`}>
-            <div className="p-2 space-y-1">
-              <a 
-                href="#features" 
-                onClick={closeMenu}
-                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
+
+        {/* Animated Orbs */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full filter blur-3xl animate-float"></div>
+        <div className="absolute top-40 right-20 w-96 h-96 bg-blue-500/20 rounded-full filter blur-3xl animate-float delay-200"></div>
+        <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-purple-500/20 rounded-full filter blur-3xl animate-float delay-400"></div>
+
+        {/* Grid Overlay */}
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px)',
+          backgroundSize: '50px 50px'
+        }}></div>
+      </div>
+
+      {/* --- HEADER --- */}
+      <header className="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex justify-between items-center">
+            <a href="#" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <img src={jogoLogo} alt="Jogo Logo" className="h-12 sm:h-14 w-auto" />
+            </a>
+
+            <div className="flex items-center gap-4 menu-container relative">
+              <button
+                onClick={toggleMenu}
+                className="p-3 text-gray-300 hover:text-emerald-400 transition-all duration-300 glass-effect rounded-full hover:scale-110"
+                aria-label="Toggle menu"
               >
-                Features
+                {mobileMenuOpen ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
+
+              <a
+                href="https://JogoUs.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold px-6 py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/50 text-sm flex items-center gap-2"
+              >
+                Launch App <ArrowRight size={16} />
               </a>
-              <a 
-                href="#faq" 
-                onClick={closeMenu}
-                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
-              >
-                FAQ
-              </a>
-              <Link 
-                to="/blog" 
-                onClick={closeMenu}
-                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
-              >
-                Blog
-              </Link>
-              <Link 
-                to="/media" 
-                onClick={closeMenu}
-                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
-              >
-                Media
-              </Link>
-              <Link
-                to="/policy"
-                onClick={closeMenu}
-                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
-              >
-                Policy
-              </Link>
-              <Link
-                to="/terms"
-                onClick={closeMenu}
-                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
-              >
-                Terms of Service
-              </Link>
-              <Link
-                to="/feedback"
-                onClick={closeMenu}
-                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
-              >
-                Feedback
-              </Link>
-              <Link
-                to="/delete-account"
-                onClick={closeMenu}
-                className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item"
-              >
-                Delete Account
-              </Link>
             </div>
           </div>
-        )}
+
+          {/* Dropdown Menu */}
+          {(mobileMenuOpen || menuClosing) && (
+            <div className={`absolute top-full right-4 mt-2 w-56 glass-effect rounded-2xl shadow-2xl overflow-hidden z-50 ${menuClosing ? 'menu-exit' : 'menu-enter'}`}>
+              <div className="p-2 space-y-1">
+                <a href="#features" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Features</a>
+                <a href="#how-it-works" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">How It Works</a>
+                <a href="#faq" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">FAQ</a>
+                <Link to="/blog" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Blog</Link>
+                <Link to="/media" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Media</Link>
+                <Link to="/policy" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Policy</Link>
+                <Link to="/terms" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Terms</Link>
+                <Link to="/feedback" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Feedback</Link>
+              </div>
+            </div>
+          )}
+        </div>
       </header>
 
       <main className="relative z-10">
-        {/* --- HERO & FEATURES SECTIONS (Unchanged) --- */}
-        <section className="min-h-screen flex flex-col justify-center items-center text-center pt-16 sm:pt-20 px-4 sm:px-0">
-          <FloatingSparkles />
-          <div className="container mx-auto px-4 sm:px-6">
-             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium border border-emerald-400/20 mb-6 animate-fade-in-up">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                  The Future of Pickup Soccer
+        {/* --- HERO SECTION --- */}
+        <section className="min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
+          <div className="container mx-auto">
+            <div className="text-center max-w-5xl mx-auto">
+              {/* Beta Badge */}
+              <div className="inline-flex items-center gap-2 glass-effect px-5 py-2.5 rounded-full mb-8 animate-slide-up border border-emerald-500/30">
+                <Sparkles size={18} className="text-emerald-400 animate-pulse-glow" />
+                <span className="text-sm font-semibold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+                  NOW IN BETA • JOIN THE REVOLUTION
                 </span>
               </div>
-             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400 leading-tight mb-6 sm:mb-8 pb-2 animate-fade-in-up animation-delay-200">
-               Stop Searching. <br /> <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text">Start Playing.</span>
-             </h1>
-             <p className="max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-gray-400 mb-8 sm:mb-10 px-4 sm:px-0 animate-fade-in-up animation-delay-400">
-               Jogo is the first app to show you live field traffic, connect you to pickup games, and build your local soccer community.
-             </p>
-             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-fade-in-up animation-delay-600">
-                <a href="#signup" className="w-full sm:w-auto bg-emerald-500 text-black font-bold px-8 py-4 rounded-full hover:bg-emerald-400 transition-transform transform hover:scale-105 shadow-2xl shadow-emerald-500/20 text-base">
-                  Get Early Access
+
+              {/* Main Headline */}
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-8 animate-slide-up delay-100">
+                <span className="block text-white mb-2">The Future of</span>
+                <span className="gradient-text">Pickup Soccer</span>
+              </h1>
+
+              {/* Subheadline */}
+              <p className="text-xl sm:text-2xl md:text-3xl text-gray-400 mb-6 max-w-3xl mx-auto leading-relaxed animate-slide-up delay-200">
+                Real-time field intelligence. Instant connections. <br className="hidden sm:block" />
+                <span className="text-emerald-400 font-semibold">Never play alone again.</span>
+              </p>
+
+              <p className="text-base sm:text-lg text-gray-500 mb-12 max-w-2xl mx-auto animate-slide-up delay-300">
+                Jogo uses AI-powered technology to show you live field activity, match you with players, and build your local soccer community—all in real-time.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-slide-up delay-400">
+                <a
+                  href="https://JogoUs.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold px-10 py-5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/50 text-lg flex items-center justify-center gap-3"
+                >
+                  Launch App
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </a>
-                <a href="#features" className="w-full sm:w-auto bg-white/5 border border-white/20 text-white font-medium px-8 py-4 rounded-full hover:bg-white/10 transition-all text-base">
+                <a
+                  href="#how-it-works"
+                  className="w-full sm:w-auto glass-effect text-white font-semibold px-10 py-5 rounded-full transition-all duration-300 hover:bg-white/10 text-lg flex items-center justify-center gap-3 border border-white/20"
+                >
+                  <Play size={20} />
                   See How It Works
                 </a>
-             </div>
-          </div>
-        </section>
+              </div>
 
-        <section id="features" className="py-16 sm:py-24 lg:py-32">
-            <div className="container mx-auto px-4 sm:px-6">
-                <div className="grid md:grid-cols-2 gap-8 sm:gap-12 lg:gap-24 items-start">
-                    <div className="md:sticky md:top-32 h-auto md:h-[calc(100vh-8rem)] flex flex-col items-center">
-                        <div className="relative w-[240px] sm:w-[280px] md:w-[320px] lg:w-[340px] h-[480px] sm:h-[560px] md:h-[640px] lg:h-[680px] bg-zinc-800 border-3 md:border-4 border-zinc-900 rounded-[35px] sm:rounded-[40px] md:rounded-[50px] shadow-2xl shadow-black/60">
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 sm:w-28 md:w-36 h-4 sm:h-5 md:h-6 bg-zinc-900 rounded-b-xl z-20"></div>
-                            <div className="absolute inset-0 p-2 md:p-3">
-                                <div className="w-full h-full bg-black rounded-[28px] sm:rounded-[32px] md:rounded-[40px] overflow-hidden relative">
-                                    {Object.entries(featureContent).map(([key, { screenImage }]) => (
-                                        <img key={key} src={screenImage} alt={`${key} screen mockup`} className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-in-out ${activeFeature === key ? 'opacity-100' : 'opacity-0'}`} />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="md:hidden w-full mt-6 text-center">
-                            <div className="flex gap-2 justify-center">
-                                {Object.entries(featureContent).map(([key, { icon: Icon, title }]) => (
-                                    <button key={key} onClick={() => setActiveFeature(key)} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 w-20 ${ activeFeature === key ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400' : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10'}`}>
-                                        <Icon className="w-4 h-4" />
-                                        <span className="text-xs font-medium">{title.split(' ')[0]}</span>
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="mt-8 px-4">
-                                {activeFeature && renderFeatureContent(activeFeature)}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="hidden md:block pt-24 space-y-80 pb-[50vh]">
-                        {Object.entries(featureContent).map(([key]) => (
-                             <div key={key} ref={featureRefs[key]} data-feature={key} className={`transition-opacity duration-500 ${activeFeature === key ? 'opacity-100' : 'opacity-30'}`}>
-                                {renderFeatureContent(key)}
-                            </div>
-                        ))}
-                    </div>
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 animate-slide-up delay-500">
+                <div className="flex items-center gap-2">
+                  <Check size={18} className="text-emerald-400" />
+                  <span>100% Free Forever</span>
                 </div>
-            </div>
-        </section>
-        
-        <section className="py-16 sm:py-20 md:py-32">
-            <div className="container mx-auto px-4 sm:px-6 text-center">
-                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 px-4 sm:px-0">Built for the Beautiful Game.</h2>
-                 <p className="text-base sm:text-lg text-gray-400 max-w-2xl mx-auto mb-8 sm:mb-12 px-4 sm:px-0">No fees. No commitments. Just football.</p>
-                 <div className="relative aspect-video max-w-4xl mx-auto rounded-xl sm:rounded-2xl shadow-2xl shadow-black/30 overflow-hidden ring-1 ring-white/10">
-                    <video className="w-full h-full object-cover" autoPlay loop muted playsInline poster="https://placehold.co/1920x1080/0A0A0A/10B981?text=JOGO">
-                        <source src={jogoVideo} type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
-                  </div>
-            </div>
-        </section>
-
-        {/* --- REFINED SIGNUP SECTION (NOW WITH MULTI-STEP) --- */}
-        <section id="signup" className="py-16 sm:py-20 md:py-32 bg-gradient-to-t from-emerald-900/30 via-emerald-900/10 to-transparent">
-          <div className="container mx-auto px-4 sm:px-6 text-center">
-            <div className="max-w-xl mx-auto px-4 sm:px-0">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white">
-                {submissionStep === 'source' ? "One last question..." : "Get Early Access!"}
-              </h2>
-              <p className="text-gray-400 mt-4 sm:mt-5 mb-8 text-base sm:text-lg">
-                {submissionStep === 'email' && "Enter your email and we’ll send you instructions soon on how to gain early access, along with additional insider details."}
-                {submissionStep === 'source' && "We're curious, where did you hear about us? (This is optional!)"}
-              </p>
-              
-              <div className="flex flex-col items-center gap-6">
-                  {/* Container prevents layout shift when switching between form and success message */}
-                  <div className="min-h-[10rem] flex flex-col justify-center items-center w-full">
-                    
-                    {/* STEP 3: SUCCESS MESSAGE */}
-                    {submissionStep === 'success' && (
-                      <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 p-4 rounded-lg text-center animate-fade-in-up w-full max-w-sm">
-                        <h3 className="font-bold text-lg flex items-center justify-center gap-2"><CheckCircle size={22} /> You're on the list!</h3>
-                        <p className="text-sm text-emerald-400/80 mt-1">We'll email you on launch day. Thanks for the support!</p>
-                      </div>
-                    )}
-                    
-                    {/* STEP 1: EMAIL FORM */}
-                    {submissionStep === 'email' && (
-                      <form onSubmit={handleEmailSubmit} className="w-full max-w-sm flex flex-col items-center gap-2 animate-fade-in-up">
-                        <div className="relative w-full">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                          <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="your.email@example.com"
-                            disabled={loading}
-                            className={`w-full bg-white/5 border text-white placeholder-gray-500 pl-12 pr-4 py-3 rounded-full focus:ring-2 focus:outline-none transition-all duration-300 ${errorMessage ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-emerald-500'}`}
-                            required
-                          />
-                        </div>
-                        <button 
-                          type="submit"
-                          disabled={loading}
-                          className="mt-4 w-full inline-flex items-center justify-center bg-emerald-500 text-black font-bold px-6 py-3 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 transform hover:scale-105 disabled:bg-emerald-800 disabled:scale-100 disabled:cursor-not-allowed"
-                        >
-                          {loading ? <LoaderCircle size={24} className="animate-spin" /> : 'Get Notified'}
-                        </button>
-                      </form>
-                    )}
-
-                    {/* STEP 2: SOURCE FORM */}
-                    {submissionStep === 'source' && (
-                        <form onSubmit={handleSourceSubmit} className="w-full max-w-sm flex flex-col items-center gap-2 animate-fade-in-up">
-                           <div className="w-full space-y-2 text-left">
-                                {['Instagram', 'TikTok', 'LinkedIn', 'Reddit', 'Other'].map(option => (
-                                    <label key={option} className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${source === option ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-white/5 border-white/20 hover:bg-white/10'}`}>
-                                        <input
-                                            type="radio"
-                                            name="source"
-                                            value={option}
-                                            checked={source === option}
-                                            onChange={() => setSource(option)}
-                                            className="w-4 h-4 text-emerald-500 bg-transparent border-gray-500 focus:ring-emerald-500 focus:ring-2"
-                                        />
-                                        <span className="ml-3 text-white">{option}</span>
-                                    </label>
-                                ))}
-                                {source === 'Other' && (
-                                    <input
-                                        type="text"
-                                        value={otherSource}
-                                        onChange={(e) => setOtherSource(e.target.value)}
-                                        placeholder="Please specify..."
-                                        className="w-full mt-2 bg-white/5 border border-white/20 text-white placeholder-gray-500 px-4 py-3 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all duration-300"
-                                    />
-                                )}
-                           </div>
-                           <div className="flex gap-2 w-full mt-4">
-                               <button
-                                 type="button"
-                                 onClick={() => setSubmissionStep('success')}
-                                 className="w-1/2 inline-flex items-center justify-center bg-white/10 text-white font-bold px-6 py-3 rounded-full hover:bg-white/20 transition-all"
-                               >
-                                 Skip
-                               </button>
-                               <button
-                                 type="submit"
-                                 disabled={loading || !source}
-                                 className="w-1/2 inline-flex items-center justify-center bg-emerald-500 text-black font-bold px-6 py-3 rounded-full hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 transform hover:scale-105 disabled:bg-emerald-800 disabled:text-gray-400 disabled:scale-100 disabled:cursor-not-allowed"
-                               >
-                                 {loading ? <LoaderCircle size={24} className="animate-spin" /> : 'Submit'}
-                               </button>
-                           </div>
-                        </form>
-                    )}
-                  </div>
-                  
-                  {/* We only show the error message if there is one, regardless of step */}
-                  {errorMessage && (
-                    <p className="text-red-400 text-sm mt-1">{errorMessage}</p>
-                  )}
-                
-                {/* --- DIVIDER & MEDIA LINK (Only show if not on success step) --- */}
-                {submissionStep !== 'success' && (
-                    <>
-                        <div className="flex items-center gap-4 w-full max-w-xs">
-                        <hr className="w-full border-t border-white/10" />
-                        <span className="text-gray-500 text-xs font-medium">OR</span>
-                        <hr className="w-full border-t border-white/10" />
-                        </div>
-                        
-                        <div className="flex flex-col items-center gap-3">
-                        <p className="text-sm text-gray-400">For live updates & content:</p>
-                        <Link 
-                            to="/media"
-                            className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/20 text-white font-semibold px-5 py-2 rounded-full hover:bg-white/10 transition-all text-sm"
-                        >
-                            <Instagram size={16} />
-                            Follow on Social Media
-                        </Link>
-                        </div>
-                    </>
-                )}
+                <div className="flex items-center gap-2">
+                  <Check size={18} className="text-emerald-400" />
+                  <span>No Credit Card Required</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check size={18} className="text-emerald-400" />
+                  <span>Available on Web & Mobile</span>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- NEW: FAQ SECTION --- */}
-        <section id="faq" className="py-16 sm:py-20 md:py-32 bg-gradient-to-t from-slate-900/50 to-transparent">
-          <div className="container mx-auto px-4 sm:px-6">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12 sm:mb-16">
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
-                  Frequently Asked Questions
-                </h2>
-                <p className="text-base sm:text-lg text-gray-400 max-w-2xl mx-auto">
-                  Got questions? We've got answers. Here's everything you need to know about Jogo.
-                </p>
-              </div>
-              
-              <div className="space-y-4">
-                {faqData.map((faq, index) => (
-                  <div key={index} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm">
-                    <button
-                      onClick={() => toggleFAQ(index)}
-                      className="w-full px-6 py-4 sm:px-8 sm:py-6 text-left flex justify-between items-center hover:bg-white/5 transition-all duration-300"
-                    >
-                      <h3 className="text-lg sm:text-xl font-semibold text-white pr-4">
-                        {faq.question}
-                      </h3>
-                      {openFAQ === index ? (
-                        <ChevronUp className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                      )}
-                    </button>
-                    
-                    {openFAQ === index && (
-                      <div className="px-6 pb-4 sm:px-8 sm:pb-6">
-                        <div className="pt-4 border-t border-white/10">
-                          <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                            {faq.answer}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+        {/* --- STATS SECTION --- */}
+        <section className="py-20 px-4">
+          <div className="container mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {stats.map((stat, index) => (
+                <div
+                  key={index}
+                  className="glass-effect rounded-2xl p-6 text-center hover-lift card-glow animate-scale-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <stat.icon size={32} className="mx-auto mb-4 text-emerald-400" />
+                  <div className="text-3xl sm:text-4xl font-black gradient-text mb-2">
+                    {stat.value}
                   </div>
+                  <div className="text-sm text-gray-400">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --- FEATURES SECTION --- */}
+        <section id="features" className="py-20 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
+                Powerful Features.<br />
+                <span className="gradient-text">Effortless Experience.</span>
+              </h2>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                Everything you need to find, join, and organize pickup soccer games in one intelligent platform.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="glass-effect rounded-3xl p-8 hover-lift card-glow animate-slide-up cursor-pointer group"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                  onMouseEnter={() => setActiveFeature(index)}
+                >
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                    <feature.icon size={32} className="text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">{feature.title}</h3>
+                  <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --- VIDEO SHOWCASE SECTION --- */}
+        <section className="py-20 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">
+                See <span className="gradient-text">Jogo</span> In Action
+              </h2>
+              <p className="text-lg text-gray-400">
+                Experience the future of pickup soccer
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="glass-effect rounded-3xl p-4 sm:p-6 hover-lift max-w-md w-full">
+                <div className="relative aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted={isMuted}
+                    playsInline
+                  >
+                    <source src={howItWorksVideo} type="video/mp4" />
+                  </video>
+
+                  {/* Mute/Unmute Button */}
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="absolute bottom-4 right-4 glass-effect p-3 rounded-full hover:bg-white/20 transition-all hover:scale-110 group z-10"
+                    aria-label={isMuted ? "Unmute" : "Mute"}
+                  >
+                    {isMuted ? (
+                      <VolumeX size={24} className="text-white" />
+                    ) : (
+                      <Volume2 size={24} className="text-emerald-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --- HOW IT WORKS SECTION --- */}
+        <section id="how-it-works" className="py-20 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
+                Getting Started is <span className="gradient-text">Simple</span>
+              </h2>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                From download to kickoff in under 60 seconds
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {howItWorks.map((step, index) => (
+                <div
+                  key={index}
+                  className="relative animate-slide-up"
+                  style={{ animationDelay: `${index * 0.2}s` }}
+                >
+                  <div className="glass-effect rounded-3xl p-8 h-full hover-lift card-glow">
+                    {/* Step Number */}
+                    <div className="text-6xl font-black gradient-text mb-4">
+                      {step.step}
+                    </div>
+
+                    {/* Icon */}
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center mb-6">
+                      <step.icon size={28} className="text-white" />
+                    </div>
+
+                    {/* Content */}
+                    <h3 className="text-2xl font-bold text-white mb-4">{step.title}</h3>
+                    <p className="text-gray-400 leading-relaxed">{step.description}</p>
+                  </div>
+
+                  {/* Connector Arrow */}
+                  {index < howItWorks.length - 1 && (
+                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                      <ArrowRight size={32} className="text-emerald-500/50" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --- 3D CAROUSEL SCREENSHOTS SECTION --- */}
+        <section className="py-20 px-4 overflow-hidden">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
+                Designed for <span className="gradient-text">Players</span>
+              </h2>
+              <p className="text-xl text-gray-400 mb-4">
+                Beautiful, intuitive, and built for the beautiful game
+              </p>
+              <p className="text-sm text-gray-500">
+                Swipe or click the arrows to explore
+              </p>
+            </div>
+
+            {/* 3D Carousel Container */}
+            <div className="carousel-container relative h-[600px] sm:h-[700px] md:h-[750px] mb-8">
+              <div className="relative w-full h-full flex items-center justify-center">
+                {[
+                  {
+                    img: liveScreenImage,
+                    title: "Live Field Intelligence",
+                    desc: "See real-time activity at every field",
+                    gradient: "from-emerald-500 to-teal-500",
+                    icon: MapPin
+                  },
+                  {
+                    img: gamesScreenImage,
+                    title: "Smart Game Discovery",
+                    desc: "Find your perfect match instantly",
+                    gradient: "from-blue-500 to-cyan-500",
+                    icon: Target
+                  },
+                  {
+                    img: socialScreenImage,
+                    title: "Built-In Community",
+                    desc: "Connect and coordinate with players",
+                    gradient: "from-purple-500 to-pink-500",
+                    icon: MessageCircle
+                  }
+                ].map((screen, index) => {
+                  const position = (index - activeCarouselIndex + 3) % 3;
+                  let positionClass = 'carousel-card-hidden';
+
+                  if (position === 0) positionClass = 'carousel-card-active';
+                  else if (position === 2) positionClass = 'carousel-card-prev';
+                  else if (position === 1) positionClass = 'carousel-card-next';
+
+                  return (
+                    <div
+                      key={index}
+                      className={`carousel-card absolute ${positionClass} cursor-pointer`}
+                      onClick={() => setActiveCarouselIndex(index)}
+                      style={{
+                        width: '320px',
+                        maxWidth: '85vw'
+                      }}
+                    >
+                      <div className="glass-effect rounded-3xl p-6 sm:p-8 card-glow h-full">
+                        {/* Icon Badge */}
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${screen.gradient} flex items-center justify-center mb-4 mx-auto`}>
+                          <screen.icon size={28} className="text-white" />
+                        </div>
+
+                        {/* Phone Mockup */}
+                        <div className="relative aspect-[9/16] rounded-2xl overflow-hidden mb-6 shadow-2xl border-2 border-white/10">
+                          <img
+                            src={screen.img}
+                            alt={screen.title}
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Overlay gradient on inactive cards */}
+                          {position !== 0 && (
+                            <div className="absolute inset-0 bg-black/40"></div>
+                          )}
+                        </div>
+
+                        {/* Title and Description */}
+                        <div className="text-center">
+                          <h3 className="text-2xl font-bold text-white mb-3">{screen.title}</h3>
+                          <p className="text-gray-400 text-sm sm:text-base">{screen.desc}</p>
+                        </div>
+
+                        {/* Active Indicator */}
+                        {position === 0 && (
+                          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse-glow"></div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Navigation Controls */}
+            <div className="flex items-center justify-center gap-4 sm:gap-6 mb-8 mt-20 sm:mt-0">
+              {/* Previous Button */}
+              <button
+                onClick={() => setActiveCarouselIndex((prev) => (prev - 1 + 3) % 3)}
+                className="glass-effect p-2 sm:p-4 rounded-full hover:bg-white/10 transition-all hover:scale-110 group"
+                aria-label="Previous"
+              >
+                <svg
+                  className="w-4 h-4 sm:w-6 sm:h-6 text-gray-400 group-hover:text-emerald-400 transition-colors"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Dots Indicator */}
+              <div className="flex gap-2 sm:gap-3">
+                {[0, 1, 2].map((index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveCarouselIndex(index)}
+                    className={`transition-all duration-300 rounded-full ${
+                      activeCarouselIndex === index
+                        ? 'w-8 sm:w-12 h-2 sm:h-3 bg-gradient-to-r from-emerald-500 to-teal-500 indicator-active'
+                        : 'w-2 sm:w-3 h-2 sm:h-3 bg-gray-600 hover:bg-gray-500'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
                 ))}
               </div>
-              
-              <div className="text-center mt-12 sm:mt-16">
-                <p className="text-gray-400 mb-4">Still have questions?</p>
-                <Link 
+
+              {/* Next Button */}
+              <button
+                onClick={() => setActiveCarouselIndex((prev) => (prev + 1) % 3)}
+                className="glass-effect p-2 sm:p-4 rounded-full hover:bg-white/10 transition-all hover:scale-110 group"
+                aria-label="Next"
+              >
+                <svg
+                  className="w-4 h-4 sm:w-6 sm:h-6 text-gray-400 group-hover:text-emerald-400 transition-colors"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Feature List */}
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12">
+              {[
+                { icon: Zap, text: "Lightning Fast", color: "emerald" },
+                { icon: Shield, text: "Privacy First", color: "blue" },
+                { icon: Award, text: "Player Approved", color: "purple" }
+              ].map((feature, index) => (
+                <div
+                  key={index}
+                  className="glass-effect rounded-2xl p-6 text-center hover-lift animate-slide-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <feature.icon size={32} className={`mx-auto mb-3 text-${feature.color}-400`} />
+                  <p className="text-white font-semibold">{feature.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --- TESTIMONIALS SECTION --- */}
+        <section className="py-20 px-4 bg-gradient-to-b from-emerald-900/10 to-transparent">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
+                Players <span className="gradient-text">Love</span> Jogo
+              </h2>
+              <p className="text-xl text-gray-400">
+                Join thousands of players already using Jogo
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  quote: "I love how easy it is! So much fun—I'll be back on the field playing ASAP. Jogo makes finding games effortless.",
+                  author: "Jorge M.",
+                  role: "Forward"
+                },
+                {
+                  quote: "I've met so many cool people and can't wait to play and improve my skills. Perfect for beginners like me!",
+                  author: "Jonathan",
+                  role: "Defender"
+                },
+                {
+                  quote: "It's so easy to just hop on, find a game, and play. Exactly what pickup soccer needed.",
+                  author: "Steven",
+                  role: "Midfielder"
+                }
+              ].map((testimonial, index) => (
+                <div
+                  key={index}
+                  className="glass-effect rounded-3xl p-8 hover-lift animate-slide-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Sparkles key={i} size={20} className="text-emerald-400 fill-emerald-400" />
+                    ))}
+                  </div>
+                  <p className="text-gray-300 mb-6 leading-relaxed italic">
+                    "{testimonial.quote}"
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">
+                        {testimonial.author.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-white font-semibold">{testimonial.author}</div>
+                      <div className="text-gray-500 text-sm">{testimonial.role}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --- FAQ SECTION --- */}
+        <section id="faq" className="py-20 px-4">
+          <div className="container mx-auto max-w-4xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
+                <span className="gradient-text">Questions?</span> Answered.
+              </h2>
+              <p className="text-xl text-gray-400">
+                Everything you need to know about Jogo
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {faqData.map((faq, index) => (
+                <div
+                  key={index}
+                  className="glass-effect rounded-2xl overflow-hidden hover-lift animate-slide-up"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <button
+                    onClick={() => toggleFAQ(index)}
+                    className="w-full px-6 py-6 text-left flex justify-between items-center hover:bg-white/5 transition-all"
+                  >
+                    <h3 className="text-lg sm:text-xl font-semibold text-white pr-4">
+                      {faq.question}
+                    </h3>
+                    {openFAQ === index ? (
+                      <ChevronUp className="w-6 h-6 text-emerald-400 flex-shrink-0" />
+                    ) : (
+                      <ChevronDown className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                    )}
+                  </button>
+
+                  {openFAQ === index && (
+                    <div className="px-6 pb-6 border-t border-white/10">
+                      <p className="text-gray-300 leading-relaxed pt-4">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --- FINAL CTA SECTION --- */}
+        <section className="py-32 px-4 relative overflow-hidden">
+          <div className="container mx-auto max-w-4xl text-center relative z-10">
+            <div className="glass-effect rounded-3xl p-12 sm:p-16 border-2 border-emerald-500/30">
+              <Sparkles size={48} className="mx-auto mb-6 text-emerald-400 animate-pulse-glow" />
+
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
+                Ready to Play?
+              </h2>
+
+              <p className="text-xl sm:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                Join the future of pickup soccer. <br className="hidden sm:block" />
+                <span className="gradient-text font-semibold">Your next game is waiting.</span>
+              </p>
+
+              <a
+                href="https://JogoUs.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold px-12 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/50 text-xl gap-3 mb-8"
+              >
+                Launch Jogo Now
+                <ArrowRight size={24} className="animate-float" />
+              </a>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8 border-t border-white/20">
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                    <Globe size={20} className="text-emerald-400" />
+                  </div>
+                  <span className="text-sm">Available on Web</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                    <Smartphone size={20} className="text-blue-400" />
+                  </div>
+                  <span className="text-sm">Mobile Coming Soon</span>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-white/20">
+                <p className="text-sm text-gray-400 mb-4">Stay connected with the community</p>
+                <Link
                   to="/media"
-                  className="inline-flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold px-6 py-3 rounded-full hover:bg-emerald-500/20 transition-all text-sm sm:text-base"
+                  className="inline-flex items-center justify-center gap-2 glass-effect text-white font-semibold px-6 py-3 rounded-full hover:bg-white/10 transition-all text-sm border border-white/20"
                 >
                   <Instagram size={18} />
-                  Connect with us on Social Media
+                  Follow on Social Media
                 </Link>
               </div>
             </div>
@@ -647,17 +1016,49 @@ export default function App() {
         </section>
       </main>
 
-      {/* --- FOOTER (Unchanged) --- */}
-      <footer className="relative z-10">
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 text-center text-gray-500 text-xs sm:text-sm border-t border-white/10">
-          <p>&copy; {new Date().getFullYear()} Jogo. All Rights Reserved. Made with ❤️ by the jogo team.
-            <span className="mx-2">|</span>
-            <Link to="/policy" className="hover:text-emerald-400 transition-colors">Privacy Policy</Link>
-            <span className="mx-2">|</span>
-            <Link to="/terms" className="hover:text-emerald-400 transition-colors">Terms of Service</Link><span className="mx-2">|</span>
-            <Link to="/feedback" className="hover:text-emerald-400 transition-colors">Feedback</Link><span className="mx-2">|</span>
-            <Link to="/delete-account" className="hover:text-emerald-400 transition-colors">Delete Account</Link>
-          </p>
+      {/* --- FOOTER --- */}
+      <footer className="relative z-10 border-t border-white/10">
+        <div className="container mx-auto px-4 sm:px-6 py-12">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div className="md:col-span-2">
+              <img src={jogoLogo} alt="Jogo" className="h-12 mb-4" />
+              <p className="text-gray-400 text-sm leading-relaxed max-w-md">
+                The future of pickup soccer. Real-time field intelligence, smart matchmaking, and community-powered connections—all in one platform.
+              </p>
+            </div>
+
+            {/* Links */}
+            <div>
+              <h3 className="text-white font-semibold mb-4">Product</h3>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#features" className="text-gray-400 hover:text-emerald-400 transition-colors">Features</a></li>
+                <li><a href="#how-it-works" className="text-gray-400 hover:text-emerald-400 transition-colors">How It Works</a></li>
+                <li><Link to="/blog" className="text-gray-400 hover:text-emerald-400 transition-colors">Blog</Link></li>
+                <li><Link to="/feedback" className="text-gray-400 hover:text-emerald-400 transition-colors">Feedback</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-white font-semibold mb-4">Legal</h3>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/policy" className="text-gray-400 hover:text-emerald-400 transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="text-gray-400 hover:text-emerald-400 transition-colors">Terms of Service</Link></li>
+                <li><Link to="/media" className="text-gray-400 hover:text-emerald-400 transition-colors">Media Kit</Link></li>
+                <li><Link to="/delete-account" className="text-gray-400 hover:text-emerald-400 transition-colors">Delete Account</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+            <p>&copy; {new Date().getFullYear()} Jogo. All rights reserved. Built with ⚽ for players.</p>
+            <div className="flex items-center gap-2">
+              <span>Made with</span>
+              <span className="text-emerald-400 animate-pulse-glow">❤️</span>
+              <span>by the Jogo team</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
