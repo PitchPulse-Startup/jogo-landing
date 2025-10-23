@@ -16,7 +16,7 @@ const Blog = ({ onBackToMain }) => {
     {
       id: 4,
       title: "Beta Launch Success: 170+ Users in Just Days!",
-      date: "January 7, 2025",
+      date: "October 7, 2025",
       readTime: "3 min read",
       category: "Launch Update",
       excerpt: "We've officially launched our beta on the web, and the response has been incredible! In just a few days, over 170 players have joined the Jogo community. Here's what this milestone means and what's coming next.",
