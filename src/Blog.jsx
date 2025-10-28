@@ -1,18 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight } from 'lucide-react';
-import jogoLogo from './assets/jogo-logo2.png';
-import soccerBackground from './assets/soccer.jpeg';
-import AnimatedBackdrop from './components/AnimatedBackdrop';
 
-const Blog = ({ onBackToMain }) => {
+const AnimatedBackdrop = () => (
+  <div className="fixed inset-0 z-0 pointer-events-none">
+    <div className="absolute top-[10%] left-[15%] w-96 h-96 bg-emerald-500/20 rounded-full filter blur-[100px] animate-blob"></div>
+    <div className="absolute top-[50%] right-[20%] w-96 h-96 bg-blue-500/20 rounded-full filter blur-[100px] animate-blob animation-delay-2000"></div>
+    <div className="absolute bottom-[20%] left-[30%] w-96 h-96 bg-purple-500/20 rounded-full filter blur-[100px] animate-blob animation-delay-4000"></div>
+  </div>
+);
+
+const Blog = ({ onBackToMain = () => {} }) => {
   const [selectedPost, setSelectedPost] = useState(null);
 
-  // Scroll to top when blog component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   const blogPosts = [
+    {
+      id: 5,
+      title: "Jogo Hosts Its First Ever Tournament – A Day to Remember!",
+      date: "October 26, 2025",
+      readTime: "2 min read",
+      category: "Community Update",
+      author: "Team Jogo",
+      excerpt: "On October 26, 2025, Jogo made history by hosting its first-ever official tournament with 29 passionate players and 4 competitive teams in an epic Real Madrid vs. Barcelona themed showdown.",
+      image: "/images/jogo-tournament.jpg",
+      content: `
+        <p>On October 26, 2025, Jogo made history by hosting its <strong>first-ever official tournament</strong>, marking a major milestone for our growing soccer community.</p>
+
+        <p>With <strong>29 passionate players</strong> showing up and <strong>4 competitive teams</strong>, the energy was electric from the first whistle. The theme? A classic and unforgettable matchup — <strong>Real Madrid vs. Barcelona</strong>. Players wore the colors of their respective sides, bringing out friendly rivalry and plenty of skillful play.</p>
+
+        <h3>A Day of Competition and Community</h3>
+
+        <p>Each match showcased the passion and creativity that define Jogo's mission: connecting local players through the love of the game. The final match came down to the wire, filled with last-minute goals, cheers, and camaraderie — the perfect way to end an incredible day.</p>
+
+        <p>This event wasn't just about competition — it was about <strong>community</strong>. We saw friendships form, players discover new teammates, and everyone leave with a smile.</p>
+
+        <h3>What's Next?</h3>
+
+        <p>Jogo will continue hosting more community tournaments and pick-up events as we grow. Thank you to everyone who showed up, played hard, and made our first tournament a success!</p>
+
+        <p>⚽ Stay tuned for our next event announcement soon!</p>
+      `,
+    },
     {
       id: 4,
       title: "Beta Launch Success: 170+ Users in Just Days!",
@@ -250,18 +281,14 @@ const Blog = ({ onBackToMain }) => {
 
   const BlogPost = ({ post, onBack }) => (
     <div className="min-h-screen bg-black text-white relative overflow-x-hidden">
-      {/* --- ANIMATED BACKDROP --- */}
       <AnimatedBackdrop />
       
-      {/* --- BACKGROUND & HEADER --- */}
-      <div className="fixed top-0 left-0 w-full min-h-screen z-0 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${soccerBackground})` }}>
-          <div className="absolute inset-0 w-full h-full bg-black/70"></div>
-          <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/30 rounded-full filter blur-3xl animate-blob"></div>
-          <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/30 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-slate-900/80 to-transparent"></div>
+      <div className="fixed top-0 left-0 w-full min-h-screen z-0 overflow-hidden bg-gradient-to-br from-slate-900 via-black to-slate-900">
+        <div className="absolute inset-0 w-full h-full bg-black/70"></div>
+        <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/30 rounded-full filter blur-3xl animate-blob"></div>
+        <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/30 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/20 border-b border-emerald-500/20">
         <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
@@ -273,7 +300,6 @@ const Blog = ({ onBackToMain }) => {
               <span className="text-sm font-medium">Back</span>
             </button>
             <div className="flex items-center gap-3">
-              <img src={jogoLogo} alt="Jogo Logo" className="h-8 w-auto opacity-90" />
               <span className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
                 Journal
               </span>
@@ -284,7 +310,6 @@ const Blog = ({ onBackToMain }) => {
 
       <main className="relative z-10 pt-8">
         <article className="container mx-auto px-4 sm:px-6 max-w-4xl">
-          {/* Article Header */}
           <header className="mb-16 text-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 backdrop-blur-sm px-6 py-3 rounded-full text-sm font-medium border border-emerald-400/20 mb-8">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
@@ -310,9 +335,17 @@ const Blog = ({ onBackToMain }) => {
             </div>
           </header>
 
-          {/* Article Content */}
+          {post.image && (
+            <div className="mb-12 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+              <img 
+                src={post.image} 
+                alt={post.title}
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          )}
+
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/5 to-white/2 backdrop-blur-xl border border-white/10 mb-16">
-            {/* Gradient accent */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400"></div>
             
             <div className="p-8 sm:p-12 lg:p-16">
@@ -329,11 +362,9 @@ const Blog = ({ onBackToMain }) => {
               />
             </div>
             
-            {/* Subtle glow effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5 opacity-50 pointer-events-none"></div>
           </div>
 
-          {/* Back to Blog */}
           <div className="text-center pb-16">
             <button
               onClick={onBack}
@@ -342,7 +373,6 @@ const Blog = ({ onBackToMain }) => {
               <ArrowLeft className="inline mr-3 w-5 h-5 transition-transform group-hover:-translate-x-1" />
               <span>Back to Stories</span>
               
-              {/* Button glow effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/50 to-blue-400/50 rounded-full blur-xl opacity-0 group-hover:opacity-75 transition-opacity duration-300 -z-10"></div>
             </button>
           </div>
@@ -353,18 +383,14 @@ const Blog = ({ onBackToMain }) => {
 
   const BlogHome = () => (
     <div className="min-h-screen bg-black text-white relative overflow-x-hidden">
-      {/* --- ANIMATED BACKDROP --- */}
       <AnimatedBackdrop />
       
-      {/* --- BACKGROUND & HEADER --- */}
-      <div className="fixed top-0 left-0 w-full min-h-screen z-0 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${soccerBackground})` }}>
-          <div className="absolute inset-0 w-full h-full bg-black/70"></div>
-          <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/30 rounded-full filter blur-3xl animate-blob"></div>
-          <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/30 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-slate-900/80 to-transparent"></div>
+      <div className="fixed top-0 left-0 w-full min-h-screen z-0 overflow-hidden bg-gradient-to-br from-slate-900 via-black to-slate-900">
+        <div className="absolute inset-0 w-full h-full bg-black/70"></div>
+        <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/30 rounded-full filter blur-3xl animate-blob"></div>
+        <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/30 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/20 border-b border-emerald-500/20">
         <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
@@ -376,7 +402,6 @@ const Blog = ({ onBackToMain }) => {
               <span className="text-sm font-medium">Home</span>
             </button>
             <div className="flex items-center gap-3">
-              <img src={jogoLogo} alt="Jogo Logo" className="h-8 w-auto opacity-90" />
               <span className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
                 Journal
               </span>
@@ -387,7 +412,6 @@ const Blog = ({ onBackToMain }) => {
 
       <main className="relative z-10 pt-8">
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
-          {/* Blog Header */}
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 backdrop-blur-sm px-6 py-3 rounded-full text-sm font-medium border border-emerald-400/20 mb-8 animate-fade-in-up">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
@@ -413,7 +437,6 @@ const Blog = ({ onBackToMain }) => {
             </p>
           </div>
 
-          {/* Blog Posts Grid */}
           <div className="space-y-8 max-w-4xl mx-auto">
             {blogPosts.map((post, index) => (
               <article 
@@ -422,11 +445,19 @@ const Blog = ({ onBackToMain }) => {
                 onClick={() => setSelectedPost(post)}
               >
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/5 to-white/2 backdrop-blur-xl border border-white/10 hover:border-emerald-400/30 transition-all duration-500">
-                  {/* Gradient accent */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400"></div>
                   
+                  {post.image && (
+                    <div className="w-full h-64 overflow-hidden">
+                      <img 
+                        src={post.image} 
+                        alt={post.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="p-8 sm:p-10">
-                    {/* Post Meta */}
                     <div className="flex flex-wrap items-center gap-3 mb-6">
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 text-emerald-400 text-sm font-medium rounded-full border border-emerald-400/20">
                         <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
@@ -439,7 +470,6 @@ const Blog = ({ onBackToMain }) => {
                       </div>
                     </div>
 
-                    {/* Post Content */}
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 group-hover:bg-gradient-to-r group-hover:from-emerald-400 group-hover:to-blue-400 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-500 leading-tight">
                       {post.title}
                     </h2>
@@ -448,31 +478,26 @@ const Blog = ({ onBackToMain }) => {
                       {post.excerpt}
                     </p>
 
-                    {/* Read More */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 text-emerald-400 font-medium group-hover:text-blue-400 transition-colors duration-300">
                         <span>Read Story</span>
                         <ArrowRight className="w-5 h-5 transition-all duration-300 group-hover:translate-x-1 group-hover:scale-110" />
                       </div>
                       
-                      {/* Post number */}
                       <div className="text-6xl font-black text-white/5 group-hover:text-emerald-400/10 transition-colors duration-500">
                         0{blogPosts.length - index}
                       </div>
                     </div>
                   </div>
                   
-                  {/* Hover glow effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 </div>
               </article>
             ))}
           </div>
 
-          {/* Newsletter CTA */}
           <div className="mt-20 mb-16">
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-500/10 via-blue-500/5 to-purple-500/10 backdrop-blur-xl border border-emerald-400/20 text-center max-w-3xl mx-auto">
-              {/* Animated background elements */}
               <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-400/20 to-transparent rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-400/20 to-transparent rounded-full blur-2xl"></div>
               
@@ -498,7 +523,6 @@ const Blog = ({ onBackToMain }) => {
                   <span>Join the Journey</span>
                   <ArrowRight className="inline ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                   
-                  {/* Button glow effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/50 to-blue-400/50 rounded-full blur-xl opacity-0 group-hover:opacity-75 transition-opacity duration-300 -z-10"></div>
                 </button>
               </div>
@@ -509,7 +533,6 @@ const Blog = ({ onBackToMain }) => {
     </div>
   );
 
-  // CSS for prose styling
   const styles = `
     @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
