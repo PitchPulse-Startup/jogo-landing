@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight, Coffee, Heart } from 'lucide-react';
 
 const AnimatedBackdrop = () => (
   <div className="fixed inset-0 z-0 pointer-events-none">
@@ -14,7 +14,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+  }, [selectedPost]);
 
   const blogPosts = [
     {
@@ -33,7 +33,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
         <h3>What We're Building</h3>
 
-        <p>Our small team of <strong>2 developers</strong> is working hard to bring you some major improvements:</p>
+        <p>Our small team of <strong>4 passionate soccer enthusiasts</strong> is working hard to bring you some major improvements:</p>
 
         <h4>Cross-Platform for iOS & Android</h4>
 
@@ -58,7 +58,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
         <h3>Small Team, Big Passion</h3>
 
-        <p>Jogo is built by a <strong>small team of just 2 developers</strong>. We're not a big corporation—we're a small team that genuinely cares about building something special for this community.</p>
+        <p>Jogo is built by a <strong>small team of just 4 passionate soccer enthusiasts</strong>. We're not a big corporation—we're a small team that genuinely cares about building something special for this community.</p>
 
         <p>Your <strong>support, patience, and feedback</strong> mean everything to us. When you report bugs, suggest features, or share Jogo with friends, you're helping us build something that will serve soccer communities for years to come.</p>
 
@@ -419,6 +419,40 @@ const Blog = ({ onBackToMain = () => {} }) => {
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5 opacity-50 pointer-events-none"></div>
           </div>
 
+          {/* Support Section */}
+          <div className="mb-16 rounded-2xl overflow-hidden border border-emerald-500/20 bg-gradient-to-br from-white/5 to-white/2 backdrop-blur-xl">
+            <div className="p-8 sm:p-10 text-center">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 mb-6">
+                <Coffee className="text-yellow-400" size={28} />
+              </div>
+
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                Support the Team
+              </h3>
+
+              <p className="text-white/70 leading-relaxed mb-6 max-w-2xl mx-auto">
+                Jogo is built by a <strong className="text-white">small team of 4 passionate soccer enthusiasts</strong> working hard to keep this platform <strong className="text-emerald-400">100% free</strong>. If you appreciate what we're building, consider buying us a coffee to help us continue this journey.
+              </p>
+
+              <a
+                href="https://buymeacoffee.com/jogoapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/30"
+              >
+                <Coffee size={20} />
+                Buy Us a Coffee
+              </a>
+
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <div className="flex items-center justify-center gap-2 text-white/50 text-sm">
+                  <Heart size={14} className="text-red-400" />
+                  <span>Every contribution helps us build better features</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="text-center pb-16">
             <button
               onClick={onBack}
@@ -426,7 +460,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
             >
               <ArrowLeft className="inline mr-3 w-5 h-5 transition-transform group-hover:-translate-x-1" />
               <span>Back to Stories</span>
-              
+
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/50 to-blue-400/50 rounded-full blur-xl opacity-0 group-hover:opacity-75 transition-opacity duration-300 -z-10"></div>
             </button>
           </div>

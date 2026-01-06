@@ -24,7 +24,9 @@ import {
   Shield,
   Award,
   Volume2,
-  VolumeX
+  VolumeX,
+  Coffee,
+  Heart
 } from 'lucide-react';
 
 // --- ASSETS ---
@@ -430,16 +432,16 @@ export default function App() {
               <img src={jogoLogo} alt="Jogo Logo" className="h-12 sm:h-14 w-auto" />
             </a>
 
-            <div className="flex items-center gap-3 sm:gap-4 menu-container relative">
+            <div className="flex items-center gap-2 sm:gap-4 menu-container relative">
               <Link
                 to="/blog"
-                className="hidden sm:flex items-center gap-2 glass-effect px-4 py-2 rounded-full border border-emerald-500/30 hover:border-emerald-400/50 transition-all duration-300 hover:scale-105 group"
+                className="hidden md:flex items-center gap-2 glass-effect px-4 py-2 rounded-full border border-emerald-500/30 hover:border-emerald-400/50 transition-all duration-300 hover:scale-105 group"
               >
                 <div className="relative">
                   <Sparkles size={16} className="text-emerald-400 animate-pulse" />
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-ping"></span>
                 </div>
-                <span className="text-xs sm:text-sm font-medium text-gray-300 group-hover:text-emerald-400 transition-colors">
+                <span className="text-sm font-medium text-gray-300 group-hover:text-emerald-400 transition-colors">
                   New from the Team
                 </span>
               </Link>
@@ -448,14 +450,16 @@ export default function App() {
                 href="https://JogoUs.app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold px-6 py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/50 text-sm flex items-center gap-2"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold px-4 sm:px-6 py-2 sm:py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/50 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2"
               >
-                Launch App <ArrowRight size={16} />
+                <span className="hidden xs:inline">Launch App</span>
+                <span className="xs:hidden">Launch</span>
+                <ArrowRight size={14} className="sm:w-4 sm:h-4" />
               </a>
 
               <button
                 onClick={toggleMenu}
-                className="p-3 text-gray-300 hover:text-emerald-400 transition-all duration-300 glass-effect rounded-full hover:scale-110"
+                className="p-2.5 sm:p-3 text-gray-300 hover:text-emerald-400 transition-all duration-300 glass-effect rounded-full hover:scale-110"
                 aria-label="Toggle menu"
               >
                 {mobileMenuOpen ? (
@@ -473,12 +477,19 @@ export default function App() {
 
           {/* Dropdown Menu */}
           {(mobileMenuOpen || menuClosing) && (
-            <div className={`absolute top-full right-4 mt-2 w-56 glass-effect rounded-2xl shadow-2xl overflow-hidden z-50 ${menuClosing ? 'menu-exit' : 'menu-enter'}`}>
+            <div className={`absolute top-full right-4 mt-2 w-56 bg-black/95 backdrop-blur-xl border border-emerald-500/20 rounded-2xl shadow-2xl overflow-hidden z-50 ${menuClosing ? 'menu-exit' : 'menu-enter'}`}>
               <div className="p-2 space-y-1">
+                <Link to="/blog" onClick={closeMenu} className="md:hidden flex items-center justify-between text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">
+                  <span>Blog / Updates</span>
+                  <div className="relative">
+                    <Sparkles size={14} className="text-emerald-400 animate-pulse" />
+                    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+                  </div>
+                </Link>
                 <a href="#features" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Features</a>
                 <a href="#how-it-works" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">How It Works</a>
                 <a href="#faq" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">FAQ</a>
-                <Link to="/blog" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Blog</Link>
+                <Link to="/blog" onClick={closeMenu} className="hidden md:block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Blog</Link>
                 <Link to="/media" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Media</Link>
                 <Link to="/policy" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Policy</Link>
                 <Link to="/terms" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Terms</Link>
@@ -1027,12 +1038,54 @@ export default function App() {
             </div>
           </div>
         </section>
+
+        {/* --- SUPPORT THE TEAM SECTION --- */}
+        <section className="relative z-10 py-20 px-4">
+          <div className="container mx-auto max-w-4xl">
+            <div className="glass-effect rounded-3xl p-8 sm:p-12 border border-emerald-500/20 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 mb-6">
+                <Coffee className="text-emerald-400" size={32} />
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Support the Team
+              </h2>
+
+              <p className="text-gray-400 text-lg leading-relaxed mb-6 max-w-2xl mx-auto">
+                Jogo is built by a small team of <strong className="text-white">4 passionate soccer enthusiasts</strong> dedicated to making pickup soccer better for everyone. We keep Jogo <strong className="text-emerald-400">100% free</strong>—no subscriptions, no paywalls.
+              </p>
+
+              <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
+                If you appreciate what we're building and want to help us keep the servers running and develop new features, consider buying us a coffee. Every contribution, big or small, helps us continue this journey.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a
+                  href="https://buymeacoffee.com/jogoapp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/50 text-lg"
+                >
+                  <Coffee size={24} />
+                  Buy Us a Coffee
+                </a>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-white/10">
+                <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+                  <Heart size={16} className="text-red-400" />
+                  <span>Thank you for supporting independent development</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* --- FOOTER --- */}
       <footer className="relative z-10 border-t border-white/10">
         <div className="container mx-auto px-4 sm:px-6 py-12">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-5 gap-8 mb-8">
             {/* Brand */}
             <div className="md:col-span-2">
               <img src={jogoLogo} alt="Jogo" className="h-12 mb-4" />
@@ -1049,6 +1102,23 @@ export default function App() {
                 <li><a href="#how-it-works" className="text-gray-400 hover:text-emerald-400 transition-colors">How It Works</a></li>
                 <li><Link to="/blog" className="text-gray-400 hover:text-emerald-400 transition-colors">Blog</Link></li>
                 <li><Link to="/feedback" className="text-gray-400 hover:text-emerald-400 transition-colors">Feedback</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-white font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a
+                    href="https://buymeacoffee.com/jogoapp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-yellow-400 transition-colors inline-flex items-center gap-1"
+                  >
+                    <Coffee size={14} />
+                    Buy Us a Coffee
+                  </a>
+                </li>
               </ul>
             </div>
 
