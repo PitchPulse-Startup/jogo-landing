@@ -430,7 +430,29 @@ export default function App() {
               <img src={jogoLogo} alt="Jogo Logo" className="h-12 sm:h-14 w-auto" />
             </a>
 
-            <div className="flex items-center gap-4 menu-container relative">
+            <div className="flex items-center gap-3 sm:gap-4 menu-container relative">
+              <Link
+                to="/blog"
+                className="hidden sm:flex items-center gap-2 glass-effect px-4 py-2 rounded-full border border-emerald-500/30 hover:border-emerald-400/50 transition-all duration-300 hover:scale-105 group"
+              >
+                <div className="relative">
+                  <Sparkles size={16} className="text-emerald-400 animate-pulse" />
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-ping"></span>
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-gray-300 group-hover:text-emerald-400 transition-colors">
+                  New from the Team
+                </span>
+              </Link>
+
+              <a
+                href="https://JogoUs.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold px-6 py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/50 text-sm flex items-center gap-2"
+              >
+                Launch App <ArrowRight size={16} />
+              </a>
+
               <button
                 onClick={toggleMenu}
                 className="p-3 text-gray-300 hover:text-emerald-400 transition-all duration-300 glass-effect rounded-full hover:scale-110"
@@ -446,15 +468,6 @@ export default function App() {
                   </svg>
                 )}
               </button>
-
-              <a
-                href="https://JogoUs.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold px-6 py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/50 text-sm flex items-center gap-2"
-              >
-                Launch App <ArrowRight size={16} />
-              </a>
             </div>
           </div>
 

@@ -18,6 +18,60 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
   const blogPosts = [
     {
+      id: 6,
+      title: "Dev Update – January 2026",
+      date: "January 2026",
+      readTime: "2 min read",
+      category: "Dev Update",
+      author: "Team Jogo",
+      excerpt: "Welcome to our first Dev Update! We're working hard to bring you cross-platform compatibility, Squad Chat, and exciting new features. Here's what's happening behind the scenes.",
+      image: "/images/JOGOupdate01.png",
+      content: `
+        <p>Happy New Year, Jogo community! 🎉</p>
+
+        <p>Welcome to our very first <strong>Dev Update</strong>—a new series where we'll share what's happening behind the scenes. Think of this as your catalog to stay connected with our development journey. You can always come back here to check what we've been working on.</p>
+
+        <h3>What We're Building</h3>
+
+        <p>Our small team of <strong>2 developers</strong> is working hard to bring you some major improvements:</p>
+
+        <h4>Cross-Platform for iOS & Android</h4>
+
+        <p>We're making Jogo <strong>100% compatible for both iOS and Android</strong>. Whether you're on iPhone, Android, tablet, or desktop, you'll get the same smooth experience. We're optimizing performance, fixing bugs, and making sure everything works flawlessly on every device.</p>
+
+        <h4>Squad Chat</h4>
+
+        <p>We're excited to introduce <strong>Squad Chat</strong>—your centralized hub for connecting with the soccer community:</p>
+
+        <ul>
+          <li>Chat with friends and teammates in real-time</li>
+          <li>Organize pickup games easily</li>
+          <li>Create squads within friend groups or communities</li>
+          <li>Connect with players who share your passion</li>
+        </ul>
+
+        <p>Squad Chat makes it easier than ever to stay connected and organize games on the fly.</p>
+
+        <h4>Plus More Features</h4>
+
+        <p>We're also working on quality-of-life improvements, performance optimizations, and new features based on your feedback. Every update brings us closer to creating the best pickup soccer experience.</p>
+
+        <h3>Small Team, Big Passion</h3>
+
+        <p>Jogo is built by a <strong>small team of just 2 developers</strong>. We're not a big corporation—we're a small team that genuinely cares about building something special for this community.</p>
+
+        <p>Your <strong>support, patience, and feedback</strong> mean everything to us. When you report bugs, suggest features, or share Jogo with friends, you're helping us build something that will serve soccer communities for years to come.</p>
+
+        <h3>Thank You</h3>
+
+        <p>We're committed to regular updates and transparency. These Dev Updates will be your window into what we're building. Bookmark this page and check back to see our progress!</p>
+
+        <p>Let's build the future of pickup soccer together! ⚽🚀</p>
+
+        <p><strong>— The Jogo Development Team</strong></p>
+      `,
+    },
+    {
       id: 5,
       title: "Jogo Hosts Its First Ever Tournament – A Day to Remember!",
       date: "October 26, 2025",
