@@ -18,6 +18,51 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
   const blogPosts = [
     {
+      id: 7,
+      title: "We're Almost There – App Store & Play Store Launch Is Coming!",
+      date: "March 2026",
+      readTime: "2 min read",
+      category: "Dev Update",
+      author: "Team Jogo",
+      excerpt: "We're 99% done and heading to the App Store and Play Store very soon. Thank you to our incredible community — plus exciting new features like Local Group Chats are on the way!",
+      image: null,
+      content: `
+        <p>We have some huge news to share with the Jogo community — and we couldn't be more excited. 🎉</p>
+
+        <p>After months of hard work, late nights, and a whole lot of passion, we are <strong>99% done</strong> and on the final stretch to launching Jogo on both the <strong>App Store</strong> and <strong>Google Play Store</strong>. The finish line is right in front of us, and we are sprinting toward it.</p>
+
+        <h3>Thank You</h3>
+
+        <p>Before anything else, we want to say something from the bottom of our hearts: <strong>thank you</strong>. The support from this community has been incredible, and it means everything to our small team. You are the reason we push through the hard moments and keep building.</p>
+
+        <p>This app isn't ours — it's <strong>yours</strong>. You asked for it, you believed in it, and now we're about to put it in your hands.</p>
+
+        <h3>What's Coming — New Features</h3>
+
+        <p>We're not just shipping the app — we're shipping it <strong>packed with new features</strong> we know you're going to love:</p>
+
+        <h4>Local Group Chats</h4>
+
+        <p>One of the most requested features is finally here. <strong>Local Group Chats</strong> let you connect with players in your area, organize games on the fly, and stay in the loop with your local soccer community — all without leaving the app. Find your crew, plan your runs, and never miss a game again.</p>
+
+        <h4>More Innovative Features</h4>
+
+        <p>We've got even more exciting features in the pipeline that we can't wait to reveal. We've been listening closely to your feedback and building things that will genuinely change how you experience pickup soccer. <strong>Get ready</strong> — there's a lot more fun coming your way.</p>
+
+        <h3>The Mission Stays the Same</h3>
+
+        <p>From day one, our goal has been simple: make pickup soccer <strong>100% free and accessible for everyone</strong>. No subscriptions, no paywalls, no barriers. Just players, fields, and the beautiful game. And we're just getting started.</p>
+
+        <h3>Stay Ready ⚽</h3>
+
+        <p>The App Store and Google Play Store launch is right around the corner. Follow us on Instagram and keep an eye on this page — we'll announce the moment it goes live.</p>
+
+        <p>Thank you for your patience, your support, and your love for the game. Let's keep pickup soccer free and fun for everyone. See you on the field.</p>
+
+        <p><strong>— The Jogo Team</strong></p>
+      `,
+    },
+    {
       id: 6,
       title: "Dev Update – January 2026",
       date: "January 2026",

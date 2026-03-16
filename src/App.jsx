@@ -447,6 +447,16 @@ export default function App() {
               </Link>
 
               <a
+                href="https://buymeacoffee.com/jogoapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold px-2.5 py-2 md:px-4 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/40 text-xs"
+              >
+                <Coffee size={14} />
+                <span className="hidden md:inline">Support Us</span>
+              </a>
+
+              <a
                 href="https://JogoUs.app"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -494,6 +504,18 @@ export default function App() {
                 <Link to="/policy" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Policy</Link>
                 <Link to="/terms" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Terms</Link>
                 <Link to="/feedback" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Feedback</Link>
+                <div className="pt-1 mt-1 border-t border-white/10">
+                  <a
+                    href="https://buymeacoffee.com/jogoapp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={closeMenu}
+                    className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-orange-500/30 text-yellow-400 font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm mobile-menu-item border border-yellow-500/30"
+                  >
+                    <Coffee size={14} />
+                    Buy Us a Coffee
+                  </a>
+                </div>
               </div>
             </div>
           )}
@@ -1064,7 +1086,7 @@ export default function App() {
                   href="https://buymeacoffee.com/jogoapp"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/50 text-lg"
+                  className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/30 hover:shadow-yellow-500/60 text-lg animate-pulse-glow"
                 >
                   <Coffee size={24} />
                   Buy Us a Coffee
