@@ -1151,6 +1151,7 @@ export default function App() {
                 <li><Link to="/terms" className="text-gray-400 hover:text-emerald-400 transition-colors">Terms of Service</Link></li>
                 <li><Link to="/media" className="text-gray-400 hover:text-emerald-400 transition-colors">Media Kit</Link></li>
                 <li><Link to="/delete-account" className="text-gray-400 hover:text-emerald-400 transition-colors">Delete Account</Link></li>
+                <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 transition-colors">Support</Link></li>
               </ul>
             </div>
           </div>
