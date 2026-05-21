@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/app/:path*",
+      "destination": "https://jogo-web-two.vercel.app/:path*"
+    },
+    {
+      "source": "/((?!app/).*)",
       "destination": "/index.html"
     }
   ]
