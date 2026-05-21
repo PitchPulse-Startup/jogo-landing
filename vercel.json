@@ -5,6 +5,14 @@
       "destination": "https://jogo-web-two.vercel.app/:path*"
     },
     {
+      "source": "/_expo/:path*",
+      "destination": "https://jogo-web-two.vercel.app/_expo/:path*"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "https://jogo-web-two.vercel.app/assets/:path*"
+    },
+    {
       "source": "/((?!app/).*)",
       "destination": "/index.html"
     }
