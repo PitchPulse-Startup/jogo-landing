@@ -457,13 +457,12 @@ export default function App() {
               </a>
 
               <a
-                href="https://JogoUs.app"
+                href="https://www.jogous.io/app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold px-4 sm:px-6 py-2 sm:py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/50 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2"
               >
-                <span className="hidden xs:inline">Launch App</span>
-                <span className="xs:hidden">Launch</span>
+                Login / Sign Up
                 <ArrowRight size={14} className="sm:w-4 sm:h-4" />
               </a>
 
@@ -554,12 +553,12 @@ export default function App() {
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-slide-up delay-400">
                 <a
-                  href="https://JogoUs.app"
+                  href="https://www.jogous.io/app"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold px-10 py-5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/50 text-lg flex items-center justify-center gap-3"
                 >
-                  Launch App
+                  Launch Jogo
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </a>
                 <a
@@ -1023,7 +1022,7 @@ export default function App() {
               </p>
 
               <a
-                href="https://JogoUs.app"
+                href="https://www.jogous.io/app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold px-12 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/50 text-xl gap-3 mb-8"
