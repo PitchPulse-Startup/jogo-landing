@@ -1,1171 +1,748 @@
-// src/App.jsx
+// src/App.jsx — Redesigned to maximize App Store downloads
 
-// --- IMPORTS ---
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Zap,
-  Users,
-  MapPin,
-  TrendingUp,
-  Sparkles,
-  Play,
-  Check,
-  ArrowRight,
-  Instagram,
-  ChevronDown,
-  ChevronUp,
-  Globe,
-  Smartphone,
-  Target,
-  BarChart3,
-  MessageCircle,
-  Clock,
-  Shield,
-  Award,
-  Volume2,
-  VolumeX,
-  Coffee,
-  Heart
+  MapPin, Users, Zap, Check, ChevronLeft, ChevronRight,
+  Shield, Coffee, Heart, Instagram
 } from 'lucide-react';
 
-// --- ASSETS ---
 import jogoLogo from './assets/jogo-logo2.png';
-import howItWorksVideo from './assets/howitworks.mp4';
-import liveScreenImage from './assets/Homejogo.png';
-import gamesScreenImage from './assets/Gamesjogo.png';
-import socialScreenImage from './assets/social.png';
-import soccerFieldBg from './assets/soccer.jpeg';
+import screenOne from './assets/one.png';
+import screenTwo from './assets/two.png';
+import screenThree from './assets/three.png';
+import screenFour from './assets/four.png';
+import soccerBg from './assets/soccer.jpeg';
+import founderPhoto from './assets/israchris.jpeg';
 
-// --- COMPONENTS ---
-import AnimatedBackdrop from './components/AnimatedBackdrop';
-import FloatingSparkles from './components/FloatingSparkles';
+const APP_STORE_URL =
+  'https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244';
 
-// --- Main App Component ---
+// ── Icons ──────────────────────────────────────────────────────────────────
+function AppleLogo({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+    </svg>
+  );
+}
+
+function AndroidLogo({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.523 15.341c-.551 0-.999-.449-.999-.999s.448-.999.999-.999c.551 0 .999.449.999.999s-.448.999-.999.999zm-11.046 0c-.551 0-.999-.449-.999-.999s.448-.999.999-.999c.551 0 .999.449.999.999s-.448.999-.999.999zm11.405-6.02l1.997-3.459a.416.416 0 00-.152-.568.416.416 0 00-.568.152l-2.022 3.503C15.59 8.244 13.853 7.851 12 7.851s-3.59.393-5.137 1.073L4.841 5.421a.416.416 0 00-.568-.152.416.416 0 00-.152.568l1.997 3.459C3.702 10.565 2.3 12.349 2 14.4H22c-.3-2.051-1.702-3.835-4.118-5.079z" />
+    </svg>
+  );
+}
+
+// ── Buttons ────────────────────────────────────────────────────────────────
+function AppStoreBtn({ large = false }) {
+  return (
+    <a
+      href={APP_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`inline-flex items-center gap-2.5 bg-white text-black font-semibold rounded-2xl hover:bg-gray-100 active:scale-95 transition-all duration-200 shadow-xl shadow-black/30 ${
+        large
+          ? 'px-5 py-3 sm:px-8 sm:py-4'
+          : 'px-5 py-2.5'
+      }`}
+    >
+      <AppleLogo size={large ? 22 : 18} />
+      <div className="text-left leading-tight">
+        <div className="text-[10px] font-normal text-black/60 leading-none mb-0.5">
+          Download on the
+        </div>
+        <div className={`font-bold leading-none ${large ? 'text-base sm:text-xl' : 'text-sm'}`}>
+          App Store
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function AndroidBtn({ large = false }) {
+  return (
+    <div
+      className={`inline-flex items-center gap-2.5 bg-white/5 text-white/35 font-semibold rounded-2xl border border-white/10 cursor-not-allowed select-none ${
+        large
+          ? 'px-5 py-3 sm:px-8 sm:py-4'
+          : 'px-5 py-2.5'
+      }`}
+    >
+      <AndroidLogo size={large ? 22 : 18} />
+      <div className="text-left leading-tight">
+        <div className="text-[10px] font-normal leading-none mb-0.5">Coming Soon</div>
+        <div className={`font-bold leading-none ${large ? 'text-base sm:text-xl' : 'text-sm'}`}>Android</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Phone Mockup ───────────────────────────────────────────────────────────
+function PhoneMockup({ src, alt = '', style = {} }) {
+  return (
+    <div className="relative" style={style}>
+      <div
+        className="relative rounded-[44px] p-[10px]"
+        style={{
+          background: 'linear-gradient(145deg, #1f1f1f 0%, #0a0a0a 100%)',
+          border: '1.5px solid rgba(255,255,255,0.13)',
+          boxShadow:
+            '0 60px 120px rgba(0,0,0,0.85), 0 0 80px rgba(16,185,129,0.18), inset 0 1px 0 rgba(255,255,255,0.07)',
+        }}
+      >
+        {/* Dynamic Island */}
+        <div
+          className="absolute z-20 rounded-full bg-black"
+          style={{ top: 14, left: '50%', transform: 'translateX(-50%)', width: 82, height: 26 }}
+        />
+        {/* Screen */}
+        <div className="rounded-[36px] overflow-hidden bg-black" style={{ aspectRatio: '9/19.5' }}>
+          <img src={src} alt={alt} className="w-full h-full object-cover" loading="lazy" />
+        </div>
+        {/* Home bar */}
+        <div
+          className="mx-auto mt-2 rounded-full"
+          style={{ width: 80, height: 4, background: 'rgba(255,255,255,0.22)' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Scroll-reveal wrapper ──────────────────────────────────────────────────
+function Reveal({ children, delay = 0, className = '' }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 36 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────
 export default function App() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [menuClosing, setMenuClosing] = useState(false);
-  const [openFAQ, setOpenFAQ] = useState(null);
-  const [activeFeature, setActiveFeature] = useState(0);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
-  const [isMuted, setIsMuted] = useState(true);
-  const videoRef = useRef(null);
+  const [showSticky, setShowSticky] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(768);
+  const touchStartX = useRef(null);
 
-  // FAQ Data
-  const faqData = [
-    {
-      question: "How does live field tracking work?",
-      answer: "We use privacy-focused location technology to detect player activity at fields. When users arrive at a location, our system updates the field's activity status in real-time, so you always know where the action is."
-    },
-    {
-      question: "Is Jogo really free?",
-      answer: "Yes! Jogo is 100% free to use. No subscriptions, no hidden fees, no paywalls. We believe soccer should be accessible to everyone."
-    },
-    {
-      question: "What if I'm new to pickup soccer?",
-      answer: "Perfect! Filter games by skill level—from beginner-friendly kickabouts to competitive matches. You can also see who's attending and chat before you go."
-    },
-    {
-      question: "How do I organize a game?",
-      answer: "Creating a game takes seconds. Choose your field, set the time and skill level, and share with the community. Players can join, chat, and coordinate all within the app."
-    },
-    {
-      question: "What cities is Jogo available in?",
-      answer: "Jogo is expanding rapidly! We're currently live in select cities and adding new locations based on user demand. Check the app to see fields near you."
-    },
-    {
-      question: "How do you protect user privacy?",
-      answer: "Privacy is paramount. We only track location when you're actively using the app, and all data is anonymized. You control what information you share."
-    }
+  const screenshots = [
+    { src: screenOne,   label: 'Home Screen', desc: 'Find games happening near you' },
+    { src: screenTwo,   label: 'Social',      desc: 'Connect with the local soccer community' },
+    { src: screenThree, label: 'Stats',        desc: 'Track your games and progress' },
+    { src: screenFour,  label: 'Profile',      desc: 'Build your soccer identity' },
   ];
+  const n = screenshots.length;
 
-  // Features Data
-  const features = [
-    {
-      icon: MapPin,
-      title: "Live Field Intelligence",
-      description: "See real-time activity at every field in your area. Know exactly where games are happening before you leave.",
-      color: "from-emerald-400 to-teal-400"
-    },
-    {
-      icon: Users,
-      title: "Smart Matchmaking",
-      description: "Find games that match your skill level, location, and schedule. Our AI connects you with the perfect pickup game.",
-      color: "from-blue-400 to-cyan-400"
-    },
-    {
-      icon: MessageCircle,
-      title: "Built-In Chat",
-      description: "Coordinate with players before, during, and after games. Build your soccer community effortlessly.",
-      color: "from-purple-400 to-pink-400"
-    },
-    {
-      icon: Target,
-      title: "Advanced Filters",
-      description: "Filter by skill level, game type, distance, and more. Find exactly what you're looking for, every time.",
-      color: "from-orange-400 to-red-400"
-    }
-  ];
-
-  // Stats Data
-  const stats = [
-    { icon: Zap, value: "Real-Time", label: "Live Updates" },
-    { icon: Users, value: "200+", label: "Active Players" },
-    { icon: MapPin, value: "50+", label: "Fields Tracked" },
-    { icon: TrendingUp, value: "24/7", label: "Game Discovery" }
-  ];
-
-  // How It Works Data
-  const howItWorks = [
-    {
-      step: "01",
-      title: "Open the App",
-      description: "Launch Jogo and see live activity at nearby fields instantly",
-      icon: Smartphone
-    },
-    {
-      step: "02",
-      title: "Find Your Game",
-      description: "Browse pickup games or check which fields have active players",
-      icon: Target
-    },
-    {
-      step: "03",
-      title: "Show Up & Play",
-      description: "Head to the field and jump into the action. It's that simple.",
-      icon: Play
-    }
-  ];
-
-  // Menu handlers
-  const closeMenu = () => {
-    setMenuClosing(true);
-    setTimeout(() => {
-      setMobileMenuOpen(false);
-      setMenuClosing(false);
-    }, 300);
-  };
-
-  const toggleMenu = () => {
-    if (mobileMenuOpen) {
-      closeMenu();
-    } else {
-      setMobileMenuOpen(true);
-    }
-  };
-
-  const toggleFAQ = (index) => {
-    setOpenFAQ(openFAQ === index ? null : index);
-  };
-
-  // Mouse tracking for parallax effects
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 2 - 1,
-        y: (e.clientY / window.innerHeight) * 2 - 1
-      });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    const onScroll = () => setShowSticky(window.scrollY > 420);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Feature rotation
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % features.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    const onResize = () => setWindowWidth(window.innerWidth);
+    onResize();
+    window.addEventListener('resize', onResize, { passive: true });
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Carousel auto-rotation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveCarouselIndex((prev) => (prev + 1) % 3);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const isMobileView = windowWidth < 640;
 
-  // Mobile detection
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 40) { delta < 0 ? nextSlide() : prevSlide(); }
+    touchStartX.current = null;
+  };
 
-    const handleClickOutside = (event) => {
-      if (mobileMenuOpen && !event.target.closest('.menu-container')) {
-        closeMenu();
-      }
-    };
-
-    if (mobileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMobile, mobileMenuOpen]);
+  const prevSlide = () => setCarouselIndex((i) => (i - 1 + n) % n);
+  const nextSlide = () => setCarouselIndex((i) => (i + 1) % n);
 
   return (
-    <div className="bg-black text-gray-200 font-sans antialiased overflow-x-hidden">
-      {/* --- ENHANCED STYLES --- */}
+    <div className="bg-[#060606] text-white font-sans antialiased overflow-x-hidden" style={{ WebkitFontSmoothing: 'antialiased' }}>
       <style>{`
         @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+          0%,100% { transform:translateY(0); }
+          50% { transform:translateY(-18px); }
         }
+        .float { animation: float 6s ease-in-out infinite; }
 
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
-          50% { opacity: 0.8; box-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
+        .g-text {
+          background: linear-gradient(130deg,#34d399,#10b981,#059669);
+          -webkit-background-clip:text;
+          -webkit-text-fill-color:transparent;
+          background-clip:text;
         }
-
-        @keyframes slide-up {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
+        .glass {
+          background:rgba(255,255,255,0.04);
+          backdrop-filter:blur(20px);
+          -webkit-backdrop-filter:blur(20px);
         }
-
-        @keyframes slide-in-left {
-          from { opacity: 0; transform: translateX(-50px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes slide-in-right {
-          from { opacity: 0; transform: translateX(50px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes scale-in {
-          from { opacity: 0; transform: scale(0.8); }
-          to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes gradient-shift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-
-        @keyframes border-flow {
-          0%, 100% { border-color: rgba(16, 185, 129, 0.5); }
-          50% { border-color: rgba(59, 130, 246, 0.5); }
-        }
-
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-        .animate-slide-up { animation: slide-up 0.6s ease-out forwards; }
-        .animate-slide-in-left { animation: slide-in-left 0.8s ease-out forwards; }
-        .animate-slide-in-right { animation: slide-in-right 0.8s ease-out forwards; }
-        .animate-scale-in { animation: scale-in 0.5s ease-out forwards; }
-        .animate-gradient {
-          background-size: 200% 200%;
-          animation: gradient-shift 8s ease infinite;
-        }
-        .animate-border-flow { animation: border-flow 3s ease infinite; }
-
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
-        .delay-400 { animation-delay: 0.4s; }
-        .delay-500 { animation-delay: 0.5s; }
-        .delay-600 { animation-delay: 0.6s; }
-
-        .glass-effect {
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .gradient-text {
-          background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6);
-          background-size: 200% 200%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: gradient-shift 8s ease infinite;
-        }
-
-        .hover-lift {
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .hover-lift:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
-        }
-
-        .card-glow {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .card-glow::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        .card-glow:hover::before {
-          opacity: 1;
-        }
-
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-10px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        @keyframes slideUp {
-          from { opacity: 1; transform: translateY(0) scale(1); }
-          to { opacity: 0; transform: translateY(-10px) scale(0.95); }
-        }
-
-        .menu-enter { animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        .menu-exit { animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-
-        .mobile-menu-item {
-          opacity: 0;
-          transform: translateY(10px);
-          animation: slide-up 0.4s ease-out forwards;
-        }
-
-        .mobile-menu-item:nth-child(1) { animation-delay: 0.1s; }
-        .mobile-menu-item:nth-child(2) { animation-delay: 0.15s; }
-        .mobile-menu-item:nth-child(3) { animation-delay: 0.2s; }
-        .mobile-menu-item:nth-child(4) { animation-delay: 0.25s; }
-        .mobile-menu-item:nth-child(5) { animation-delay: 0.3s; }
-        .mobile-menu-item:nth-child(6) { animation-delay: 0.35s; }
-        .mobile-menu-item:nth-child(7) { animation-delay: 0.4s; }
-        .mobile-menu-item:nth-child(8) { animation-delay: 0.45s; }
-
-        /* 3D Carousel Styles */
-        .carousel-container {
-          perspective: 1200px;
-          perspective-origin: 50% 50%;
-        }
-
-        .carousel-card {
-          transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-          transform-style: preserve-3d;
-          backface-visibility: hidden;
-        }
-
-        .carousel-card-active {
-          transform: translateX(0) translateZ(0) scale(1) rotateY(0deg);
-          opacity: 1;
-          z-index: 30;
-        }
-
-        .carousel-card-prev {
-          transform: translateX(-40%) translateZ(-200px) scale(0.85) rotateY(25deg);
-          opacity: 0.6;
-          z-index: 20;
-        }
-
-        .carousel-card-next {
-          transform: translateX(40%) translateZ(-200px) scale(0.85) rotateY(-25deg);
-          opacity: 0.6;
-          z-index: 20;
-        }
-
-        .carousel-card-hidden {
-          transform: translateX(0) translateZ(-400px) scale(0.7);
-          opacity: 0;
-          pointer-events: none;
-          z-index: 10;
-        }
-
-        @media (max-width: 768px) {
-          .carousel-card-prev {
-            transform: translateX(-80%) translateZ(-150px) scale(0.75) rotateY(15deg);
-            opacity: 0.3;
-          }
-
-          .carousel-card-next {
-            transform: translateX(80%) translateZ(-150px) scale(0.75) rotateY(-15deg);
-            opacity: 0.3;
-          }
-        }
-
-        @keyframes indicator-pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.2); }
-        }
-
-        .indicator-active {
-          animation: indicator-pulse 2s ease-in-out infinite;
-        }
+        ::selection { background:rgba(16,185,129,0.3); }
       `}</style>
 
-      {/* --- ANIMATED BACKGROUND --- */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${soccerFieldBg})` }}>
-          <div className="absolute inset-0 bg-gradient-to-br from-black via-black/95 to-emerald-950/30"></div>
-        </div>
-
-        {/* Animated Orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full filter blur-3xl animate-float"></div>
-        <div className="absolute top-40 right-20 w-96 h-96 bg-blue-500/20 rounded-full filter blur-3xl animate-float delay-200"></div>
-        <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-purple-500/20 rounded-full filter blur-3xl animate-float delay-400"></div>
-
-        {/* Grid Overlay */}
-        <div className="absolute inset-0 opacity-20" style={{
-          backgroundImage: 'linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px)',
-          backgroundSize: '50px 50px'
-        }}></div>
-      </div>
-
-      {/* --- HEADER --- */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass-effect">
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex justify-between items-center">
-            <a href="#" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <img src={jogoLogo} alt="Jogo Logo" className="h-12 sm:h-14 w-auto" />
+      {/* ── STICKY MOBILE CTA ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {showSticky && (
+          <motion.div
+            initial={{ y: 120 }}
+            animate={{ y: 0 }}
+            exit={{ y: 120 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+            className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-4 pb-safe-bottom"
+            style={{
+              paddingBottom: 'max(env(safe-area-inset-bottom), 16px)',
+              paddingTop: 12,
+              background:
+                'linear-gradient(to top, rgba(6,6,6,1) 65%, rgba(6,6,6,0))',
+            }}
+          >
+            <a
+              href={APP_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-black font-bold py-4 rounded-2xl text-base transition-all shadow-2xl shadow-emerald-500/40"
+            >
+              <AppleLogo size={20} />
+              Download Free on App Store
             </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            <div className="flex items-center gap-2 sm:gap-4 menu-container relative">
-              <Link
-                to="/blog"
-                className="hidden md:flex items-center gap-2 glass-effect px-4 py-2 rounded-full border border-emerald-500/30 hover:border-emerald-400/50 transition-all duration-300 hover:scale-105 group"
-              >
-                <div className="relative">
-                  <Sparkles size={16} className="text-emerald-400 animate-pulse" />
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-ping"></span>
-                </div>
-                <span className="text-sm font-medium text-gray-300 group-hover:text-emerald-400 transition-colors">
-                  New from the Team
-                </span>
-              </Link>
+      {/* ── HEADER — desktop only ─────────────────────────────────── */}
+      <header className="hidden md:block fixed top-0 left-0 right-0 z-40 glass border-b border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-8 py-2 flex items-center justify-between gap-4">
+          <a href="/" className="flex items-center flex-shrink-0">
+            <img src={jogoLogo} alt="Jogo" className="h-9 w-auto" />
+          </a>
 
-              <a
-                href="https://buymeacoffee.com/jogoapp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold px-2.5 py-2 md:px-4 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/40 text-xs"
-              >
-                <Coffee size={14} />
-                <span className="hidden md:inline">Support Us</span>
-              </a>
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-white/50">
+            <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
+            <a href="#screenshots" className="hover:text-white transition-colors">Screenshots</a>
+            <a href="#why-jogo" className="hover:text-white transition-colors">Why Jogo</a>
+            <a href="https://www.jogous.io/app" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Sign Up</a>
+          </nav>
 
-              <a
-                href="https://www.jogous.io/app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold px-4 sm:px-6 py-2 sm:py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/50 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2"
-              >
-                Login / Sign Up
-                <ArrowRight size={14} className="sm:w-4 sm:h-4" />
-              </a>
-
-              <button
-                onClick={toggleMenu}
-                className="p-2.5 sm:p-3 text-gray-300 hover:text-emerald-400 transition-all duration-300 glass-effect rounded-full hover:scale-110"
-                aria-label="Toggle menu"
-              >
-                {mobileMenuOpen ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Dropdown Menu */}
-          {(mobileMenuOpen || menuClosing) && (
-            <div className={`absolute top-full right-4 mt-2 w-56 bg-black/95 backdrop-blur-xl border border-emerald-500/20 rounded-2xl shadow-2xl overflow-hidden z-50 ${menuClosing ? 'menu-exit' : 'menu-enter'}`}>
-              <div className="p-2 space-y-1">
-                <Link to="/blog" onClick={closeMenu} className="md:hidden flex items-center justify-between text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">
-                  <span>Blog / Updates</span>
-                  <div className="relative">
-                    <Sparkles size={14} className="text-emerald-400 animate-pulse" />
-                    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
-                  </div>
-                </Link>
-                <a href="#features" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Features</a>
-                <a href="#how-it-works" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">How It Works</a>
-                <a href="#faq" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">FAQ</a>
-                <Link to="/blog" onClick={closeMenu} className="hidden md:block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Blog</Link>
-                <Link to="/media" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Media</Link>
-                <Link to="/policy" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Policy</Link>
-                <Link to="/terms" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Terms</Link>
-                <Link to="/feedback" onClick={closeMenu} className="block text-gray-300 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300 text-sm font-medium py-3 px-4 rounded-lg mobile-menu-item">Feedback</Link>
-                <div className="pt-1 mt-1 border-t border-white/10">
-                  <a
-                    href="https://buymeacoffee.com/jogoapp"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={closeMenu}
-                    className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-orange-500/30 text-yellow-400 font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm mobile-menu-item border border-yellow-500/30"
-                  >
-                    <Coffee size={14} />
-                    Buy Us a Coffee
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
+          <AppStoreBtn />
         </div>
       </header>
 
-      <main className="relative z-10">
-        {/* --- HERO SECTION --- */}
-        <section className="min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
-          <div className="container mx-auto">
-            <div className="text-center max-w-5xl mx-auto">
-              {/* Beta Badge */}
-              <div className="inline-flex items-center gap-2 glass-effect px-5 py-2.5 rounded-full mb-8 animate-slide-up border border-emerald-500/30">
-                <Sparkles size={18} className="text-emerald-400 animate-pulse-glow" />
-                <span className="text-sm font-semibold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                  NOW IN BETA • JOIN THE REVOLUTION
-                </span>
-              </div>
-
-              {/* Main Headline */}
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-8 animate-slide-up delay-100">
-                <span className="block text-white mb-2">The Future of</span>
-                <span className="gradient-text">Pickup Soccer</span>
-              </h1>
-
-              {/* Subheadline */}
-              <p className="text-xl sm:text-2xl md:text-3xl text-gray-400 mb-6 max-w-3xl mx-auto leading-relaxed animate-slide-up delay-200">
-                Real-time field intelligence. Instant connections. <br className="hidden sm:block" />
-                <span className="text-emerald-400 font-semibold">Never play alone again.</span>
-              </p>
-
-              <p className="text-base sm:text-lg text-gray-500 mb-12 max-w-2xl mx-auto animate-slide-up delay-300">
-                Jogo uses AI-powered technology to show you live field activity, match you with players, and build your local soccer community—all in real-time.
-              </p>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-slide-up delay-400">
-                <a
-                  href="https://www.jogous.io/app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold px-10 py-5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/50 text-lg flex items-center justify-center gap-3"
-                >
-                  Launch Jogo
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                </a>
-                <a
-                  href="#how-it-works"
-                  className="w-full sm:w-auto glass-effect text-white font-semibold px-10 py-5 rounded-full transition-all duration-300 hover:bg-white/10 text-lg flex items-center justify-center gap-3 border border-white/20"
-                >
-                  <Play size={20} />
-                  See How It Works
-                </a>
-              </div>
-
-              {/* Trust Indicators */}
-              <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 animate-slide-up delay-500">
-                <div className="flex items-center gap-2">
-                  <Check size={18} className="text-emerald-400" />
-                  <span>100% Free Forever</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check size={18} className="text-emerald-400" />
-                  <span>No Credit Card Required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check size={18} className="text-emerald-400" />
-                  <span>Available on Web & Mobile</span>
-                </div>
-              </div>
-            </div>
+      <main>
+        {/* ── HERO ──────────────────────────────────────────────────── */}
+        <section className="relative min-h-screen flex items-center pt-14 sm:pt-20 pb-16 sm:pb-20 px-4 sm:px-8 overflow-hidden">
+          {/* BG */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${soccerBg})`, opacity: 0.12 }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'radial-gradient(ellipse 90% 55% at 50% -10%, rgba(16,185,129,0.18) 0%, transparent 70%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#060606]/50 via-transparent to-[#060606]" />
           </div>
-        </section>
 
-        {/* --- STATS SECTION --- */}
-        <section className="py-20 px-4">
-          <div className="container mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                <div
-                  key={index}
-                  className="glass-effect rounded-2xl p-6 text-center hover-lift card-glow animate-scale-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <stat.icon size={32} className="mx-auto mb-4 text-emerald-400" />
-                  <div className="text-3xl sm:text-4xl font-black gradient-text mb-2">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
+          <div className="relative z-10 max-w-7xl mx-auto w-full">
+            <div className="grid lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-6 items-center">
+              {/* — Phone — first on mobile, right on desktop — */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                className="flex justify-center order-1 lg:order-2"
+              >
+                <div className="float">
+                  <PhoneMockup
+                    src={screenOne}
+                    alt="Jogo App — pickup soccer near you"
+                    style={{ width: 'min(200px, 52vw)' }}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
+              </motion.div>
 
-        {/* --- FEATURES SECTION --- */}
-        <section id="features" className="py-20 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
-                Powerful Features.<br />
-                <span className="gradient-text">Effortless Experience.</span>
-              </h2>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-                Everything you need to find, join, and organize pickup soccer games in one intelligent platform.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {features.map((feature, index) => (
-                <div
-                  key={index}
-                  className="glass-effect rounded-3xl p-8 hover-lift card-glow animate-slide-up cursor-pointer group"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                  onMouseEnter={() => setActiveFeature(index)}
+              {/* — Text — */}
+              <div className="text-center lg:text-left order-2 lg:order-1">
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="inline-flex items-center gap-2 glass border border-emerald-500/30 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-emerald-400 mb-5 sm:mb-7"
                 >
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                    <feature.icon size={32} className="text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-4">{feature.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  Now Available on iOS
+                </motion.div>
 
-        {/* --- VIDEO SHOWCASE SECTION --- */}
-        <section className="py-20 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">
-                See <span className="gradient-text">Jogo</span> In Action
-              </h2>
-              <p className="text-lg text-gray-400">
-                Experience the future of pickup soccer
-              </p>
-            </div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 28 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  className="text-[2.4rem] leading-[1.08] sm:text-6xl lg:text-7xl font-black tracking-tight mb-4 sm:mb-6"
+                >
+                  Pickup Soccer.<br />
+                  <span className="g-text">Anytime.</span>{' '}
+                  <span className="g-text">Anywhere.</span>
+                </motion.h1>
 
-            <div className="flex justify-center">
-              <div className="glass-effect rounded-3xl p-4 sm:p-6 hover-lift max-w-md w-full">
-                <div className="relative aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full object-cover"
-                    autoPlay
-                    loop
-                    muted={isMuted}
-                    playsInline
+                <motion.p
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.18 }}
+                  className="text-base sm:text-xl text-white/55 mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed"
+                >
+                  Join local pickup games, meet players, and play for free.
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.28 }}
+                  className="flex flex-row items-center justify-center lg:justify-start gap-3 mb-6 sm:mb-8"
+                >
+                  <AppStoreBtn large />
+                  <AndroidBtn large />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.45, duration: 0.5 }}
+                  className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-5 text-xs sm:text-sm text-white/40"
+                >
+                  {['100% Free', 'No credit card', 'Join in 60 seconds'].map((t, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <Check size={12} className="text-emerald-400 flex-shrink-0" />
+                      {t}
+                    </div>
+                  ))}
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.5 }}
+                  className="mt-4 text-center lg:text-left"
+                >
+                  <a
+                    href="https://www.jogous.io/app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs sm:text-sm text-white/35 hover:text-emerald-400 transition-colors underline underline-offset-4"
                   >
-                    <source src={howItWorksVideo} type="video/mp4" />
-                  </video>
-
-                  {/* Mute/Unmute Button */}
-                  <button
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="absolute bottom-4 right-4 glass-effect p-3 rounded-full hover:bg-white/20 transition-all hover:scale-110 group z-10"
-                    aria-label={isMuted ? "Unmute" : "Mute"}
-                  >
-                    {isMuted ? (
-                      <VolumeX size={24} className="text-white" />
-                    ) : (
-                      <Volume2 size={24} className="text-emerald-400" />
-                    )}
-                  </button>
-                </div>
+                    Or sign up on the web app →
+                  </a>
+                </motion.div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- HOW IT WORKS SECTION --- */}
-        <section id="how-it-works" className="py-20 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
-                Getting Started is <span className="gradient-text">Simple</span>
-              </h2>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-                From download to kickoff in under 60 seconds
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {howItWorks.map((step, index) => (
-                <div
-                  key={index}
-                  className="relative animate-slide-up"
-                  style={{ animationDelay: `${index * 0.2}s` }}
-                >
-                  <div className="glass-effect rounded-3xl p-8 h-full hover-lift card-glow">
-                    {/* Step Number */}
-                    <div className="text-6xl font-black gradient-text mb-4">
-                      {step.step}
-                    </div>
-
-                    {/* Icon */}
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center mb-6">
-                      <step.icon size={28} className="text-white" />
-                    </div>
-
-                    {/* Content */}
-                    <h3 className="text-2xl font-bold text-white mb-4">{step.title}</h3>
-                    <p className="text-gray-400 leading-relaxed">{step.description}</p>
-                  </div>
-
-                  {/* Connector Arrow */}
-                  {index < howItWorks.length - 1 && (
-                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
-                      <ArrowRight size={32} className="text-emerald-500/50" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* --- 3D CAROUSEL SCREENSHOTS SECTION --- */}
-        <section className="py-20 px-4 overflow-hidden">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
-                Designed for <span className="gradient-text">Players</span>
-              </h2>
-              <p className="text-xl text-gray-400 mb-4">
-                Beautiful, intuitive, and built for the beautiful game
-              </p>
-              <p className="text-sm text-gray-500">
-                Swipe or click the arrows to explore
-              </p>
-            </div>
-
-            {/* 3D Carousel Container */}
-            <div className="carousel-container relative h-[600px] sm:h-[700px] md:h-[750px] mb-8">
-              <div className="relative w-full h-full flex items-center justify-center">
+        {/* ── SOCIAL PROOF ──────────────────────────────────────────── */}
+        <section className="py-10 sm:py-14 px-4 sm:px-8 border-y border-white/[0.06]">
+          <div className="max-w-3xl mx-auto">
+            <Reveal>
+              <div className="grid grid-cols-3 gap-3 sm:gap-12 text-center">
                 {[
-                  {
-                    img: liveScreenImage,
-                    title: "Live Field Intelligence",
-                    desc: "See real-time activity at every field",
-                    gradient: "from-emerald-500 to-teal-500",
-                    icon: MapPin
-                  },
-                  {
-                    img: gamesScreenImage,
-                    title: "Smart Game Discovery",
-                    desc: "Find your perfect match instantly",
-                    gradient: "from-blue-500 to-cyan-500",
-                    icon: Target
-                  },
-                  {
-                    img: socialScreenImage,
-                    title: "Built-In Community",
-                    desc: "Connect and coordinate with players",
-                    gradient: "from-purple-500 to-pink-500",
-                    icon: MessageCircle
-                  }
-                ].map((screen, index) => {
-                  const position = (index - activeCarouselIndex + 3) % 3;
-                  let positionClass = 'carousel-card-hidden';
+                  { value: '2,000+', label: 'Players' },
+                  { value: '100+', label: 'Games Created' },
+                  { value: '100%', label: 'Free' },
+                ].map((s, i) => (
+                  <div key={i} className="min-w-0">
+                    <div className="text-xl xs:text-2xl sm:text-5xl font-black g-text mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{s.value}</div>
+                    <div className="text-white/45 text-[11px] sm:text-base leading-tight">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        </section>
 
-                  if (position === 0) positionClass = 'carousel-card-active';
-                  else if (position === 2) positionClass = 'carousel-card-prev';
-                  else if (position === 1) positionClass = 'carousel-card-next';
+        {/* ── HOW IT WORKS ──────────────────────────────────────────── */}
+        <section id="how-it-works" className="py-16 sm:py-24 px-4 sm:px-8">
+          <div className="max-w-6xl mx-auto">
+            <Reveal className="text-center mb-16">
+              <h2 className="text-3xl sm:text-5xl font-black mb-4">How It Works</h2>
+              <p className="text-white/45 text-lg">From download to kickoff in under a minute</p>
+            </Reveal>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                {
+                  step: '01',
+                  icon: MapPin,
+                  title: 'Find Games',
+                  desc: 'Open the app and see every pickup game near you on a live map. Know exactly where the action is before you leave.',
+                },
+                {
+                  step: '02',
+                  icon: Users,
+                  title: 'Join Instantly',
+                  desc: 'Tap to join, see who\'s playing, and coordinate with players in one tap. No emails, no forms.',
+                },
+                {
+                  step: '03',
+                  icon: Zap,
+                  title: 'Play',
+                  desc: 'Show up and play. No fees, no subscriptions, no pay walls. Just pure pickup soccer.',
+                },
+              ].map((step, i) => (
+                <Reveal key={i} delay={i * 0.12}>
+                  <div className="glass border border-white/[0.07] hover:border-emerald-500/25 rounded-3xl p-8 text-center h-full transition-colors group">
+                    <div className="text-6xl font-black g-text mb-4 leading-none">{step.step}</div>
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/12 border border-emerald-500/25 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
+                      <step.icon size={22} className="text-emerald-400" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                    <p className="text-white/45 text-sm leading-relaxed">{step.desc}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── SCREENSHOTS ───────────────────────────────────────────── */}
+        <section id="screenshots" className="py-16 sm:py-24 px-4 sm:px-8 overflow-hidden">
+          <div className="max-w-6xl mx-auto">
+            <Reveal className="text-center mb-16">
+              <h2 className="text-3xl sm:text-5xl font-black mb-4">Built for the Beautiful Game</h2>
+              <p className="text-white/45 text-lg">Clean, fast, and designed for players</p>
+            </Reveal>
+
+            {/* Carousel */}
+            <div className="flex items-center gap-3 sm:gap-6 justify-center">
+              {/* Arrows hidden on mobile — swipe instead */}
+              <button
+                onClick={prevSlide}
+                aria-label="Previous"
+                className="hidden sm:flex flex-shrink-0 w-11 h-11 glass border border-white/10 rounded-full items-center justify-center hover:border-emerald-500/40 hover:text-emerald-400 transition-all"
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              {/* Cards container */}
+              <div
+                className="relative flex-1 flex items-start justify-center overflow-hidden"
+                style={{
+                  height: isMobileView ? 'calc(55vw * 2.17 + 70px)' : 'min(580px, 100vw)',
+                  maxWidth: 700,
+                }}
+                onTouchStart={onTouchStart}
+                onTouchEnd={onTouchEnd}
+              >
+                {screenshots.map((s, i) => {
+                  const pos = (i - carouselIndex + n) % n;
+                  const isActive = pos === 0;
+                  const isNext  = pos === 1;
+                  const isPrev  = pos === n - 1;
+
+                  // On mobile show only the active card; on desktop show side cards
+                  const showSide = !isMobileView && (isNext || isPrev);
+                  const opacity  = isActive ? 1 : showSide ? 0.42 : 0;
+                  const scale    = isActive ? 1 : 0.8;
+
+                  let tx = '-50%';
+                  if (!isMobileView) {
+                    if (isNext) tx = 'calc(-50% + min(230px, 38vw))';
+                    if (isPrev) tx = 'calc(-50% - min(230px, 38vw))';
+                  }
 
                   return (
                     <div
-                      key={index}
-                      className={`carousel-card absolute ${positionClass} cursor-pointer`}
-                      onClick={() => setActiveCarouselIndex(index)}
+                      key={i}
+                      onClick={() => setCarouselIndex(i)}
+                      className="absolute top-0 left-1/2 cursor-pointer"
                       style={{
-                        width: '320px',
-                        maxWidth: '85vw'
+                        transform: `translateX(${tx}) scale(${scale})`,
+                        opacity,
+                        zIndex: isActive ? 30 : showSide ? 20 : 5,
+                        transition: 'transform 0.52s cubic-bezier(0.4,0,0.2,1), opacity 0.52s cubic-bezier(0.4,0,0.2,1)',
+                        width: isMobileView ? 'min(190px, 55vw)' : 'min(200px, 28vw)',
+                        pointerEvents: isActive || showSide ? 'auto' : 'none',
                       }}
                     >
-                      <div className="glass-effect rounded-3xl p-6 sm:p-8 card-glow h-full">
-                        {/* Icon Badge */}
-                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${screen.gradient} flex items-center justify-center mb-4 mx-auto`}>
-                          <screen.icon size={28} className="text-white" />
-                        </div>
-
-                        {/* Phone Mockup */}
-                        <div className="relative aspect-[9/16] rounded-2xl overflow-hidden mb-6 shadow-2xl border-2 border-white/10">
-                          <img
-                            src={screen.img}
-                            alt={screen.title}
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Overlay gradient on inactive cards */}
-                          {position !== 0 && (
-                            <div className="absolute inset-0 bg-black/40"></div>
-                          )}
-                        </div>
-
-                        {/* Title and Description */}
-                        <div className="text-center">
-                          <h3 className="text-2xl font-bold text-white mb-3">{screen.title}</h3>
-                          <p className="text-gray-400 text-sm sm:text-base">{screen.desc}</p>
-                        </div>
-
-                        {/* Active Indicator */}
-                        {position === 0 && (
-                          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse-glow"></div>
-                          </div>
-                        )}
-                      </div>
+                      <PhoneMockup src={s.src} alt={s.label} />
+                      {isActive && (
+                        <motion.div
+                          key={carouselIndex}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.35 }}
+                          className="text-center mt-4 sm:mt-5 px-2"
+                        >
+                          <div className="text-sm sm:text-base font-bold">{s.label}</div>
+                          <div className="text-white/40 text-xs sm:text-sm mt-1">{s.desc}</div>
+                        </motion.div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
 
-            {/* Navigation Controls */}
-            <div className="flex items-center justify-center gap-4 sm:gap-6 mb-8 mt-20 sm:mt-0">
-              {/* Previous Button */}
               <button
-                onClick={() => setActiveCarouselIndex((prev) => (prev - 1 + 3) % 3)}
-                className="glass-effect p-2 sm:p-4 rounded-full hover:bg-white/10 transition-all hover:scale-110 group"
-                aria-label="Previous"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-6 sm:h-6 text-gray-400 group-hover:text-emerald-400 transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              {/* Dots Indicator */}
-              <div className="flex gap-2 sm:gap-3">
-                {[0, 1, 2].map((index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveCarouselIndex(index)}
-                    className={`transition-all duration-300 rounded-full ${
-                      activeCarouselIndex === index
-                        ? 'w-8 sm:w-12 h-2 sm:h-3 bg-gradient-to-r from-emerald-500 to-teal-500 indicator-active'
-                        : 'w-2 sm:w-3 h-2 sm:h-3 bg-gray-600 hover:bg-gray-500'
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
-                ))}
-              </div>
-
-              {/* Next Button */}
-              <button
-                onClick={() => setActiveCarouselIndex((prev) => (prev + 1) % 3)}
-                className="glass-effect p-2 sm:p-4 rounded-full hover:bg-white/10 transition-all hover:scale-110 group"
+                onClick={nextSlide}
                 aria-label="Next"
+                className="hidden sm:flex flex-shrink-0 w-11 h-11 glass border border-white/10 rounded-full items-center justify-center hover:border-emerald-500/40 hover:text-emerald-400 transition-all"
               >
-                <svg
-                  className="w-4 h-4 sm:w-6 sm:h-6 text-gray-400 group-hover:text-emerald-400 transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRight size={18} />
               </button>
             </div>
 
-            {/* Feature List */}
-            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12">
-              {[
-                { icon: Zap, text: "Lightning Fast", color: "emerald" },
-                { icon: Shield, text: "Privacy First", color: "blue" },
-                { icon: Award, text: "Player Approved", color: "purple" }
-              ].map((feature, index) => (
-                <div
-                  key={index}
-                  className="glass-effect rounded-2xl p-6 text-center hover-lift animate-slide-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <feature.icon size={32} className={`mx-auto mb-3 text-${feature.color}-400`} />
-                  <p className="text-white font-semibold">{feature.text}</p>
-                </div>
+            {/* Swipe hint — mobile only */}
+            <p className="text-center text-white/25 text-xs mt-3 sm:hidden">Swipe to explore</p>
+
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-8">
+              {screenshots.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCarouselIndex(i)}
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    width: i === carouselIndex ? 28 : 8,
+                    height: 8,
+                    background: i === carouselIndex ? '#10b981' : 'rgba(255,255,255,0.2)',
+                  }}
+                />
               ))}
             </div>
           </div>
         </section>
 
-        {/* --- TESTIMONIALS SECTION --- */}
-        <section className="py-20 px-4 bg-gradient-to-b from-emerald-900/10 to-transparent">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
-                Players <span className="gradient-text">Love</span> Jogo
-              </h2>
-              <p className="text-xl text-gray-400">
-                Join thousands of players already using Jogo
-              </p>
-            </div>
+        {/* ── WHY JOGO ──────────────────────────────────────────────── */}
+        <section id="why-jogo" className="py-16 sm:py-24 px-4 sm:px-8">
+          <div className="max-w-6xl mx-auto">
+            <Reveal className="text-center mb-16">
+              <h2 className="text-3xl sm:text-5xl font-black mb-4">Why Jogo</h2>
+              <p className="text-white/45 text-lg">Built because we needed it too</p>
+            </Reveal>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
               {[
                 {
-                  quote: "I love how easy it is! So much fun—I'll be back on the field playing ASAP. Jogo makes finding games effortless.",
-                  author: "Jorge M.",
-                  role: "Forward"
+                  icon: MapPin,
+                  grad: 'from-emerald-500 to-teal-500',
+                  title: 'Never wonder where the game is',
+                  desc: 'See every pickup game on a live map. No more group texts trying to figure out if there\'s a game tonight.',
                 },
                 {
-                  quote: "I've met so many cool people and can't wait to play and improve my skills. Perfect for beginners like me!",
-                  author: "Jonathan",
-                  role: "Defender"
+                  icon: Users,
+                  grad: 'from-blue-500 to-cyan-500',
+                  title: 'Meet players, not strangers',
+                  desc: 'View player profiles and skill levels before you show up. Know your team before kickoff.',
                 },
                 {
-                  quote: "It's so easy to just hop on, find a game, and play. Exactly what pickup soccer needed.",
-                  author: "Steven",
-                  role: "Midfielder"
-                }
-              ].map((testimonial, index) => (
-                <div
-                  key={index}
-                  className="glass-effect rounded-3xl p-8 hover-lift animate-slide-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Sparkles key={i} size={20} className="text-emerald-400 fill-emerald-400" />
-                    ))}
-                  </div>
-                  <p className="text-gray-300 mb-6 leading-relaxed italic">
-                    "{testimonial.quote}"
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">
-                        {testimonial.author.charAt(0)}
-                      </span>
+                  icon: Shield,
+                  grad: 'from-purple-500 to-pink-500',
+                  title: 'No pay-to-play',
+                  desc: 'Jogo is 100% free. No subscriptions, no premium tiers. Soccer belongs to everyone.',
+                },
+              ].map((item, i) => (
+                <Reveal key={i} delay={i * 0.12}>
+                  <div className="glass border border-white/[0.07] hover:border-emerald-500/22 rounded-3xl p-8 h-full transition-colors group">
+                    <div
+                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.grad} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
+                    >
+                      <item.icon size={26} className="text-white" />
                     </div>
-                    <div>
-                      <div className="text-white font-semibold">{testimonial.author}</div>
-                      <div className="text-gray-500 text-sm">{testimonial.role}</div>
-                    </div>
+                    <h3 className="text-xl font-bold mb-3 leading-snug">{item.title}</h3>
+                    <p className="text-white/45 text-sm leading-relaxed">{item.desc}</p>
                   </div>
-                </div>
+                </Reveal>
               ))}
             </div>
           </div>
         </section>
 
-        {/* --- FAQ SECTION --- */}
-        <section id="faq" className="py-20 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
-                <span className="gradient-text">Questions?</span> Answered.
+        {/* ── WORLD CUP ─────────────────────────────────────────────── */}
+        <section className="relative py-20 sm:py-36 px-4 sm:px-8 overflow-hidden">
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-40"
+              style={{ backgroundImage: `url(${soccerBg})` }}
+            />
+            <div className="absolute inset-0 bg-black/83" />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(16,185,129,0.12) 0%, transparent 70%)',
+              }}
+            />
+          </div>
+
+          <div className="relative z-10 max-w-3xl mx-auto text-center">
+            <Reveal>
+              <div className="text-6xl mb-7">⚽</div>
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-black leading-tight mb-6">
+                Don't Just Watch<br />
+                the World Cup.<br />
+                <span className="g-text">Play.</span>
               </h2>
-              <p className="text-xl text-gray-400">
-                Everything you need to know about Jogo
+              <p className="text-white/55 text-xl mb-10 max-w-lg mx-auto">
+                While the world watches, Jogo players are already on the field. Find local pickup games happening right now.
               </p>
-            </div>
+              <AppStoreBtn large />
+            </Reveal>
+          </div>
+        </section>
 
-            <div className="space-y-4">
-              {faqData.map((faq, index) => (
-                <div
-                  key={index}
-                  className="glass-effect rounded-2xl overflow-hidden hover-lift animate-slide-up"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <button
-                    onClick={() => toggleFAQ(index)}
-                    className="w-full px-6 py-6 text-left flex justify-between items-center hover:bg-white/5 transition-all"
-                  >
-                    <h3 className="text-lg sm:text-xl font-semibold text-white pr-4">
-                      {faq.question}
-                    </h3>
-                    {openFAQ === index ? (
-                      <ChevronUp className="w-6 h-6 text-emerald-400 flex-shrink-0" />
-                    ) : (
-                      <ChevronDown className="w-6 h-6 text-gray-400 flex-shrink-0" />
-                    )}
-                  </button>
+        {/* ── FOUNDER STORY ─────────────────────────────────────────── */}
+        <section className="py-16 sm:py-24 px-4 sm:px-8">
+          <div className="max-w-4xl mx-auto">
+            <Reveal>
+              <div className="glass border border-white/[0.07] rounded-3xl overflow-hidden">
+                {/* Photo */}
+                <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
+                  <img
+                    src={founderPhoto}
+                    alt="Christopher and a friend after a Jogo game with the NYC skyline"
+                    className="w-full h-full object-cover"
+                    style={{ objectPosition: 'center 65%' }}
+                  />
+                  {/* Gradient fade into card body */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-transparent" />
+                  {/* City badge */}
+                  <div className="absolute bottom-4 left-4 sm:bottom-5 sm:left-5 flex items-center gap-2 glass border border-white/15 rounded-full px-3 py-1.5">
+                    <span className="text-xs text-white/70 font-medium">📍 Jersey City, NJ</span>
+                  </div>
+                </div>
 
-                  {openFAQ === index && (
-                    <div className="px-6 pb-6 border-t border-white/10">
-                      <p className="text-gray-300 leading-relaxed pt-4">
-                        {faq.answer}
-                      </p>
+                {/* Text body */}
+                <div className="p-7 sm:p-12">
+                  <div className="flex flex-wrap items-center gap-2 mb-5">
+                    <span className="text-xs font-bold text-white/35 tracking-widest uppercase">The Pioneers</span>
+                    <span className="text-white/15">·</span>
+                    <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-3 py-0.5">🇺🇸 Army Veteran</span>
+                  </div>
+
+                  <h2 className="text-2xl sm:text-4xl font-black leading-tight mb-6">
+                    We played soccer across the world.<br />
+                    <span className="g-text">Then came home and couldn't find a game.</span>
+                  </h2>
+
+                  <div className="text-white/60 text-sm sm:text-base leading-relaxed max-w-2xl space-y-3">
+                    <p>
+                      Serving in the Army took me all over the world. Every country, every base —
+                      I could always find a pickup game. Didn't matter if I didn't speak the language.
+                      Soccer is universal. You just show up and play.
+                    </p>
+                    <p>
+                      When I got back to Jersey, that wasn't the case. No way to know where the
+                      games were. No app. No platform. Just hoping someone texted you.
+                    </p>
+                    <p>
+                      The team and I built Jogo to fix that — a free app that shows you every pickup
+                      game near you and lets you join in one tap.
+                    </p>
+                    <p className="text-white/85 font-semibold">
+                      That's an actual Jogo game behind us. Jersey City. NYC skyline.
+                      This is what we built it for.
+                    </p>
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t border-white/[0.07]">
+                    <p className="text-white/30 text-xs mb-4 uppercase tracking-widest font-semibold">The Pioneers</p>
+                    <div className="flex flex-wrap gap-4">
+                      {[
+                        { initials: 'CV', name: 'Christopher', note: 'Army Veteran', grad: 'from-emerald-500 to-teal-500' },
+                        { initials: 'IS', name: 'Israel',      note: null,           grad: 'from-blue-500 to-cyan-500' },
+                        { initials: 'AD', name: 'Adriana',     note: null,           grad: 'from-purple-500 to-pink-500' },
+                        { initials: 'JM', name: 'Jimmy',       note: null,           grad: 'from-orange-500 to-red-500' },
+                      ].map((p) => (
+                        <div key={p.name} className="flex items-center gap-2.5">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black text-white flex-shrink-0 bg-gradient-to-br ${p.grad}`}
+                          >
+                            {p.initials}
+                          </div>
+                          <div>
+                            <div className="text-white font-semibold text-sm">{p.name}</div>
+                            {p.note && <div className="text-white/35 text-xs">{p.note}</div>}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            </Reveal>
           </div>
         </section>
 
-        {/* --- FINAL CTA SECTION --- */}
-        <section className="py-32 px-4 relative overflow-hidden">
-          <div className="container mx-auto max-w-4xl text-center relative z-10">
-            <div className="glass-effect rounded-3xl p-12 sm:p-16 border-2 border-emerald-500/30">
-              <Sparkles size={48} className="mx-auto mb-6 text-emerald-400 animate-pulse-glow" />
-
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6">
-                Ready to Play?
+        {/* ── FINAL CTA ─────────────────────────────────────────────── */}
+        <section className="py-16 sm:py-28 px-4 sm:px-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <Reveal>
+              <div className="text-6xl mb-8">⚽</div>
+              <h2 className="text-4xl sm:text-6xl font-black leading-tight mb-5">
+                Your next game<br />
+                <span className="g-text">is waiting.</span>
               </h2>
-
-              <p className="text-xl sm:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto">
-                Join the future of pickup soccer. <br className="hidden sm:block" />
-                <span className="gradient-text font-semibold">Your next game is waiting.</span>
+              <p className="text-white/45 text-xl mb-10">
+                Download Jogo. Find a game. Play tonight.
               </p>
-
-              <a
-                href="https://www.jogous.io/app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold px-12 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/50 text-xl gap-3 mb-8"
-              >
-                Launch Jogo Now
-                <ArrowRight size={24} className="animate-float" />
-              </a>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8 border-t border-white/20">
-                <div className="flex items-center gap-3 text-gray-300">
-                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                    <Globe size={20} className="text-emerald-400" />
-                  </div>
-                  <span className="text-sm">Available on Web</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
-                    <Smartphone size={20} className="text-blue-400" />
-                  </div>
-                  <span className="text-sm">Mobile Coming Soon</span>
-                </div>
-              </div>
-
-              <div className="mt-8 pt-8 border-t border-white/20">
-                <p className="text-sm text-gray-400 mb-4">Stay connected with the community</p>
-                <Link
-                  to="/media"
-                  className="inline-flex items-center justify-center gap-2 glass-effect text-white font-semibold px-6 py-3 rounded-full hover:bg-white/10 transition-all text-sm border border-white/20"
-                >
-                  <Instagram size={18} />
-                  Follow on Social Media
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* --- SUPPORT THE TEAM SECTION --- */}
-        <section className="relative z-10 py-20 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <div className="glass-effect rounded-3xl p-8 sm:p-12 border border-emerald-500/20 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 mb-6">
-                <Coffee className="text-emerald-400" size={32} />
-              </div>
-
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-                Support the Team
-              </h2>
-
-              <p className="text-gray-400 text-lg leading-relaxed mb-6 max-w-2xl mx-auto">
-                Jogo is built by a small team of <strong className="text-white">4 passionate soccer enthusiasts</strong> dedicated to making pickup soccer better for everyone. We keep Jogo <strong className="text-emerald-400">100% free</strong>—no subscriptions, no paywalls.
-              </p>
-
-              <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
-                If you appreciate what we're building and want to help us keep the servers running and develop new features, consider buying us a coffee. Every contribution, big or small, helps us continue this journey.
-              </p>
-
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a
-                  href="https://buymeacoffee.com/jogoapp"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/30 hover:shadow-yellow-500/60 text-lg animate-pulse-glow"
-                >
-                  <Coffee size={24} />
-                  Buy Us a Coffee
-                </a>
+                <AppStoreBtn large />
+                <AndroidBtn large />
               </div>
-
-              <div className="mt-8 pt-8 border-t border-white/10">
-                <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
-                  <Heart size={16} className="text-red-400" />
-                  <span>Thank you for supporting independent development</span>
-                </div>
-              </div>
-            </div>
+            </Reveal>
           </div>
         </section>
       </main>
 
-      {/* --- FOOTER --- */}
-      <footer className="relative z-10 border-t border-white/10">
-        <div className="container mx-auto px-4 sm:px-6 py-12">
-          <div className="grid md:grid-cols-5 gap-8 mb-8">
-            {/* Brand */}
-            <div className="md:col-span-2">
-              <img src={jogoLogo} alt="Jogo" className="h-12 mb-4" />
-              <p className="text-gray-400 text-sm leading-relaxed max-w-md">
-                The future of pickup soccer. Real-time field intelligence, smart matchmaking, and community-powered connections—all in one platform.
+      {/* ── FOOTER ────────────────────────────────────────────────── */}
+      <footer className="border-t border-white/[0.06] pt-10 pb-6 px-4 sm:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 mb-10">
+            <div>
+              <img src={jogoLogo} alt="Jogo" className="h-9 w-auto mb-3" />
+              <p className="text-white/30 text-sm max-w-xs">
+                Free pickup soccer finder. Built in New Jersey.
               </p>
             </div>
-
-            {/* Links */}
-            <div>
-              <h3 className="text-white font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="text-gray-400 hover:text-emerald-400 transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="text-gray-400 hover:text-emerald-400 transition-colors">How It Works</a></li>
-                <li><Link to="/blog" className="text-gray-400 hover:text-emerald-400 transition-colors">Blog</Link></li>
-                <li><Link to="/feedback" className="text-gray-400 hover:text-emerald-400 transition-colors">Feedback</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-white font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a
-                    href="https://buymeacoffee.com/jogoapp"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-yellow-400 transition-colors inline-flex items-center gap-1"
-                  >
-                    <Coffee size={14} />
-                    Buy Us a Coffee
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-white font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm">
-                <li><Link to="/policy" className="text-gray-400 hover:text-emerald-400 transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="text-gray-400 hover:text-emerald-400 transition-colors">Terms of Service</Link></li>
-                <li><Link to="/media" className="text-gray-400 hover:text-emerald-400 transition-colors">Media Kit</Link></li>
-                <li><Link to="/delete-account" className="text-gray-400 hover:text-emerald-400 transition-colors">Delete Account</Link></li>
-                <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 transition-colors">Support</Link></li>
-              </ul>
+            <div className="flex flex-col sm:items-end gap-4">
+              <AppStoreBtn />
+              <div className="text-white/25 text-xs">Android coming soon</div>
             </div>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-            <p>&copy; {new Date().getFullYear()} Jogo. All rights reserved. Built with ⚽ for players.</p>
-            <div className="flex items-center gap-2">
-              <span>Made with</span>
-              <span className="text-emerald-400 animate-pulse-glow">❤️</span>
-              <span>by the Jogo team</span>
-            </div>
+          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/35 mb-10">
+            <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
+            <Link to="/media" className="hover:text-white transition-colors">Media</Link>
+            <Link to="/feedback" className="hover:text-white transition-colors">Feedback</Link>
+            <Link to="/support" className="hover:text-white transition-colors">Support</Link>
+            <Link to="/policy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <Link to="/delete-account" className="hover:text-white transition-colors">Delete Account</Link>
+            <a href="https://buymeacoffee.com/jogoapp" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-1">
+              <Coffee size={13} /> Support Us
+            </a>
+          </nav>
+
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-white/[0.06] text-xs text-white/25">
+            <p>© {new Date().getFullYear()} Jogo. All rights reserved.</p>
+            <p>Pioneered in New Jersey by players, for players.</p>
           </div>
         </div>
       </footer>
+
+      {/* Bottom padding so sticky CTA doesn't overlap content on mobile */}
+      <div className="h-24 md:hidden" />
     </div>
   );
 }
