@@ -14,7 +14,7 @@ import screenTwo from './assets/two.png';
 import screenThree from './assets/three.png';
 import screenFour from './assets/four.png';
 import soccerBg from './assets/soccer.jpeg';
-import founderPhoto from './assets/israchris.jpeg';
+import founderPhoto from './assets/Team.jpeg';
 
 const APP_STORE_URL =
   'https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244';
@@ -612,7 +612,7 @@ export default function App() {
                     src={founderPhoto}
                     alt="Christopher and a friend after a Jogo game with the NYC skyline"
                     className="w-full h-full object-cover"
-                    style={{ objectPosition: 'center 65%' }}
+                    style={{ objectPosition: 'center 35%' }}
                   />
                   {/* Gradient fade into card body */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-transparent" />
@@ -626,8 +626,6 @@ export default function App() {
                 <div className="p-7 sm:p-12">
                   <div className="flex flex-wrap items-center gap-2 mb-5">
                     <span className="text-xs font-bold text-white/35 tracking-widest uppercase">The Pioneers</span>
-                    <span className="text-white/15">·</span>
-                    <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-3 py-0.5">🇺🇸 Army Veteran</span>
                   </div>
 
                   <h2 className="text-2xl sm:text-4xl font-black leading-tight mb-6">
@@ -650,8 +648,7 @@ export default function App() {
                       game near you and lets you join in one tap.
                     </p>
                     <p className="text-white/85 font-semibold">
-                      That's an actual Jogo game behind us. Jersey City. NYC skyline.
-                      This is what we built it for.
+                      We do this for the game we love.
                     </p>
                   </div>
 
@@ -659,7 +656,7 @@ export default function App() {
                     <p className="text-white/30 text-xs mb-4 uppercase tracking-widest font-semibold">The Pioneers</p>
                     <div className="flex flex-wrap gap-4">
                       {[
-                        { initials: 'CV', name: 'Christopher', note: 'Army Veteran', grad: 'from-emerald-500 to-teal-500' },
+                        { initials: 'CV', name: 'Christopher', note: null, grad: 'from-emerald-500 to-teal-500' },
                         { initials: 'IS', name: 'Israel',      note: null,           grad: 'from-blue-500 to-cyan-500' },
                         { initials: 'AD', name: 'Adriana',     note: null,           grad: 'from-purple-500 to-pink-500' },
                         { initials: 'JM', name: 'Jimmy',       note: null,           grad: 'from-orange-500 to-red-500' },
