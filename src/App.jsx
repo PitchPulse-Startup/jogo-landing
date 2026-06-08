@@ -625,35 +625,33 @@ export default function App() {
                 {/* Text body */}
                 <div className="p-7 sm:p-12">
                   <div className="flex flex-wrap items-center gap-2 mb-5">
-                    <span className="text-xs font-bold text-white/35 tracking-widest uppercase">The Pioneers</span>
+                    <span className="text-xs font-bold text-white/35 tracking-widest uppercase">Built by Players</span>
                   </div>
 
                   <h2 className="text-2xl sm:text-4xl font-black leading-tight mb-6">
-                    We played soccer across the world.<br />
-                    <span className="g-text">Then came home and couldn't find a game.</span>
+                    Pickup soccer should be easy to find.<br />
+                    <span className="g-text">So we built Jogo.</span>
                   </h2>
 
                   <div className="text-white/60 text-sm sm:text-base leading-relaxed max-w-2xl space-y-3">
                     <p>
-                      Serving in the Army took me all over the world. Every country, every base —
-                      I could always find a pickup game. Didn't matter if I didn't speak the language.
-                      Soccer is universal. You just show up and play.
+                      Growing up in Jersey, we knew there were games happening everywhere — parks,
+                      turf fields, school yards — but finding them was always random.
                     </p>
                     <p>
-                      When I got back to Jersey, that wasn't the case. No way to know where the
-                      games were. No app. No platform. Just hoping someone texted you.
+                      You had to know someone, be in the right group chat, or hope a friend texted you.
                     </p>
                     <p>
-                      The team and I built Jogo to fix that — a free app that shows you every pickup
-                      game near you and lets you join in one tap.
+                      Jogo fixes that. Now you can open the app, see games near you, join in seconds,
+                      and play with people who love the game too.
                     </p>
                     <p className="text-white/85 font-semibold">
-                      We do this for the game we love.
+                      Built in Jersey. Made for every player.
                     </p>
                   </div>
 
                   <div className="mt-8 pt-6 border-t border-white/[0.07]">
-                    <p className="text-white/30 text-xs mb-4 uppercase tracking-widest font-semibold">The Pioneers</p>
+                    <p className="text-white/30 text-xs mb-4 uppercase tracking-widest font-semibold">Built by Players</p>
                     <div className="flex flex-wrap gap-4">
                       {[
                         { initials: 'CV', name: 'Christopher', note: null, grad: 'from-emerald-500 to-teal-500' },
