@@ -12,6 +12,7 @@ import Feedback from './Feedback.jsx'
 import DeleteAccount from './DeleteAccount.jsx'
 import Support from './Support.jsx'
 import EmailVerified from './EmailVerified.jsx'
+import AuthAction from './AuthAction.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -32,6 +33,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/delete-account" element={<DeleteAccount onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/support" element={<Support onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/email-verified" element={<EmailVerified />} />
+        <Route path="/auth-action" element={<AuthAction />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
