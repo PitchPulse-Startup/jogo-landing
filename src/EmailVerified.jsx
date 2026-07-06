@@ -91,15 +91,17 @@ export default function EmailVerified() {
             margin: 0,
             fontFamily: "'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif",
             fontWeight: 900, color: '#F7F6F1',
-            fontSize: 58, lineHeight: 0.95, letterSpacing: -1,
+            fontSize: 58, lineHeight: 1.05, letterSpacing: -1,
           }}>
-            WELCOME TO THE{' '}
-            <img
-              src="/verified/photos/jogo-green.png"
-              alt="jogo"
-              style={{ height: 74, width: 'auto', verticalAlign: 'middle', margin: '0 10px 4px' }}
-            />
-            {' '}MOVEMENT
+            <span style={{ display: 'block' }}>
+              WELCOME TO THE{' '}
+              <img
+                src="/verified/photos/jogo-green.png"
+                alt="jogo"
+                style={{ height: 62, width: 'auto', verticalAlign: 'middle', margin: '0 6px 4px' }}
+              />
+            </span>
+            <span style={{ display: 'block' }}>MOVEMENT</span>
           </h1>
           <p style={{
             margin: '14px auto 0', color: '#c9cabf', fontWeight: 500,
