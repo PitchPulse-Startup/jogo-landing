@@ -17,7 +17,12 @@ export default function EmailVerified() {
   useEffect(() => {
     const stage = document.getElementById('verified-stage');
     function fit() {
-      const s = Math.min(window.innerWidth, window.innerHeight) / 1080;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      // Portrait (mobile): scale to ~90% of screen height so the design fills the screen.
+      // Side overflow is clipped by the container's overflow:hidden.
+      // Landscape / desktop: fit within the smaller dimension as before.
+      const s = h > w ? (h * 0.9) / 1080 : Math.min(w, h) / 1080;
       stage.style.transform = `scale(${s})`;
     }
     fit();
