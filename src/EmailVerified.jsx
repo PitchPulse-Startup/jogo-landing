@@ -87,22 +87,24 @@ export default function EmailVerified() {
           textAlign: 'center', padding: '44px 48px',
           background: 'linear-gradient(to top, #0E0F0D 58%, rgba(14,15,13,0.85) 78%, rgba(14,15,13,0) 100%)',
         }}>
-          <h1 style={{
-            margin: 0,
-            fontFamily: "'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif",
-            fontWeight: 900, color: '#F7F6F1',
-            fontSize: 58, lineHeight: 1.05, letterSpacing: -1,
-          }}>
-            <span style={{ display: 'block' }}>
-              WELCOME TO THE{' '}
+          <div style={{ margin: 0, lineHeight: 1.1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+              <span style={{
+                fontFamily: "'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                fontWeight: 900, fontSize: 50, color: '#F7F6F1', letterSpacing: -1, whiteSpace: 'nowrap',
+              }}>WELCOME TO THE</span>
               <img
                 src="/verified/photos/jogo-green.png"
                 alt="jogo"
-                style={{ height: 62, width: 'auto', verticalAlign: 'middle', margin: '0 6px 4px' }}
+                style={{ height: 56, width: 'auto', flexShrink: 0, marginBottom: 4 }}
               />
-            </span>
-            <span style={{ display: 'block' }}>MOVEMENT</span>
-          </h1>
+            </div>
+            <div style={{
+              fontFamily: "'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+              fontWeight: 900, fontSize: 50, color: '#F7F6F1', letterSpacing: -1,
+              textAlign: 'center',
+            }}>MOVEMENT</div>
+          </div>
           <p style={{
             margin: '14px auto 0', color: '#c9cabf', fontWeight: 500,
             fontSize: 22, lineHeight: 1.35, maxWidth: 640,
