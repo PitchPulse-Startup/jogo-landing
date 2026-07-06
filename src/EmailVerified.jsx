@@ -19,10 +19,11 @@ export default function EmailVerified() {
     function fit() {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      // Portrait (mobile): scale to ~90% of screen height so the design fills the screen.
-      // Side overflow is clipped by the container's overflow:hidden.
+      // Portrait (mobile): scale to fill screen height so the collage is large.
+      // The stage is 1080×1080 and the collage photos are centered horizontally,
+      // so only the outermost photo edges overflow; everything important stays visible.
       // Landscape / desktop: fit within the smaller dimension as before.
-      const s = h > w ? (h * 0.9) / 1080 : Math.min(w, h) / 1080;
+      const s = h > w ? h / 1080 : Math.min(w, h) / 1080;
       stage.style.transform = `scale(${s})`;
     }
     fit();
