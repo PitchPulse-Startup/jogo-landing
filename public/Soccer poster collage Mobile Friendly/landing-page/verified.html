@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Welcome to the JOGO movement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: #0E0F0D;
+    font-family: 'Archivo', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .frame {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: #0E0F0D;
+    overflow: hidden;
+  }
+
+  /* ---- Header: logo centered, EST top-right (never clipped) ---- */
+  header {
+    position: relative;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 3.2vw, 40px) clamp(16px, 3vw, 48px);
+  }
+  header .logo {
+    width: clamp(68px, 13vw, 101px);
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,0.4));
+  }
+  header .est {
+    position: absolute;
+    right: clamp(16px, 3vw, 48px);
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 700;
+    font-size: clamp(10px, 2vw, 15px);
+    letter-spacing: 3px;
+    color: #B6F03C;
+    white-space: nowrap;
+  }
+
+  /* ---- Collage: auto-fit to the middle area, never clipped ---- */
+  .stage-wrap {
+    flex: 1 1 auto;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .collage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1080px;
+    height: 1080px;
+    transform-origin: center center;
+    /* transform set by fit() */
+  }
+  .pic {
+    position: absolute;
+    display: block;
+    object-fit: cover;
+    border: 5px solid #B6F03C;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+  }
+
+  /* ---- Caption: normal flow, readable everywhere ---- */
+  .caption {
+    flex: none;
+    text-align: center;
+    padding: clamp(18px, 3vw, 40px) clamp(20px, 4vw, 48px) clamp(26px, 4vw, 48px);
+    background: linear-gradient(to top, #0E0F0D 70%, rgba(14,15,13,0) 100%);
+  }
+  .caption h1 {
+    margin: 0;
+    font-family: 'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 900;
+    color: #F7F6F1;
+    font-size: clamp(26px, 6.4vw, 58px);
+    line-height: 0.98;
+    letter-spacing: -1px;
+  }
+  .caption h1 img {
+    height: clamp(34px, 8vw, 74px);
+    width: auto;
+    vertical-align: middle;
+    margin: 0 clamp(6px, 1.4vw, 10px) 4px;
+  }
+  .caption p {
+    margin: clamp(10px, 1.6vw, 16px) auto 0;
+    color: #c9cabf;
+    font-weight: 500;
+    font-size: clamp(15px, 3.4vw, 22px);
+    line-height: 1.4;
+    max-width: 640px;
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <header>
+      <img class="logo" src="uploads/newIcon-final.png" alt="JOGO">
+      <div class="est">EST. 2026</div>
+    </header>
+
+    <div class="stage-wrap">
+      <div class="collage" id="collage">
+        <img class="pic" src="photos/web/pic2.jpg"  style="width:520px; height:388px; left:540px; top:452px; transform:translate(-50%,-50%) rotate(-3deg);  z-index:2;">
+        <img class="pic" src="photos/web/pic1.jpg"  style="width:472px; height:407px; left:378px; top:384px; transform:translate(-50%,-50%) rotate(-9deg);  z-index:4;">
+        <img class="pic" src="photos/web/pic9.jpg"  style="width:460px; height:345px; left:698px; top:416px; transform:translate(-50%,-50%) rotate(8deg);   z-index:3;">
+        <img class="pic" src="photos/web/pic6.jpg"  style="width:270px; height:385px; left:298px; top:332px; transform:translate(-50%,-50%) rotate(-14deg); z-index:5;">
+        <img class="pic" src="photos/web/pic4.jpg"  style="width:262px; height:372px; left:566px; top:328px; transform:translate(-50%,-50%) rotate(3deg);   z-index:6;">
+        <img class="pic" src="photos/web/pic7.jpg"  style="width:274px; height:390px; left:766px; top:312px; transform:translate(-50%,-50%) rotate(12deg);  z-index:6;">
+        <img class="pic" src="photos/web/pic10.jpg" style="width:440px; height:330px; left:566px; top:634px; transform:translate(-50%,-50%) rotate(-5deg);  z-index:7;">
+        <img class="pic" src="photos/web/pic3.jpg"  style="width:300px; height:428px; left:344px; top:594px; transform:translate(-50%,-50%) rotate(-8deg);  z-index:8;">
+        <img class="pic" src="photos/web/pic5.jpg"  style="width:282px; height:402px; left:498px; top:576px; transform:translate(-50%,-50%) rotate(4deg);   z-index:10;">
+        <img class="pic" src="photos/web/pic8.jpg"  style="width:288px; height:388px; left:726px; top:626px; transform:translate(-50%,-50%) rotate(9deg);   z-index:9;">
+      </div>
+    </div>
+
+    <div class="caption">
+      <h1>WELCOME TO THE <img src="photos/jogo-green.png" alt="jogo"> MOVEMENT</h1>
+      <p>You can return to the JOGO app and start creating your profile.</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var collage = document.getElementById('collage');
+      var wrap = collage.parentElement;
+      // Intrinsic cluster bounds within the 1080x1080 collage box (measured).
+      var CX = 531, CY = 466, CW = 837, CH = 747;
+      function fit() {
+        var availW = wrap.clientWidth  * 0.96;
+        var availH = wrap.clientHeight * 0.96;
+        var s = Math.min(availW / CW, availH / CH);
+        // Offset so the cluster center (not the box center) lands in the middle.
+        var dx = 540 - CX; // px in collage space
+        var dy = 540 - CY;
+        collage.style.transform =
+          'translate(calc(-50% + ' + (dx * s) + 'px), calc(-50% + ' + (dy * s) + 'px)) scale(' + s + ')';
+      }
+      fit();
+      requestAnimationFrame(fit);
+      window.addEventListener('load', fit);
+      window.addEventListener('resize', fit);
+      window.addEventListener('orientationchange', fit);
+      if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fit); }
+    })();
+  </script>
+</body>
+</html>
