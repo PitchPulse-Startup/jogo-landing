@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/invite/:path*",
+      "destination": "https://jogo-web-two.vercel.app/invite/:path*"
+    },
+    {
       "source": "/app/:path*",
       "destination": "https://jogo-web-two.vercel.app/:path*"
     },
@@ -13,7 +17,7 @@
       "destination": "https://jogo-web-two.vercel.app/assets/:path*"
     },
     {
-      "source": "/((?!app/).*)",
+      "source": "/((?!app/|invite/).*)",
       "destination": "/index.html"
     }
   ]
