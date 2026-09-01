@@ -526,8 +526,8 @@ export default function App() {
         {/* ── TICKER ────────────────────────────────────────────────── */}
         <Marquee
           items={[
-            'Jersey City', 'Hoboken', 'Newark', 'New York City', 'Elizabeth',
-            'Brooklyn', 'Union City', 'Weehawken', 'and more every week',
+            'New Jersey', 'New York', 'California', 'Texas', 'Florida',
+            'Illinois', 'Pennsylvania', 'Missouri', 'and more every week',
           ]}
         />
 
@@ -537,7 +537,7 @@ export default function App() {
             <Reveal>
               <div className="grid grid-cols-3 gap-3 sm:gap-12 text-center">
                 {[
-                  { value: '2,000+', label: 'Players' },
+                  { value: '4,000+', label: 'Players' },
                   { value: '100+', label: 'Games Created' },
                   { value: '100%', label: 'Free' },
                 ].map((s, i) => (
