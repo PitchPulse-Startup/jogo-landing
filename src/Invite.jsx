@@ -9,9 +9,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { motion } from 'framer-motion';
 import { db } from './firebase';
 import { Users } from 'lucide-react';
-import jogoLogo from './assets/jogo-logo2.png';
+import appIcon from './assets/jogo-app-icon.png';
 
 const APP_STORE_URL =
   'https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244';
@@ -105,7 +106,24 @@ export default function Invite() {
 
   return (
     <div className="min-h-screen bg-[#EDEEF1] text-[#111111] font-sans antialiased flex flex-col relative overflow-hidden">
-      {/* dot-grid texture + soft glow behind the header, matching the rest of the site */}
+      <style>{`
+        @keyframes invite-drift {
+          0%   { transform: translate(0,0) scale(1); }
+          33%  { transform: translate(30px,-24px) scale(1.12); }
+          66%  { transform: translate(-24px,20px) scale(0.92); }
+          100% { transform: translate(0,0) scale(1); }
+        }
+        .invite-blob { animation: invite-drift 11s ease-in-out infinite; }
+        .invite-blob-2 { animation-delay: -3.5s; }
+        .invite-blob-3 { animation-delay: -7s; }
+        @keyframes invite-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        .invite-icon-float { animation: invite-float 3.2s ease-in-out infinite; }
+      `}</style>
+
+      {/* dot-grid texture + drifting color glow, matching the rest of the site */}
       <div
         className="absolute inset-0 pointer-events-none opacity-60"
         style={{
@@ -113,23 +131,58 @@ export default function Invite() {
           backgroundSize: '22px 22px',
         }}
       />
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[560px] h-[560px] bg-emerald-300/20 rounded-full filter blur-[120px]" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="invite-blob absolute top-[-15%] left-1/2 -translate-x-1/2 w-[560px] h-[560px] bg-emerald-300/25 rounded-full filter blur-[120px]" />
+        <div className="invite-blob invite-blob-2 absolute top-[10%] left-[-10%] w-[340px] h-[340px] bg-teal-300/20 rounded-full filter blur-[100px]" />
+        <div className="invite-blob invite-blob-3 absolute top-[5%] right-[-10%] w-[340px] h-[340px] bg-emerald-400/20 rounded-full filter blur-[100px]" />
       </div>
 
-      <header className="relative py-8 flex justify-center">
-        <img src={jogoLogo} alt="Jogo" className="h-8 w-auto" />
-      </header>
-
-      <main className="relative flex-1 flex items-start justify-center px-4 pb-16">
+      <main className="relative flex-1 flex items-start justify-center px-4 pt-12 pb-16">
         <div className="w-full max-w-md">
-          {ref && (
-            <p className="text-center text-[#6b7280] mb-5">
-              <strong className="text-[#111111]">{ref}</strong> invited you to play
-            </p>
-          )}
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col items-center mb-6"
+          >
+            <div className="invite-icon-float">
+              <img
+                src={appIcon}
+                alt="Jogo"
+                className="w-20 h-20 rounded-[22px] shadow-lg shadow-emerald-900/20 border border-white/60"
+              />
+            </div>
+          </motion.div>
 
-          <div className="bg-white border border-[#DDE1E5] rounded-3xl shadow-md overflow-hidden mb-7">
+          {ref ? (
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="text-center text-2xl font-black mb-1.5 leading-tight"
+            >
+              <span className="text-emerald-600">{ref}</span> invited you to play ⚽
+            </motion.h1>
+          ) : (
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="text-center text-2xl font-black mb-1.5 leading-tight"
+            >
+              You're invited to play ⚽
+            </motion.h1>
+          )}
+          <p className="text-center text-[#6b7280] text-sm mb-6">
+            Grab your spot before it's gone.
+          </p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className="bg-white border border-[#DDE1E5] rounded-3xl shadow-md overflow-hidden mb-7"
+          >
             {loading ? (
               <div className="flex justify-center py-20">
                 <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
@@ -207,20 +260,25 @@ export default function Invite() {
                 </p>
               </div>
             )}
-          </div>
+          </motion.div>
 
-          <a
+          <motion.a
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.97 }}
             href={APP_STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] active:scale-[0.98] text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-black/15"
+            className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-4 rounded-2xl shadow-lg shadow-black/15"
           >
             <AppleLogo />
             <span className="text-left leading-tight">
               <span className="block text-[10px] font-normal text-white/60">Download on the</span>
               <span className="block text-lg font-bold">App Store</span>
             </span>
-          </a>
+          </motion.a>
           <p className="text-center text-xs text-[#9CA3AF] mt-3">
             Free to join. Find games near you in seconds.
           </p>
