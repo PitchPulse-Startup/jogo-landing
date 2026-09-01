@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { Users } from 'lucide-react';
 import jogoLogo from './assets/jogo-logo2.png';
@@ -32,6 +32,7 @@ export default function Invite() {
 
   const [loading, setLoading] = useState(true);
   const [game, setGame] = useState(null);
+  const [fieldPhoto, setFieldPhoto] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,20 +59,60 @@ export default function Invite() {
     return () => { cancelled = true; };
   }, [gameId]);
 
+  // The game document only ever stores a copy of the field's own imageUrl
+  // (almost never set) — real field photos live in a separate `field-photos`
+  // collection, keyed by fieldId, the same place the app's own field picker
+  // pulls them from. That's the piece that was missing before.
+  useEffect(() => {
+    let cancelled = false;
+    if (!game?.fieldId) return;
+
+    (async () => {
+      try {
+        const q = query(
+          collection(db, 'field-photos'),
+          where('fieldId', '==', game.fieldId),
+          orderBy('timestamp', 'desc'),
+          limit(1)
+        );
+        const snap = await getDocs(q);
+        if (cancelled) return;
+        setFieldPhoto(snap.empty ? null : snap.docs[0].data().imageUrl || null);
+      } catch (e) {
+        console.error('Error loading field photo:', e);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [game?.fieldId]);
+
   // Deliberately not showing the field/address or the date/time here —
   // this page has no signed-in user and no way to know if someone actually
   // joined. Showing exactly where and when would let people just show up
   // without ever downloading the app or getting on the roster. A cover
   // photo and who's already in are enticing without being enough to act on.
-  const playerCount = game?.players?.length ?? game?.currentPlayers ?? null;
+  // Attendee count matches how the app counts capacity everywhere else —
+  // each player row plus however many guests they're bringing, since
+  // maxPlayers accounts for guest slots too. Just using players.length
+  // would undercount any game where people brought +1s.
+  const playerCount = game?.players
+    ? game.players.reduce((total, p) => total + 1 + (p.guests || 0), 0)
+    : game?.currentPlayers ?? null;
   const maxPlayers = game?.maxPlayers ?? null;
-  const coverImage = game?.imageUrl || game?.field?.photos?.[0]?.imageUrl || game?.field?.imageUrl || null;
+  const coverImage = game?.imageUrl || fieldPhoto || game?.field?.imageUrl || null;
   const avatars = (game?.players || []).filter(p => p.photoURL).slice(0, 5);
   const extraCount = Math.max(0, (playerCount || 0) - avatars.length);
 
   return (
     <div className="min-h-screen bg-[#EDEEF1] text-[#111111] font-sans antialiased flex flex-col relative overflow-hidden">
-      {/* soft glow behind the header, matching the rest of the site */}
+      {/* dot-grid texture + soft glow behind the header, matching the rest of the site */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-60"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(17,17,17,0.08) 1px, transparent 1px)',
+          backgroundSize: '22px 22px',
+        }}
+      />
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[560px] h-[560px] bg-emerald-300/20 rounded-full filter blur-[120px]" />
       </div>
@@ -97,15 +138,21 @@ export default function Invite() {
               <>
                 {/* Hero — real cover photo when the game/field has one, otherwise
                     a branded placeholder so it still feels alive either way */}
-                <div className="relative w-full h-48 bg-gradient-to-br from-[#F1F8F3] to-[#e7f5eb] overflow-hidden">
+                <div className="relative w-full h-48 bg-[#F1F8F3] overflow-hidden">
                   {coverImage ? (
                     <img src={coverImage} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[130px] leading-none opacity-[0.09] select-none">⚽</span>
-                      </div>
-                      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600" />
+                      {/* Same placeholder treatment as the app's own game
+                          cards when there's no photo: a left accent bar and
+                          a faint rotated watermark, not a big centered icon. */}
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-600" />
+                      <span
+                        className="absolute select-none pointer-events-none"
+                        style={{ right: -30, bottom: -30, transform: 'rotate(-15deg)', fontSize: 150, opacity: 0.06, lineHeight: 1 }}
+                      >
+                        ⚽
+                      </span>
                     </>
                   )}
                   <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-sm text-emerald-700 text-xs font-bold uppercase tracking-wide rounded-full px-3 py-1 shadow-sm">
