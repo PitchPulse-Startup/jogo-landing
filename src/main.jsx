@@ -26,7 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/blog" element={<Blog onBackToMain={() => window.location.href = '/'} />} />
+        <Route path="/blog/:slug?" element={<Blog onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/media" element={<Media onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/policy" element={<Policy onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/terms" element={<Terms onBackToMain={() => window.location.href = '/'} />} />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight, Coffee, Heart, Search, X } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight, Coffee, Heart, Search, X, Link2, Check as CheckIcon } from 'lucide-react';
 import mapModel1 from './assets/mapmodel1.png';
 import mapModel2 from './assets/mapmodel2.png';
 import mapModel3 from './assets/mapmodel3.png';
@@ -42,13 +43,24 @@ const ReadingProgressBar = () => {
   );
 };
 
+const slugify = (str) =>
+  str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
 const Blog = ({ onBackToMain = () => {} }) => {
+  const navigate = useNavigate();
+  const { slug } = useParams();
+
   const [selectedPost, setSelectedPost] = useState(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    setLinkCopied(false);
   }, [selectedPost]);
 
   const blogPosts = [
@@ -502,13 +514,27 @@ const Blog = ({ onBackToMain = () => {} }) => {
     }
   ];
 
-  const categories = useMemo(
-    () => ['All', ...Array.from(new Set(blogPosts.map((p) => p.category)))],
+  const postsWithSlugs = useMemo(
+    () => blogPosts.map((p) => ({ ...p, slug: slugify(p.title) })),
     []
   );
 
-  const featuredPost = blogPosts[0];
-  const restPosts = blogPosts.slice(1);
+  useEffect(() => {
+    if (slug) {
+      const match = postsWithSlugs.find((p) => p.slug === slug);
+      setSelectedPost(match || null);
+    } else {
+      setSelectedPost(null);
+    }
+  }, [slug, postsWithSlugs]);
+
+  const categories = useMemo(
+    () => ['All', ...Array.from(new Set(postsWithSlugs.map((p) => p.category)))],
+    [postsWithSlugs]
+  );
+
+  const featuredPost = postsWithSlugs[0];
+  const restPosts = postsWithSlugs.slice(1);
 
   const filteredPosts = restPosts.filter((post) => {
     const matchesCategory = activeCategory === 'All' || post.category === activeCategory;
@@ -537,10 +563,30 @@ const Blog = ({ onBackToMain = () => {} }) => {
               <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
               <span className="text-sm font-medium">Back</span>
             </button>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="text-lg font-bold text-[#111111]">Journal</span>
-            </div>
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/blog/${post.slug}`;
+                if (navigator.clipboard?.writeText) {
+                  navigator.clipboard.writeText(url).then(() => {
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  });
+                }
+              }}
+              className="flex items-center gap-2 text-[#111111]/70 hover:text-emerald-600 transition-all duration-300 group bg-white px-4 py-2 rounded-full border border-[#DDE1E5] hover:border-emerald-400/50 shadow-sm"
+            >
+              {linkCopied ? (
+                <>
+                  <CheckIcon className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm font-medium text-emerald-600">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-4 h-4" />
+                  <span className="text-sm font-medium">Copy Link</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -652,7 +698,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
       className={`group cursor-pointer transform transition-all duration-500 hover:-translate-y-1 ${
         large ? '' : ''
       }`}
-      onClick={() => setSelectedPost(post)}
+      onClick={() => navigate(`/blog/${post.slug}`)}
     >
       <div className="relative overflow-hidden rounded-2xl bg-white border border-[#DDE1E5] hover:border-emerald-400/50 shadow-sm hover:shadow-lg transition-all duration-500">
         <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500"></div>
@@ -853,7 +899,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
     <>
       <style>{styles}</style>
       {selectedPost ? (
-        <BlogPost post={selectedPost} onBack={() => setSelectedPost(null)} />
+        <BlogPost post={selectedPost} onBack={() => navigate('/blog')} />
       ) : (
         <BlogHome />
       )}
