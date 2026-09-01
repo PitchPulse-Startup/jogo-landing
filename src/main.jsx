@@ -13,6 +13,7 @@ import DeleteAccount from './DeleteAccount.jsx'
 import Support from './Support.jsx'
 import EmailVerified from './EmailVerified.jsx'
 import AuthAction from './AuthAction.jsx'
+import Invite from './Invite.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -34,6 +35,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/support" element={<Support onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/email-verified" element={<EmailVerified />} />
         <Route path="/auth-action" element={<AuthAction />} />
+        <Route path="/invite/:gameId" element={<Invite />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
