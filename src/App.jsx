@@ -538,7 +538,7 @@ export default function App() {
               <div className="grid grid-cols-3 gap-3 sm:gap-12 text-center">
                 {[
                   { value: '4,000+', label: 'Players' },
-                  { value: '100+', label: 'Games Created' },
+                  { value: '2,000+', label: 'Games Created' },
                   { value: '100%', label: 'Free' },
                 ].map((s, i) => (
                   <div key={i} className="min-w-0">
