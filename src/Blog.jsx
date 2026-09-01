@@ -1,22 +1,146 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight, Coffee, Heart } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight, Coffee, Heart, Search, X } from 'lucide-react';
+import mapModel1 from './assets/mapmodel1.png';
+import mapModel2 from './assets/mapmodel2.png';
+import mapModel3 from './assets/mapmodel3.png';
+import statusImg from './assets/status.png';
+import qr1 from './assets/qr1.png';
+import qr2 from './assets/qr2.png';
+import qr3 from './assets/qr3.png';
+import qr5 from './assets/qr5-web.gif';
 
 const AnimatedBackdrop = () => (
-  <div className="fixed inset-0 z-0 pointer-events-none">
-    <div className="absolute top-[10%] left-[15%] w-96 h-96 bg-emerald-500/20 rounded-full filter blur-[100px] animate-blob"></div>
-    <div className="absolute top-[50%] right-[20%] w-96 h-96 bg-blue-500/20 rounded-full filter blur-[100px] animate-blob animation-delay-2000"></div>
-    <div className="absolute bottom-[20%] left-[30%] w-96 h-96 bg-purple-500/20 rounded-full filter blur-[100px] animate-blob animation-delay-4000"></div>
+  <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div className="absolute top-[8%] left-[10%] w-96 h-96 bg-emerald-300/25 rounded-full filter blur-[110px] animate-blob"></div>
+    <div className="absolute top-[45%] right-[10%] w-96 h-96 bg-emerald-200/30 rounded-full filter blur-[110px] animate-blob animation-delay-2000"></div>
+    <div className="absolute bottom-[10%] left-[25%] w-96 h-96 bg-teal-200/20 rounded-full filter blur-[110px] animate-blob animation-delay-4000"></div>
   </div>
 );
 
+const ReadingProgressBar = () => {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollTop = doc.scrollTop || document.body.scrollTop;
+      const scrollHeight = (doc.scrollHeight || document.body.scrollHeight) - doc.clientHeight;
+      setProgress(scrollHeight > 0 ? Math.min(100, (scrollTop / scrollHeight) * 100) : 0);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <div className="fixed top-0 left-0 right-0 h-1 z-[60] bg-black/5">
+      <div
+        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-[width] duration-150 ease-out"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  );
+};
+
 const Blog = ({ onBackToMain = () => {} }) => {
   const [selectedPost, setSelectedPost] = useState(null);
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [selectedPost]);
 
   const blogPosts = [
+    {
+      id: 8,
+      title: "What's New in Jogo: Arrival Status, Meetup Pins, QR Check-In & More",
+      date: "September 2026",
+      readTime: "2 min read",
+      category: "Release Notes",
+      author: "Team Jogo",
+      excerpt: "A big batch of updates just landed — see who's actually arrived, pin the exact meetup spot, scan in for big games, and get a heads-up before kickoff.",
+      image: null,
+      content: `
+        <p>A big update just shipped. Here's what's new, fast:</p>
+
+        <h3>Know Who's Actually There</h3>
+
+        <p>Mark yourself <strong>Arrived</strong>, <strong>On the Way</strong>, or <strong>Running Late</strong> — everyone in the game sees it live. No more guessing who's actually at the field.</p>
+
+        <p>Shows up automatically <strong>45 minutes before kickoff</strong>, gone once the game ends. No clutter for games that are still days away.</p>
+
+        <div class="not-prose my-10 flex justify-center">
+          <figure class="m-0 max-w-xs w-full">
+            <img src="${statusImg}" alt="Game screen showing the Arrived, OTW, and Running Late status buttons" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <figcaption class="text-center text-sm text-[#6b7280] mt-2">Shows up 45 minutes before kickoff</figcaption>
+          </figure>
+        </div>
+
+        <h3>Pin the Exact Meetup Spot</h3>
+
+        <p>Big park, confusing entrance? Hosts drop a pin on a field diagram — <strong>exactly</strong> where to gather. Everyone sees it the moment they open the app. No more "where are you guys?" texts.</p>
+
+        <div class="not-prose my-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <figure class="m-0">
+            <img src="${mapModel1}" alt="Game screen with the 'Set a meetup point' option" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <figcaption class="text-center text-sm text-[#6b7280] mt-2">1. Tap "Set a meetup point"</figcaption>
+          </figure>
+          <figure class="m-0">
+            <img src="${mapModel2}" alt="Tapping the field diagram to drop a meetup pin" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <figcaption class="text-center text-sm text-[#6b7280] mt-2">2. Drop a pin exactly where to gather</figcaption>
+          </figure>
+          <figure class="m-0">
+            <img src="${mapModel3}" alt="Game screen now showing the meetup pin on the field" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <figcaption class="text-center text-sm text-[#6b7280] mt-2">3. Everyone sees exactly where to meet</figcaption>
+          </figure>
+        </div>
+
+        <h3>QR Check-In for Bigger Games</h3>
+
+        <p>Big crowd? Turn on <strong>QR check-in</strong> when creating a game. Players scan your code and they're instantly marked arrived — verified, not just self-reported.</p>
+
+        <div class="not-prose my-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <figure class="m-0">
+            <img src="${qr1}" alt="Toggling on 'Expecting a lot of players?' when creating a game" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <figcaption class="text-center text-sm text-[#6b7280] mt-2">1. Turn it on when creating your game</figcaption>
+          </figure>
+          <figure class="m-0">
+            <img src="${qr2}" alt="Host's game screen showing the QR Code button" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <figcaption class="text-center text-sm text-[#6b7280] mt-2">2. Open your check-in code at the field</figcaption>
+          </figure>
+          <figure class="m-0">
+            <img src="${qr3}" alt="The check-in QR code the host shows to players" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <figcaption class="text-center text-sm text-[#6b7280] mt-2">3. Players scan it and they're checked in</figcaption>
+          </figure>
+        </div>
+
+        <p>Scanning even comes with a little celebration:</p>
+
+        <div class="not-prose my-10 flex justify-center">
+          <figure class="m-0 max-w-[220px] w-full">
+            <img src="${qr5}" alt="Animation of a player scanning the QR code and getting checked in" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <figcaption class="text-center text-sm text-[#6b7280] mt-2">What players see when they scan</figcaption>
+          </figure>
+        </div>
+
+        <h3>We'll Text You Before Kickoff</h3>
+
+        <p>A couple hours out, we'll send a notification: still coming? Tap <strong>Yes</strong> to lock your spot, <strong>No</strong> to free it up for the waitlist. No app-opening required.</p>
+
+        <h3>Teams Balance Themselves</h3>
+
+        <p>No more "pick a team" prompt nobody answers. You're auto-placed on whichever side needs players — balanced, no one left unassigned. Switch anytime if you want to play with a friend.</p>
+
+        <h3>Plus the Small Stuff</h3>
+
+        <p>Clearer buttons, less menu-digging, a handful of bugs squashed.</p>
+
+        <p>All of this came from watching how you actually play. Keep the feedback coming — see you on the field. ⚽</p>
+
+        <p><strong>— The Jogo Team</strong></p>
+      `,
+    },
     {
       id: 7,
       title: "We're Almost There – App Store & Play Store Launch Is Coming!",
@@ -236,13 +360,13 @@ const Blog = ({ onBackToMain = () => {} }) => {
       excerpt: "Due to overwhelming requests from our community, we're excited to announce that early access signups are open once again. Your feedback has been incredible, and we can't wait to build this amazing product together.",
       content: `
         <p>Hey soccer lovers! ⚽</p>
-        
+
         <p>We have some amazing news to share with you today. Due to the <strong>incredible number of requests</strong> we've been receiving, we're thrilled to announce that <strong>early access is back!</strong></p>
 
         <h3>Why We're Reopening</h3>
-        
+
         <p>Since closing our initial early access program, we've been overwhelmed by the response from the soccer community:</p>
-        
+
         <ul>
           <li>Hundreds of messages asking when signups would reopen</li>
           <li>Amazing feedback from our current early access members</li>
@@ -251,25 +375,25 @@ const Blog = ({ onBackToMain = () => {} }) => {
         </ul>
 
         <h3>Your Feedback Has Been Incredible</h3>
-        
+
         <p>We are absolutely <strong>thrilled</strong> with the feedback we've been receiving from our early access community. Your insights, suggestions, and enthusiasm have been invaluable in shaping Jogo into something truly special.</p>
-        
+
         <p>Every message, every feature request, every story about your local soccer scene helps us build a platform that truly serves the pickup soccer community. We're not just building an app—we're creating something together.</p>
 
         <h3>Building Something Amazing Together</h3>
-        
+
         <p>This reopening isn't just about getting more users. It's about expanding our community of passionate players who want to help us create the ultimate pickup soccer experience.</p>
-        
+
         <p>When you join our early access, you become part of the development process. Your voice matters, your feedback shapes features, and your local soccer knowledge helps us understand what communities really need.</p>
 
         <h3>Ready to Join?</h3>
-        
+
         <p>If you've been waiting for another chance to get early access to Jogo, this is it! We're looking for passionate players who want to help us revolutionize how pickup soccer works.</p>
-        
+
         <p>Head back to our homepage and sign up for early access. Spots are limited, and we expect them to fill up quickly based on the demand we've seen.</p>
-        
+
         <p>Let's build the future of pickup soccer together! 🚀</p>
-        
+
         <p><strong>— The Jogo Team</strong></p>
       `,
       image: null
@@ -283,13 +407,13 @@ const Blog = ({ onBackToMain = () => {} }) => {
       excerpt: "We're in the final stretch! The Jogo team has reached a major milestone with 90% completion of our core features. Here's what we've been working on and what's coming next.",
       content: `
         <p>Hey Jogo community! 👋</p>
-        
+
         <p>We're incredibly excited to share some major updates with you. We're sitting at an impressive <strong>90% completion</strong> of Jogo's core functionality!</p>
 
         <h3>What We've Been Building</h3>
-        
+
         <p>Our team has been working around the clock to bring you the most intuitive pickup soccer platform ever created:</p>
-        
+
         <ul>
           <li><strong>Real-Time Field Tracking:</strong> Live updates on field activity across your area</li>
           <li><strong>Game Discovery:</strong> Perfect game matching based on your preferences</li>
@@ -298,9 +422,9 @@ const Blog = ({ onBackToMain = () => {} }) => {
         </ul>
 
         <h3>What's Coming Next</h3>
-        
+
         <p>We can't reveal everything just yet, but <strong>big news is coming very soon</strong>:</p>
-        
+
         <ul>
           <li>🚀 <strong>Launch timeline:</strong> Release within the next few weeks</li>
           <li>📱 <strong>App stores:</strong> Both iOS and Android simultaneously</li>
@@ -309,13 +433,13 @@ const Blog = ({ onBackToMain = () => {} }) => {
         </ul>
 
         <h3>Thank You</h3>
-        
+
         <p>Your enthusiasm drives everything we do. Knowing that over 100 of you signed up for early access gives us incredible motivation to deliver something truly special.</p>
-        
+
         <p>Keep following us on <a href="https://www.instagram.com/jogo.us/" target="_blank" rel="noopener noreferrer">Instagram</a> and stay subscribed to our newsletter. You won't want to miss what's coming next!</p>
-        
+
         <p>The beautiful game is about to get even more beautiful. ⚽</p>
-        
+
         <p><strong>— The Jogo Team</strong></p>
       `,
       image: null
@@ -329,13 +453,13 @@ const Blog = ({ onBackToMain = () => {} }) => {
       excerpt: "We've officially closed our early access program after receiving an overwhelming response from soccer enthusiasts across the country. Here's what this milestone means for Jogo.",
       content: `
         <p>What an incredible journey it has been! 🎉</p>
-        
+
         <p>Today marks a significant milestone for Jogo as we officially close our early access program. We are blown away by the response—<strong>over 100 passionate players</strong> signed up!</p>
 
         <h3>Amazing Response</h3>
-        
+
         <p>When we launched our early access signup, we hoped to connect with soccer enthusiasts who shared our vision. What we got exceeded our expectations:</p>
-        
+
         <ul>
           <li><strong>100+ signups</strong> in record time</li>
           <li>Players from <strong>25+ cities</strong> across the US</li>
@@ -345,63 +469,77 @@ const Blog = ({ onBackToMain = () => {} }) => {
         </ul>
 
         <h3>What This Means</h3>
-        
+
         <p>This response validates what we believed from the beginning: there's a real need for a platform that makes finding pickup soccer games effortless.</p>
-        
+
         <p>Every signup represents someone who believes soccer brings communities together. Whether you're a weekend warrior or trying to break into the local scene, we heard you loud and clear.</p>
 
         <h3>Thank You</h3>
-        
+
         <p>To everyone who signed up: <strong>THANK YOU.</strong> You're not just early users—you're founding members of what will become the largest pickup soccer community in the country.</p>
-        
+
         <p>To those who shared our posts and spread the word: you've helped us reach players we never could have connected with on our own.</p>
 
         <h3>What's Next?</h3>
-        
+
         <p>Our team is now laser-focused on development. We're working to ensure Jogo exceeds every expectation when it launches.</p>
-        
+
         <p>If you missed early access, you can still:</p>
-        
+
         <ul>
           <li>Join our newsletter for launch notifications</li>
           <li>Follow us on <a href="https://www.instagram.com/jogo.us/" target="_blank" rel="noopener noreferrer">Instagram</a> for updates</li>
           <li>Tell your soccer friends about Jogo!</li>
         </ul>
-        
+
         <p>We're building more than an app—we're creating a movement that will transform pickup soccer in communities across America.</p>
-        
+
         <p>The best is yet to come! ⚽</p>
-        
+
         <p><strong>— The Jogo Team</strong></p>
       `,
       image: null
     }
   ];
 
-  const BlogPost = ({ post, onBack }) => (
-    <div className="min-h-screen bg-black text-white relative overflow-x-hidden">
-      <AnimatedBackdrop />
-      
-      <div className="fixed top-0 left-0 w-full min-h-screen z-0 overflow-hidden bg-gradient-to-br from-slate-900 via-black to-slate-900">
-        <div className="absolute inset-0 w-full h-full bg-black/70"></div>
-        <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/30 rounded-full filter blur-3xl animate-blob"></div>
-        <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/30 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
+  const categories = useMemo(
+    () => ['All', ...Array.from(new Set(blogPosts.map((p) => p.category)))],
+    []
+  );
 
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/20 border-b border-emerald-500/20">
+  const featuredPost = blogPosts[0];
+  const restPosts = blogPosts.slice(1);
+
+  const filteredPosts = restPosts.filter((post) => {
+    const matchesCategory = activeCategory === 'All' || post.category === activeCategory;
+    const q = search.trim().toLowerCase();
+    const matchesSearch =
+      !q || post.title.toLowerCase().includes(q) || post.excerpt.toLowerCase().includes(q);
+    return matchesCategory && matchesSearch;
+  });
+
+  const showFeatured =
+    !search.trim() &&
+    (activeCategory === 'All' || activeCategory === featuredPost.category);
+
+  const BlogPost = ({ post, onBack }) => (
+    <div className="min-h-screen bg-[#EDEEF1] text-[#111111] relative overflow-x-hidden">
+      <ReadingProgressBar />
+      <AnimatedBackdrop />
+
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#EDEEF1]/80 border-b border-[#DDE1E5]">
         <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
-            <button 
+            <button
               onClick={onBack}
-              className="flex items-center gap-2 text-white/80 hover:text-emerald-400 transition-all duration-300 group bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:border-emerald-400/30"
+              className="flex items-center gap-2 text-[#111111]/70 hover:text-emerald-600 transition-all duration-300 group bg-white px-4 py-2 rounded-full border border-[#DDE1E5] hover:border-emerald-400/50 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
               <span className="text-sm font-medium">Back</span>
             </button>
-            <div className="flex items-center gap-3">
-              <span className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                Journal
-              </span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="text-lg font-bold text-[#111111]">Journal</span>
             </div>
           </div>
         </div>
@@ -410,87 +548,84 @@ const Blog = ({ onBackToMain = () => {} }) => {
       <main className="relative z-10 pt-8">
         <article className="container mx-auto px-4 sm:px-6 max-w-4xl">
           <header className="mb-16 text-center">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 backdrop-blur-sm px-6 py-3 rounded-full text-sm font-medium border border-emerald-400/20 mb-8">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                {post.category}
-              </span>
+            <div className="inline-flex items-center gap-2 bg-[#F1F8F3] px-6 py-3 rounded-full text-sm font-medium border border-emerald-400/20 mb-8">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span className="text-emerald-700">{post.category}</span>
             </div>
-            
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-white via-emerald-200 to-blue-200 bg-clip-text text-transparent">
-                {post.title}
-              </span>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight text-[#111111]">
+              {post.title}
             </h1>
-            
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <div className="h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent w-20"></div>
-              <div className="flex items-center gap-4 text-white/50 text-sm">
-                <span>{post.date}</span>
-                <span>•</span>
-                <span>{post.readTime}</span>
-              </div>
-              <div className="h-px bg-gradient-to-r from-transparent via-blue-400/50 to-transparent w-20"></div>
+
+            <div className="flex items-center justify-center gap-4 mb-8 text-[#6b7280] text-sm">
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="w-4 h-4" />
+                {post.date}
+              </span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Clock className="w-4 h-4" />
+                {post.readTime}
+              </span>
             </div>
           </header>
 
           {post.image && (
-            <div className="mb-12 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-              <img 
-                src={post.image} 
+            <div className="mb-12 rounded-2xl overflow-hidden border border-[#DDE1E5] shadow-lg">
+              <img
+                src={post.image}
                 alt={post.title}
                 className="w-full h-auto object-cover"
               />
             </div>
           )}
 
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/5 to-white/2 backdrop-blur-xl border border-white/10 mb-16">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400"></div>
-            
+          <div className="relative overflow-hidden rounded-2xl bg-white border border-[#DDE1E5] shadow-sm mb-16">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></div>
+
             <div className="p-8 sm:p-12 lg:p-16">
-              <div 
-                className="prose prose-xl prose-invert max-w-none 
-                prose-headings:text-white prose-headings:font-bold prose-headings:tracking-tight
-                prose-h3:text-3xl prose-h3:mb-8 prose-h3:mt-12 prose-h3:bg-gradient-to-r prose-h3:from-emerald-400 prose-h3:to-blue-400 prose-h3:bg-clip-text prose-h3:text-transparent
-                prose-p:text-white/80 prose-p:leading-relaxed prose-p:mb-8 prose-p:text-lg
-                prose-ul:text-white/80 prose-ul:mb-8 prose-ul:space-y-3 prose-ul:text-lg
-                prose-li:text-white/80 prose-li:leading-relaxed prose-li:mb-2
-                prose-strong:text-white prose-strong:font-semibold prose-strong:bg-gradient-to-r prose-strong:from-emerald-400 prose-strong:to-blue-400 prose-strong:bg-clip-text prose-strong:text-transparent
-                prose-a:text-emerald-400 prose-a:no-underline prose-a:font-medium hover:prose-a:text-blue-400 prose-a:transition-colors"
+              <div
+                className="prose prose-lg max-w-none
+                prose-headings:text-[#111111] prose-headings:font-bold prose-headings:tracking-tight
+                prose-h3:text-2xl prose-h3:mb-6 prose-h3:mt-12 prose-h3:pl-4 prose-h3:border-l-4 prose-h3:border-emerald-500
+                prose-h4:text-lg prose-h4:mb-3 prose-h4:mt-8 prose-h4:text-emerald-700
+                prose-p:text-[#374151] prose-p:leading-relaxed prose-p:mb-6 prose-p:text-lg
+                prose-ul:text-[#374151] prose-ul:mb-6 prose-ul:space-y-2 prose-ul:text-lg
+                prose-li:text-[#374151] prose-li:leading-relaxed
+                prose-strong:text-[#111111] prose-strong:font-semibold
+                prose-a:text-emerald-600 prose-a:no-underline prose-a:font-medium hover:prose-a:text-emerald-500 prose-a:transition-colors"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </div>
-            
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5 opacity-50 pointer-events-none"></div>
           </div>
 
           {/* Support Section */}
-          <div className="mb-16 rounded-2xl overflow-hidden border border-emerald-500/20 bg-gradient-to-br from-white/5 to-white/2 backdrop-blur-xl">
+          <div className="mb-16 rounded-2xl overflow-hidden border border-[#DDE1E5] bg-white shadow-sm">
             <div className="p-8 sm:p-10 text-center">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 mb-6">
-                <Coffee className="text-yellow-400" size={28} />
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-50 border border-amber-200 mb-6">
+                <Coffee className="text-amber-500" size={28} />
               </div>
 
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold text-[#111111] mb-4">
                 Support the Team
               </h3>
 
-              <p className="text-white/70 leading-relaxed mb-6 max-w-2xl mx-auto">
-                Jogo is built by a <strong className="text-white">small team of 4 passionate soccer enthusiasts</strong> working hard to keep this platform <strong className="text-emerald-400">100% free</strong>. If you appreciate what we're building, consider buying us a coffee to help us continue this journey.
+              <p className="text-[#6b7280] leading-relaxed mb-6 max-w-2xl mx-auto">
+                Jogo is built by a <strong className="text-[#111111]">small team of 4 passionate soccer enthusiasts</strong> working hard to keep this platform <strong className="text-emerald-600">100% free</strong>. If you appreciate what we're building, consider buying us a coffee to help us continue this journey.
               </p>
 
               <a
                 href="https://buymeacoffee.com/jogoapp"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/30"
+                className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-[#111111] font-bold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-md"
               >
                 <Coffee size={20} />
                 Buy Us a Coffee
               </a>
 
-              <div className="mt-6 pt-6 border-t border-white/10">
-                <div className="flex items-center justify-center gap-2 text-white/50 text-sm">
+              <div className="mt-6 pt-6 border-t border-[#DDE1E5]">
+                <div className="flex items-center justify-center gap-2 text-[#6b7280] text-sm">
                   <Heart size={14} className="text-red-400" />
                   <span>Every contribution helps us build better features</span>
                 </div>
@@ -501,12 +636,10 @@ const Blog = ({ onBackToMain = () => {} }) => {
           <div className="text-center pb-16">
             <button
               onClick={onBack}
-              className="group relative bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-bold px-10 py-5 rounded-full hover:from-emerald-400 hover:to-blue-400 transition-all duration-300 transform hover:scale-105 shadow-xl shadow-emerald-500/30"
+              className="group relative bg-emerald-600 text-white font-bold px-10 py-5 rounded-full hover:bg-emerald-500 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-emerald-600/20"
             >
               <ArrowLeft className="inline mr-3 w-5 h-5 transition-transform group-hover:-translate-x-1" />
               <span>Back to Stories</span>
-
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/50 to-blue-400/50 rounded-full blur-xl opacity-0 group-hover:opacity-75 transition-opacity duration-300 -z-10"></div>
             </button>
           </div>
         </article>
@@ -514,30 +647,75 @@ const Blog = ({ onBackToMain = () => {} }) => {
     </div>
   );
 
-  const BlogHome = () => (
-    <div className="min-h-screen bg-black text-white relative overflow-x-hidden">
-      <AnimatedBackdrop />
-      
-      <div className="fixed top-0 left-0 w-full min-h-screen z-0 overflow-hidden bg-gradient-to-br from-slate-900 via-black to-slate-900">
-        <div className="absolute inset-0 w-full h-full bg-black/70"></div>
-        <div className="absolute top-[20%] left-[5%] sm:left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-900/30 rounded-full filter blur-3xl animate-blob"></div>
-        <div className="absolute top-[40%] right-[5%] sm:right-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-slate-800/30 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
+  const PostCard = ({ post, index, large = false }) => (
+    <article
+      className={`group cursor-pointer transform transition-all duration-500 hover:-translate-y-1 ${
+        large ? '' : ''
+      }`}
+      onClick={() => setSelectedPost(post)}
+    >
+      <div className="relative overflow-hidden rounded-2xl bg-white border border-[#DDE1E5] hover:border-emerald-400/50 shadow-sm hover:shadow-lg transition-all duration-500">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500"></div>
 
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/20 border-b border-emerald-500/20">
+        {post.image && (
+          <div className={`w-full ${large ? 'h-72' : 'h-56'} overflow-hidden`}>
+            <img
+              src={post.image}
+              alt={post.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
+        )}
+
+        <div className={large ? 'p-8 sm:p-10' : 'p-6 sm:p-8'}>
+          <div className="flex flex-wrap items-center gap-3 mb-5">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F1F8F3] text-emerald-700 text-xs font-semibold uppercase tracking-wide rounded-full border border-emerald-400/20">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+              {post.category}
+            </div>
+            <div className="flex items-center gap-3 text-[#9CA3AF] text-sm">
+              <span>{post.date}</span>
+              <span>•</span>
+              <span>{post.readTime}</span>
+            </div>
+          </div>
+
+          <h2
+            className={`${
+              large ? 'text-2xl sm:text-3xl lg:text-4xl' : 'text-xl sm:text-2xl'
+            } font-bold text-[#111111] mb-3 group-hover:text-emerald-700 transition-colors duration-300 leading-tight`}
+          >
+            {post.title}
+          </h2>
+
+          <p className="text-[#6b7280] leading-relaxed mb-6">{post.excerpt}</p>
+
+          <div className="flex items-center gap-2 text-emerald-600 font-semibold group-hover:gap-3 transition-all duration-300">
+            <span>Read Story</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+
+  const BlogHome = () => (
+    <div className="min-h-screen bg-[#EDEEF1] text-[#111111] relative overflow-x-hidden">
+      <AnimatedBackdrop />
+
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#EDEEF1]/80 border-b border-[#DDE1E5]">
         <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
-            <button 
+            <button
               onClick={onBackToMain}
-              className="flex items-center gap-2 text-white/80 hover:text-emerald-400 transition-all duration-300 group bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:border-emerald-400/30"
+              className="flex items-center gap-2 text-[#111111]/70 hover:text-emerald-600 transition-all duration-300 group bg-white px-4 py-2 rounded-full border border-[#DDE1E5] hover:border-emerald-400/50 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
               <span className="text-sm font-medium">Home</span>
             </button>
-            <div className="flex items-center gap-3">
-              <span className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                Journal
-              </span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="text-lg font-bold text-[#111111]">Journal</span>
             </div>
           </div>
         </div>
@@ -545,118 +723,105 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
       <main className="relative z-10 pt-8">
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 backdrop-blur-sm px-6 py-3 rounded-full text-sm font-medium border border-emerald-400/20 mb-8 animate-fade-in-up">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                Latest Stories
-              </span>
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 bg-[#F1F8F3] px-6 py-3 rounded-full text-sm font-medium border border-emerald-400/20 mb-8 animate-fade-in-up">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span className="text-emerald-700">Latest Stories</span>
             </div>
-            
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-8 animate-fade-in-up animation-delay-200">
-              <span className="bg-gradient-to-r from-white via-emerald-200 to-blue-200 bg-clip-text text-transparent leading-tight">
-                Updates
-              </span>
+
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-6 animate-fade-in-up animation-delay-200 text-[#111111] leading-tight">
+              Updates
             </h1>
-            
-            <div className="flex items-center justify-center gap-4 mb-8 animate-fade-in-up animation-delay-400">
-              <div className="h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent w-20"></div>
-              <div className="text-2xl">⚽</div>
-              <div className="h-px bg-gradient-to-r from-transparent via-blue-400/50 to-transparent w-20"></div>
-            </div>
-            
-            <p className="text-lg text-white/60 max-w-2xl mx-auto animate-fade-in-up animation-delay-600">
-              Behind the scenes with the Jogo team
+
+            <p className="text-lg text-[#6b7280] max-w-2xl mx-auto animate-fade-in-up animation-delay-400">
+              Behind the scenes with the Jogo team — what's new, what's next, and everything in between.
             </p>
           </div>
 
-          <div className="space-y-8 max-w-4xl mx-auto">
-            {blogPosts.map((post, index) => (
-              <article 
-                key={post.id}
-                className="group cursor-pointer transform transition-all duration-500 hover:scale-[1.02]"
-                onClick={() => setSelectedPost(post)}
-              >
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/5 to-white/2 backdrop-blur-xl border border-white/10 hover:border-emerald-400/30 transition-all duration-500">
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400"></div>
-                  
-                  {post.image && (
-                    <div className="w-full h-64 overflow-hidden">
-                      <img 
-                        src={post.image} 
-                        alt={post.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="p-8 sm:p-10">
-                    <div className="flex flex-wrap items-center gap-3 mb-6">
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 text-emerald-400 text-sm font-medium rounded-full border border-emerald-400/20">
-                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
-                        {post.category}
-                      </div>
-                      <div className="flex items-center gap-4 text-white/50 text-sm">
-                        <span>{post.date}</span>
-                        <span>•</span>
-                        <span>{post.readTime}</span>
-                      </div>
-                    </div>
+          {/* Search + Filters */}
+          <div className="max-w-4xl mx-auto mb-12 animate-fade-in-up animation-delay-600">
+            <div className="relative mb-5">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search updates..."
+                className="w-full pl-11 pr-11 py-3 rounded-full bg-white border border-[#DDE1E5] text-[#111111] placeholder:text-[#9CA3AF] focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all shadow-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#111111] transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
-                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 group-hover:bg-gradient-to-r group-hover:from-emerald-400 group-hover:to-blue-400 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-500 leading-tight">
-                      {post.title}
-                    </h2>
-                    
-                    <p className="text-white/70 text-lg leading-relaxed mb-8">
-                      {post.excerpt}
-                    </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-300 ${
+                    activeCategory === cat
+                      ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                      : 'bg-white border-[#DDE1E5] text-[#6b7280] hover:border-emerald-400/50 hover:text-emerald-700'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 text-emerald-400 font-medium group-hover:text-blue-400 transition-colors duration-300">
-                        <span>Read Story</span>
-                        <ArrowRight className="w-5 h-5 transition-all duration-300 group-hover:translate-x-1 group-hover:scale-110" />
-                      </div>
-                      
-                      <div className="text-6xl font-black text-white/5 group-hover:text-emerald-400/10 transition-colors duration-500">
-                        0{blogPosts.length - index}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                </div>
-              </article>
+          {/* Featured latest post */}
+          {showFeatured && (
+            <div className="max-w-4xl mx-auto mb-10">
+              <div className="flex items-center gap-2 mb-4 text-sm font-semibold text-emerald-700 uppercase tracking-wide">
+                <Sparkles className="w-4 h-4" />
+                Latest
+              </div>
+              <PostCard post={featuredPost} index={0} large />
+            </div>
+          )}
+
+          {/* Post grid */}
+          <div className="grid gap-6 sm:grid-cols-2 max-w-4xl mx-auto">
+            {filteredPosts.map((post, index) => (
+              <PostCard key={post.id} post={post} index={index + 1} />
             ))}
           </div>
 
+          {filteredPosts.length === 0 && !showFeatured && (
+            <div className="text-center py-16 text-[#9CA3AF]">
+              No stories match "{search}" yet.
+            </div>
+          )}
+
           <div className="mt-20 mb-16">
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-500/10 via-blue-500/5 to-purple-500/10 backdrop-blur-xl border border-emerald-400/20 text-center max-w-3xl mx-auto">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-400/20 to-transparent rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-400/20 to-transparent rounded-full blur-2xl"></div>
-              
+            <div className="relative overflow-hidden rounded-3xl bg-white border border-[#DDE1E5] shadow-sm text-center max-w-3xl mx-auto">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-200/40 to-transparent rounded-full blur-3xl"></div>
+
               <div className="relative p-8 sm:p-12">
-                <div className="mb-8">
-                  <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/25">
-                    <Users className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-3xl sm:text-4xl font-bold mb-4">
-                    <span className="bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                      Stay in the Loop
-                    </span>
-                  </h3>
-                  <p className="text-white/70 text-lg leading-relaxed max-w-xl mx-auto">
-                    Get the latest updates, behind-the-scenes content, and be first to know when we launch.
-                  </p>
+                <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-600/25">
+                  <Users className="w-8 h-8 text-white" />
                 </div>
-                
+                <h3 className="text-3xl sm:text-4xl font-bold mb-4 text-[#111111]">
+                  Stay in the Loop
+                </h3>
+                <p className="text-[#6b7280] text-lg leading-relaxed max-w-xl mx-auto mb-8">
+                  Get the latest updates, behind-the-scenes content, and be first to know when we launch something new.
+                </p>
+
                 <button
                   onClick={onBackToMain}
-                  className="group relative bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-bold px-8 py-4 rounded-full hover:from-emerald-400 hover:to-blue-400 transition-all duration-300 transform hover:scale-105 shadow-xl shadow-emerald-500/30"
+                  className="group relative bg-emerald-600 text-white font-bold px-8 py-4 rounded-full hover:bg-emerald-500 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-emerald-600/20"
                 >
                   <span>Join the Journey</span>
                   <ArrowRight className="inline ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-                  
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/50 to-blue-400/50 rounded-full blur-xl opacity-0 group-hover:opacity-75 transition-opacity duration-300 -z-10"></div>
                 </button>
               </div>
             </div>
@@ -670,38 +835,18 @@ const Blog = ({ onBackToMain = () => {} }) => {
     @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
     @keyframes blob { 0% { transform: translate(0px, 0px) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0px, 0px) scale(1); } }
-    .animate-blob { animation: blob 7s infinite; }
+    .animate-blob { animation: blob 9s infinite; }
     .animation-delay-200 { animation-delay: 0.2s; opacity: 0; }
     .animation-delay-400 { animation-delay: 0.4s; opacity: 0; }
     .animation-delay-600 { animation-delay: 0.6s; opacity: 0; }
-    .animation-delay-2000 { animation-delay: -2s; }
-    .animation-delay-4000 { animation-delay: -4s; }
-    
-    .glass-card {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .hover-lift {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .hover-lift:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    }
-    .prose p {
-      margin-bottom: 1.5rem !important;
-    }
-    .prose h3 {
-      margin-top: 2rem !important;
-      margin-bottom: 1rem !important;
-    }
-    .prose ul {
-      margin-bottom: 1.5rem !important;
-    }
-    .prose li {
-      margin-bottom: 0.5rem !important;
-    }
+    .animation-delay-2000 { animation-delay: -3s; }
+    .animation-delay-4000 { animation-delay: -6s; }
+
+    .prose p { margin-bottom: 1.5rem !important; }
+    .prose h3 { margin-top: 2rem !important; margin-bottom: 1rem !important; }
+    .prose h4 { margin-top: 1.5rem !important; margin-bottom: 0.5rem !important; }
+    .prose ul { margin-bottom: 1.5rem !important; }
+    .prose li { margin-bottom: 0.5rem !important; }
   `;
 
   return (
