@@ -841,7 +841,7 @@ export default function App() {
                   </div>
 
                   <h2 className="text-2xl sm:text-4xl font-black leading-tight mb-6 text-[#111111]">
-                    Pickup soccer should be easy to find.<br />
+                    Pickup soccer should be free and easy.<br />
                     <span className="g-text">So we built Jogo.</span>
                   </h2>
 
