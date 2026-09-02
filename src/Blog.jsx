@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, Users, Sparkles, ArrowRight, Coffee, Heart, Search, X, Link2, Check as CheckIcon } from 'lucide-react';
-import mapModel1 from './assets/mapmodel1.png';
-import mapModel2 from './assets/mapmodel2.png';
-import mapModel3 from './assets/mapmodel3.png';
-import statusImg from './assets/status.png';
-import qr1 from './assets/qr1.png';
-import qr2 from './assets/qr2.png';
-import qr3 from './assets/qr3.png';
-import qr5 from './assets/qr5-web.gif';
+import mapModel1 from './assets/mapmodel1.webp';
+import mapModel2 from './assets/mapmodel2.webp';
+import mapModel3 from './assets/mapmodel3.webp';
+import statusImg from './assets/status.webp';
+import qr1 from './assets/qr1.webp';
+import qr2 from './assets/qr2.webp';
+import qr3 from './assets/qr3.webp';
+import qr5 from './assets/qr5-web.webp';
 
 const AnimatedBackdrop = () => (
   <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
@@ -84,7 +84,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
         <div class="not-prose my-10 flex justify-center">
           <figure class="m-0 max-w-xs w-full">
-            <img src="${statusImg}" alt="Game screen showing the Arrived, OTW, and Running Late status buttons" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <img src="${statusImg}" alt="Game screen showing the Arrived, OTW, and Running Late status buttons" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" loading="lazy" decoding="async" />
             <figcaption class="text-center text-sm text-[#6b7280] mt-2">Shows up 45 minutes before kickoff</figcaption>
           </figure>
         </div>
@@ -95,15 +95,15 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
         <div class="not-prose my-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <figure class="m-0">
-            <img src="${mapModel1}" alt="Game screen with the 'Set a meetup point' option" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <img src="${mapModel1}" alt="Game screen with the 'Set a meetup point' option" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" loading="lazy" decoding="async" />
             <figcaption class="text-center text-sm text-[#6b7280] mt-2">1. Tap "Set a meetup point"</figcaption>
           </figure>
           <figure class="m-0">
-            <img src="${mapModel2}" alt="Tapping the field diagram to drop a meetup pin" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <img src="${mapModel2}" alt="Tapping the field diagram to drop a meetup pin" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" loading="lazy" decoding="async" />
             <figcaption class="text-center text-sm text-[#6b7280] mt-2">2. Drop a pin exactly where to gather</figcaption>
           </figure>
           <figure class="m-0">
-            <img src="${mapModel3}" alt="Game screen now showing the meetup pin on the field" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <img src="${mapModel3}" alt="Game screen now showing the meetup pin on the field" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" loading="lazy" decoding="async" />
             <figcaption class="text-center text-sm text-[#6b7280] mt-2">3. Everyone sees exactly where to meet</figcaption>
           </figure>
         </div>
@@ -114,15 +114,15 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
         <div class="not-prose my-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <figure class="m-0">
-            <img src="${qr1}" alt="Toggling on 'Expecting a lot of players?' when creating a game" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <img src="${qr1}" alt="Toggling on 'Expecting a lot of players?' when creating a game" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" loading="lazy" decoding="async" />
             <figcaption class="text-center text-sm text-[#6b7280] mt-2">1. Turn it on when creating your game</figcaption>
           </figure>
           <figure class="m-0">
-            <img src="${qr2}" alt="Host's game screen showing the QR Code button" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <img src="${qr2}" alt="Host's game screen showing the QR Code button" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" loading="lazy" decoding="async" />
             <figcaption class="text-center text-sm text-[#6b7280] mt-2">2. Open your check-in code at the field</figcaption>
           </figure>
           <figure class="m-0">
-            <img src="${qr3}" alt="The check-in QR code the host shows to players" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <img src="${qr3}" alt="The check-in QR code the host shows to players" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" loading="lazy" decoding="async" />
             <figcaption class="text-center text-sm text-[#6b7280] mt-2">3. Players scan it and they're checked in</figcaption>
           </figure>
         </div>
@@ -131,7 +131,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
 
         <div class="not-prose my-10 flex justify-center">
           <figure class="m-0 max-w-[220px] w-full">
-            <img src="${qr5}" alt="Animation of a player scanning the QR code and getting checked in" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" />
+            <img src="${qr5}" alt="Animation of a player scanning the QR code and getting checked in" class="w-full rounded-2xl border border-[#DDE1E5] shadow-sm" loading="lazy" decoding="async" />
             <figcaption class="text-center text-sm text-[#6b7280] mt-2">What players see when they scan</figcaption>
           </figure>
         </div>
