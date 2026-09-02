@@ -206,7 +206,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
       category: "Dev Update",
       author: "Team Jogo",
       excerpt: "Welcome to our first Dev Update! We're working hard to bring you cross-platform compatibility, Squad Chat, and exciting new features. Here's what's happening behind the scenes.",
-      image: "/images/JOGOupdate01.png",
+      image: "/images/JOGOupdate01.webp",
       content: `
         <p>Happy New Year, Jogo community! 🎉</p>
 
@@ -260,7 +260,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
       category: "Community Update",
       author: "Team Jogo",
       excerpt: "On October 26, 2025, Jogo made history by hosting its first-ever official tournament with 29 passionate players and 4 competitive teams in an epic Real Madrid vs. Barcelona themed showdown.",
-      image: "/images/jogo-tournament.jpg",
+      image: "/images/jogo-tournament.webp",
       content: `
         <p>On October 26, 2025, Jogo made history by hosting its <strong>first-ever official tournament</strong>, marking a major milestone for our growing soccer community.</p>
 
@@ -622,6 +622,7 @@ const Blog = ({ onBackToMain = () => {} }) => {
                 src={post.image}
                 alt={post.title}
                 className="w-full h-auto object-cover"
+                decoding="async"
               />
             </div>
           )}
@@ -709,6 +710,8 @@ const Blog = ({ onBackToMain = () => {} }) => {
               src={post.image}
               alt={post.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         )}
