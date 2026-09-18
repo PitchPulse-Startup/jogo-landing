@@ -14,6 +14,7 @@ import Support from './Support.jsx'
 import EmailVerified from './EmailVerified.jsx'
 import AuthAction from './AuthAction.jsx'
 import Invite from './Invite.jsx'
+import Crew from './Crew.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/email-verified" element={<EmailVerified />} />
         <Route path="/auth-action" element={<AuthAction />} />
         <Route path="/invite/:gameId" element={<Invite />} />
+        <Route path="/crew/:squadId" element={<Crew />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-three/drei": "^10.6.1",
     "@react-three/fiber": "^9.3.0",
+    "@vercel/og": "^1.0.2",
     "firebase": "^11.9.1",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.523.0",

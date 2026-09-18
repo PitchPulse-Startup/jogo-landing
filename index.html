@@ -2,14 +2,96 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    
-    <link rel="icon" type="image/png" href="" />
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Jogo - Stop Searching. Start Playing.</title>
-    
-    <meta name="description" content="Jogo shows you live field traffic, connects you to pickup games, and builds your local soccer community. Launching soon!" />
+    <!-- Was a bare empty href before (favicon never actually rendered from
+         static HTML — main.jsx patched it in via JS at runtime, so a
+         crawler or a slow first paint saw nothing). Set for real here;
+         main.jsx's swap is now just a redundant no-op enhancement, not the
+         only path that ever sets it. -->
+    <link rel="icon" type="image/png" href="/jogo-logo2.png" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.jogous.io/" />
+
+    <!-- Title/description below are what Google actually shows in search
+         results and weighs for ranking. Two rounds of correction here:
+         (1) the original copy said "Launching soon!" even though the app's
+         been live on iOS for a while (App.jsx's own "Now Available on iOS"
+         badge). (2) the first rewrite claimed "live field activity" —
+         not a real feature; the actual real one is a live MAP of nearby
+         pickup games (App.jsx: "See every pickup game near you on a live
+         map"), so that's what this says instead. Never claim a feature
+         search engines or users can then discover doesn't exist — that's
+         worse for trust/SEO than not mentioning it at all.
+         Also deliberately leans on Crews (persistent group chat/polls/
+         games for a regular soccer group) as the differentiator — a real
+         shipped feature competitors in this exact search space (e.g.
+         jogo.team, which positions purely on one-off drop-in RSVPs) don't
+         appear to offer, per their own public homepage copy. -->
+    <title>Jogo – Pickup Soccer Games & Crews Near You</title>
+    <meta name="description" content="Find pickup soccer games near you on a live map, join in one tap, and keep your crew connected with group chat, polls, and recurring games — 100% free on iOS." />
+
+    <!-- Generic fallback link-preview tags for every OTHER route on this
+         site — /crew/:id and /invite/:id get their own per-crew/per-game
+         versions of these from api/crew-page.js and api/invite-page.js
+         (server-rendered, since a crawler never runs this SPA's JS to see
+         anything more specific than what's already in this file). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jogo" />
+    <meta property="og:title" content="Jogo – Pickup Soccer Games & Crews Near You" />
+    <meta property="og:description" content="Find pickup soccer games near you on a live map, join in one tap, and keep your crew connected with group chat, polls, and recurring games — 100% free on iOS." />
+    <meta property="og:image" content="https://www.jogous.io/jogo-app-icon.png" />
+    <meta property="og:url" content="https://www.jogous.io" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Jogo – Pickup Soccer Games & Crews Near You" />
+    <meta name="twitter:description" content="Find pickup soccer games near you on a live map, join in one tap, and keep your crew connected with group chat, polls, and recurring games — 100% free on iOS." />
+    <meta name="twitter:image" content="https://www.jogous.io/jogo-app-icon.png" />
+
+    <!-- Structured data — helps Google understand this is a real app +
+         company (entity understanding), not just a page of text. No
+         aggregateRating block: don't fabricate a rating that doesn't
+         exist, that's a Google Rich Results spam violation that can get a
+         site penalized. `sameAs` links the real, live social profiles
+         (found in Media.jsx/Blog.jsx) to this entity — the strongest
+         on-page signal available here for Google to keep "Jogo" (this
+         site/app/brand) distinct from any similarly-named competitor,
+         short of off-page work like backlinks this pass can't touch. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MobileApplication",
+      "name": "Jogo",
+      "applicationCategory": "SportsApplication",
+      "operatingSystem": "iOS",
+      "url": "https://www.jogous.io",
+      "description": "Find pickup soccer games near you on a live map, join in one tap, and keep your crew connected with group chat, polls, and recurring games. Free to join.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://www.instagram.com/jogo.us/",
+        "https://x.com/jogo.us",
+        "https://www.tiktok.com/@jogo.us"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Jogo",
+      "url": "https://www.jogous.io",
+      "logo": "https://www.jogous.io/jogo-app-icon.png",
+      "sameAs": [
+        "https://www.instagram.com/jogo.us/",
+        "https://x.com/jogo.us",
+        "https://www.tiktok.com/@jogo.us"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
