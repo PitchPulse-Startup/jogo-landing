@@ -1,16 +1,22 @@
 // src/Crew.jsx — landing page for shared crew links (jogous.io/crew/:squadId)
 //
 // Same job as Invite.jsx, aimed at a crew instead of a single game: whoever
-// taps a crew invite link lands here first, sees just enough to be worth
-// downloading the app for, then "Download on the App Store" is the loud,
-// obvious thing to do. Continuing on the web is still there, just small.
+// taps a crew invite link lands here first. Two ways forward: download the
+// app, or — new — join right here on the web via the "Join Crew" flow below,
+// which signs them into the same Firebase project the app uses and adds
+// them to the crew directly, private or public.
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { motion } from 'framer-motion';
-import { db } from './firebase';
-import { Users, MapPin, Lock } from 'lucide-react';
+import { doc, getDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from 'firebase/auth';
+import { motion, AnimatePresence } from 'framer-motion';
+import { db, auth } from './firebase';
+import { Users, MapPin, Lock, Check, Loader2 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
 
 const APP_STORE_URL =
@@ -25,6 +31,214 @@ function AppleLogo({ size = 22 }) {
   );
 }
 
+// Firebase auth error codes -> copy that matches what a person actually did.
+function authErrorMessage(error, mode) {
+  switch (error?.code) {
+    case 'auth/email-already-in-use':
+      return 'That email already has a Jogo account — try logging in instead.';
+    case 'auth/invalid-email':
+      return 'That email address doesn’t look right.';
+    case 'auth/weak-password':
+      return 'Password should be at least 8 characters with a mix of letters and numbers.';
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Incorrect email or password.';
+    case 'auth/user-not-found':
+      return 'No Jogo account with that email — try signing up instead.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please wait a moment and try again.';
+    default:
+      return mode === 'signup'
+        ? 'Could not create your account. Please try again.'
+        : 'Could not log you in. Please try again.';
+  }
+}
+
+// Mirrors screens/LoginScreen.js's password rule so a web signup can't
+// create an account the app itself would call "weak".
+function isStrongEnoughPassword(pw) {
+  return pw.length >= 8 && /[a-z]/.test(pw) && /[A-Z]/.test(pw) && /[0-9]/.test(pw);
+}
+
+// Renders inline under the "Join Crew" button. Handles both the auth step
+// and the actual Firestore membership write, without ever needing to read
+// the crew doc first — squads/{squadId}'s update rule already lets any
+// signed-in user add their own uid to `members`, independent of the crew's
+// visibility, so this works for private crews too (the invite link itself
+// is treated as delegated permission from whoever shared it).
+function JoinCrewButton({ squadId, knownMemberIds }) {
+  const [user, setUser] = useState(() => auth.currentUser);
+  const [mode, setMode] = useState(null); // null | 'login' | 'signup'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [joinState, setJoinState] = useState('idle'); // idle | joining | joined | error
+
+  useEffect(() => onAuthStateChanged(auth, setUser), []);
+
+  useEffect(() => {
+    if (!user) return;
+    const localKey = `jogo_joined_${squadId}_${user.uid}`;
+    if (knownMemberIds?.includes(user.uid) || localStorage.getItem(localKey)) {
+      setJoinState('joined');
+    }
+  }, [user, squadId, knownMemberIds]);
+
+  const runJoin = async (uid) => {
+    setJoinState('joining');
+    try {
+      await updateDoc(doc(db, 'squads', squadId), {
+        members: arrayUnion(uid),
+        memberCount: increment(1),
+      });
+      try { localStorage.setItem(`jogo_joined_${squadId}_${uid}`, '1'); } catch {}
+      setJoinState('joined');
+    } catch (e) {
+      console.error('Error joining crew:', e);
+      setJoinState('error');
+    }
+  };
+
+  const handlePrimaryClick = () => {
+    if (joinState === 'joined' || joinState === 'joining') return;
+    if (user) {
+      runJoin(user.uid);
+    } else {
+      setMode('login');
+    }
+  };
+
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+
+    if (!email.trim() || !password) {
+      setAuthError('Enter your email and password.');
+      return;
+    }
+    if (mode === 'signup' && !isStrongEnoughPassword(password)) {
+      setAuthError('Password should be at least 8 characters with uppercase, lowercase, and a number.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const credential = mode === 'signup'
+        ? await createUserWithEmailAndPassword(auth, email.trim(), password)
+        : await signInWithEmailAndPassword(auth, email.trim(), password);
+      setMode(null);
+      await runJoin(credential.user.uid);
+    } catch (err) {
+      setAuthError(authErrorMessage(err, mode));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (joinState === 'joined') {
+    return (
+      <div className="flex items-center justify-center gap-2 w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-4 rounded-2xl">
+        <Check size={18} strokeWidth={3} />
+        You're in this crew
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <motion.button
+        type="button"
+        whileHover={{ scale: 1.03, y: -2 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={handlePrimaryClick}
+        disabled={joinState === 'joining'}
+        className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-900/20 disabled:opacity-70"
+      >
+        {joinState === 'joining' ? (
+          <>
+            <Loader2 size={18} className="animate-spin" />
+            Joining...
+          </>
+        ) : (
+          'Join Crew'
+        )}
+      </motion.button>
+
+      {joinState === 'error' && (
+        <p className="text-center text-xs text-red-500 mt-2">
+          Something went wrong joining the crew. Please try again.
+        </p>
+      )}
+
+      <AnimatePresence>
+        {mode && (
+          <motion.form
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            onSubmit={handleAuthSubmit}
+            className="overflow-hidden"
+          >
+            <div className="bg-white border border-[#DDE1E5] rounded-2xl p-4 mt-3">
+              <div className="flex bg-[#F1F2F4] rounded-xl p-1 mb-3">
+                <button
+                  type="button"
+                  onClick={() => { setMode('login'); setAuthError(''); }}
+                  className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors ${mode === 'login' ? 'bg-white shadow-sm text-[#111111]' : 'text-[#6b7280]'}`}
+                >
+                  Log In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMode('signup'); setAuthError(''); }}
+                  className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors ${mode === 'signup' ? 'bg-white shadow-sm text-[#111111]' : 'text-[#6b7280]'}`}
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              <input
+                type="email"
+                autoComplete="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-[#F7F8F9] border border-[#E5E7EB] rounded-xl px-4 py-3 text-sm mb-2 outline-none focus:border-emerald-400"
+              />
+              <input
+                type="password"
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-[#F7F8F9] border border-[#E5E7EB] rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-400"
+              />
+
+              {authError && (
+                <p className="text-xs text-red-500 mt-2">{authError}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-3 rounded-xl mt-3 disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {submitting && <Loader2 size={16} className="animate-spin" />}
+                {mode === 'signup' ? 'Create Account & Join' : 'Log In & Join'}
+              </button>
+              <p className="text-center text-[11px] text-[#9CA3AF] mt-2">
+                Same account as the Jogo app.
+              </p>
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function Crew() {
   const { squadId } = useParams();
   const [searchParams] = useSearchParams();
@@ -35,7 +249,9 @@ export default function Crew() {
   // A private crew's doc read is refused by Firestore rules (by design —
   // only public crews are readable without being a signed-in member). That
   // refusal is itself informative: it means the link is for a real, private
-  // crew, not simply a wrong/deleted id, so the fallback card can say so.
+  // crew, not simply a wrong/deleted id, so the fallback card can say so —
+  // and still offer the Join Crew flow, which writes blind and doesn't
+  // need read access at all.
   const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
@@ -71,6 +287,7 @@ export default function Crew() {
 
   const memberCount = crew?.memberCount || crew?.members?.length || null;
   const coverImage = crew?.bannerUrl || crew?.imageUrl || null;
+  const canJoin = !loading && squadId && (crew || isPrivate);
 
   return (
     <div className="min-h-screen bg-[#EDEEF1] text-[#111111] font-sans antialiased flex flex-col relative overflow-hidden">
@@ -206,10 +423,6 @@ export default function Crew() {
                       {crew.description}
                     </p>
                   )}
-
-                  <p className="text-[#9CA3AF] text-xs mt-4">
-                    Open the app to see games, chat, and join the crew.
-                  </p>
                 </div>
               </>
             ) : (
@@ -222,16 +435,27 @@ export default function Crew() {
                   )}
                 </div>
                 <h1 className="text-xl font-bold mb-2">
-                  {isPrivate ? "This crew is private" : "You're invited to a crew"}
+                  {isPrivate ? "You're invited to a private crew" : "You're invited to a crew"}
                 </h1>
                 <p className="text-[#6b7280] text-sm leading-relaxed">
                   {isPrivate
-                    ? 'Ask whoever sent you this link to add you directly, or open Jogo to see crews near you.'
+                    ? 'This crew keeps its details private, but your invite link still works — join below to see everything.'
                     : 'This crew may no longer exist. Open Jogo to see what’s happening near you.'}
                 </p>
               </div>
             )}
           </motion.div>
+
+          {canJoin && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              className="mb-4"
+            >
+              <JoinCrewButton squadId={squadId} knownMemberIds={crew?.members} />
+            </motion.div>
+          )}
 
           <motion.a
             initial={{ opacity: 0, y: 16 }}
@@ -246,7 +470,9 @@ export default function Crew() {
           >
             <AppleLogo />
             <span className="text-left leading-tight">
-              <span className="block text-[10px] font-normal text-white/60">Download on the</span>
+              <span className="block text-[10px] font-normal text-white/60">
+                {canJoin ? 'Then chat with your crew on the' : 'Download on the'}
+              </span>
               <span className="block text-lg font-bold">App Store</span>
             </span>
           </motion.a>

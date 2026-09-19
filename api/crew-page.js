@@ -17,10 +17,30 @@ import { SHARE_PAGE_STYLES, USERS_ICON_SVG, PIN_ICON_SVG, APPLE_LOGO_SVG, APP_ST
 
 export const config = { runtime: 'edge' };
 
+// Link-preview crawlers never run JS, so they need this static, per-crew-meta
+// HTML. A real visitor needs the opposite: the actual React SPA (src/Crew.jsx),
+// since that's where the interactive "Join Crew" flow (sign in + Firestore
+// write) lives — plain HTML can't do that. Route by User-Agent: known
+// crawlers get this file's static markup as before, everyone else gets the
+// real app's index.html fetched from this same deployment and returned
+// as-is, so the URL bar never changes and React Router mounts Crew.jsx.
+const CRAWLER_UA_PATTERN =
+  /facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|Discordbot|TelegramBot|LinkedInBot|Googlebot|bingbot|Applebot|SkypeUriPreview|vkShare|W3C_Validator|redditbot|Pinterest|YandexBot|DuckDuckBot|Iframely|Embedly|Bufferbot|Google-InspectionTool/i;
+
 export default async function handler(request) {
   const url = new URL(request.url);
   const squadId = url.searchParams.get('squadId') || '';
   const ref = url.searchParams.get('ref') || '';
+  const userAgent = request.headers.get('user-agent') || '';
+
+  if (!CRAWLER_UA_PATTERN.test(userAgent)) {
+    const appShell = await fetch(new URL('/index.html', url.origin));
+    const html = await appShell.text();
+    return new Response(html, {
+      status: appShell.status,
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    });
+  }
 
   const result = await fetchPublicDoc('squads', squadId);
   const crew = result.status === 'ok' ? result.data : null;
