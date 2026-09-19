@@ -246,13 +246,6 @@ export default function Crew() {
 
   const [loading, setLoading] = useState(true);
   const [crew, setCrew] = useState(null);
-  // A private crew's doc read is refused by Firestore rules (by design —
-  // only public crews are readable without being a signed-in member). That
-  // refusal is itself informative: it means the link is for a real, private
-  // crew, not simply a wrong/deleted id, so the fallback card can say so —
-  // and still offer the Join Crew flow, which writes blind and doesn't
-  // need read access at all.
-  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -265,16 +258,20 @@ export default function Crew() {
 
     (async () => {
       try {
-        const snap = await getDoc(doc(db, 'squads', squadId));
+        // crewPreviews mirrors just the safe public subset of every crew
+        // (name/banner/description/homeArea/memberCount/visibility — never
+        // the members list), kept in sync by the onCrewPreviewSync Cloud
+        // Function regardless of the crew's own visibility. Readable by
+        // anyone, so a private crew's real name/photo still shows here —
+        // same idea as a Discord/Slack invite link surfacing a private
+        // server's identity. Joining itself (see JoinCrewButton) still
+        // never touches this doc; it writes straight to squads/{squadId}.
+        const snap = await getDoc(doc(db, 'crewPreviews', squadId));
         if (cancelled) return;
         setCrew(snap.exists() ? { id: snap.id, ...snap.data() } : null);
       } catch (e) {
         if (!cancelled) {
-          if (e.code === 'permission-denied') {
-            setIsPrivate(true);
-          } else {
-            console.error('Error loading invited crew:', e);
-          }
+          console.error('Error loading invited crew:', e);
           setCrew(null);
         }
       } finally {
@@ -285,9 +282,10 @@ export default function Crew() {
     return () => { cancelled = true; };
   }, [squadId]);
 
-  const memberCount = crew?.memberCount || crew?.members?.length || null;
+  const memberCount = crew?.memberCount ?? null;
   const coverImage = crew?.bannerUrl || crew?.imageUrl || null;
-  const canJoin = !loading && squadId && (crew || isPrivate);
+  const isPrivate = crew?.visibility === 'private';
+  const canJoin = !loading && squadId && crew;
 
   return (
     <div className="min-h-screen bg-[#EDEEF1] text-[#111111] font-sans antialiased flex flex-col relative overflow-hidden">
@@ -394,7 +392,8 @@ export default function Crew() {
                     </>
                   )}
                   <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-sm text-emerald-700 text-xs font-bold uppercase tracking-wide rounded-full px-3 py-1 shadow-sm">
-                    Crew
+                    {isPrivate && <Lock size={11} strokeWidth={3} />}
+                    {isPrivate ? 'Private Crew' : 'Crew'}
                   </div>
                 </div>
 
@@ -428,19 +427,11 @@ export default function Crew() {
             ) : (
               <div className="text-center py-14 px-7">
                 <div className="w-12 h-12 rounded-2xl bg-[#F1F8F3] flex items-center justify-center mx-auto mb-4">
-                  {isPrivate ? (
-                    <Lock size={20} className="text-emerald-700" />
-                  ) : (
-                    <span className="text-2xl">⚽</span>
-                  )}
+                  <span className="text-2xl">⚽</span>
                 </div>
-                <h1 className="text-xl font-bold mb-2">
-                  {isPrivate ? "You're invited to a private crew" : "You're invited to a crew"}
-                </h1>
+                <h1 className="text-xl font-bold mb-2">You're invited to a crew</h1>
                 <p className="text-[#6b7280] text-sm leading-relaxed">
-                  {isPrivate
-                    ? 'This crew keeps its details private, but your invite link still works — join below to see everything.'
-                    : 'This crew may no longer exist. Open Jogo to see what’s happening near you.'}
+                  This crew may no longer exist. Open Jogo to see what’s happening near you.
                 </p>
               </div>
             )}
@@ -453,7 +444,7 @@ export default function Crew() {
               transition={{ duration: 0.55, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
               className="mb-4"
             >
-              <JoinCrewButton squadId={squadId} knownMemberIds={crew?.members} />
+              <JoinCrewButton squadId={squadId} />
             </motion.div>
           )}
 

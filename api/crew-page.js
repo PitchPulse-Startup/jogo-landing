@@ -42,23 +42,27 @@ export default async function handler(request) {
     });
   }
 
-  const result = await fetchPublicDoc('squads', squadId);
+  // crewPreviews mirrors just the safe/public subset of every crew (name,
+  // banner, description, homeArea, memberCount, visibility — never the
+  // members list), kept in sync by the onCrewPreviewSync Cloud Function
+  // regardless of the crew's own visibility. Readable by anyone, so a
+  // shared link shows the real name/photo even for a private crew — same
+  // as a Discord/Slack invite link surfacing a private server's identity.
+  const result = await fetchPublicDoc('crewPreviews', squadId);
   const crew = result.status === 'ok' ? result.data : null;
-  const isPrivate = result.status === 'private';
+  const isPrivate = crew?.visibility === 'private';
 
   const name = crew?.name || 'A Jogo Crew';
-  const memberCount = crew?.memberCount ?? (Array.isArray(crew?.members) ? crew.members.length : null);
+  const memberCount = crew?.memberCount ?? null;
   const homeArea = crew?.homeArea || '';
   const description = crew?.description || '';
   const coverImage = crew?.bannerUrl || crew?.imageUrl || '';
   const icon = crew?.icon || '⚽';
 
-  const pageTitle = crew ? `${name} · Jogo Crew` : (isPrivate ? 'Private Crew · Jogo' : 'Crew Invite · Jogo');
+  const pageTitle = crew ? `${name} · Jogo Crew` : 'Crew Invite · Jogo';
   const ogDescription = crew
     ? `${memberCount != null ? `${memberCount} member${memberCount === 1 ? '' : 's'}` : 'Join'}${homeArea ? ` · ${homeArea}` : ''} — join on Jogo`
-    : (isPrivate
-      ? 'This crew is private. Open Jogo to see crews near you.'
-      : "This crew may no longer exist. Open Jogo to see what's happening near you.");
+    : "This crew may no longer exist. Open Jogo to see what's happening near you.";
   const ogImage = `${SITE_URL}/api/og/crew?squadId=${encodeURIComponent(squadId)}`;
   const canonicalUrl = `${SITE_URL}/crew/${encodeURIComponent(squadId)}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`;
 
@@ -71,7 +75,7 @@ export default async function handler(request) {
   const bodyMarkup = crew ? `
     <div class="hero">
       ${heroMarkup}
-      <div class="hero-badge">Crew</div>
+      <div class="hero-badge">${isPrivate ? '🔒 Private Crew' : 'Crew'}</div>
     </div>
     <div class="card-body">
       <h1 class="entity-name">${escapeHtml(name)}</h1>
@@ -82,11 +86,9 @@ export default async function handler(request) {
     </div>
   ` : `
     <div class="empty-state">
-      <div class="empty-icon">${isPrivate ? '🔒' : '⚽'}</div>
-      <h1 class="empty-title">${isPrivate ? 'This crew is private' : "You're invited to a crew"}</h1>
-      <p class="empty-text">${isPrivate
-        ? 'Ask whoever sent you this link to add you directly, or open Jogo to see crews near you.'
-        : "This crew may no longer exist. Open Jogo to see what's happening near you."}</p>
+      <div class="empty-icon">⚽</div>
+      <h1 class="empty-title">You're invited to a crew</h1>
+      <p class="empty-text">This crew may no longer exist. Open Jogo to see what's happening near you.</p>
     </div>
   `;
 

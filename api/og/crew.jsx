@@ -14,13 +14,17 @@ export default async function handler(request) {
   const url = new URL(request.url);
   const squadId = url.searchParams.get('squadId') || '';
 
-  const result = await fetchPublicDoc('squads', squadId);
+  // crewPreviews holds only the safe public subset (never the members
+  // list) and is readable regardless of the crew's own visibility, so a
+  // private crew's OG image still shows its real name/banner.
+  const result = await fetchPublicDoc('crewPreviews', squadId);
   const crew = result.status === 'ok' ? result.data : null;
 
   const name = crew?.name || 'A Jogo Crew';
-  const memberCount = crew?.memberCount ?? (Array.isArray(crew?.members) ? crew.members.length : null);
+  const memberCount = crew?.memberCount ?? null;
   const homeArea = crew?.homeArea || '';
   const coverImage = crew?.bannerUrl || crew?.imageUrl || null;
+  const isPrivate = crew?.visibility === 'private';
 
   return new ImageResponse(
     (
@@ -80,7 +84,7 @@ export default async function handler(request) {
               color: '#fff', fontSize: 20, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase',
             }}
           >
-            CREW
+            {isPrivate ? '🔒 PRIVATE CREW' : 'CREW'}
           </div>
           <div
             style={{
