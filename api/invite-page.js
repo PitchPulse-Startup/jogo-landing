@@ -11,10 +11,30 @@ import { SHARE_PAGE_STYLES, USERS_ICON_SVG, APPLE_LOGO_SVG, APP_STORE_URL, WEB_A
 
 export const config = { runtime: 'edge' };
 
+// Same split as api/crew-page.js: link-preview crawlers never run JS, so
+// they get this file's static per-game meta HTML. Real visitors need the
+// actual React page (src/Invite.jsx) — that's where the join flow, live
+// roster, and the rest of the design live — so they get the SPA's
+// index.html from this same deployment, URL unchanged, and React Router
+// mounts Invite.jsx. Without this, every human was served the static
+// fallback and never saw the real page.
+const CRAWLER_UA_PATTERN =
+  /facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|Discordbot|TelegramBot|LinkedInBot|Googlebot|bingbot|Applebot|SkypeUriPreview|vkShare|W3C_Validator|redditbot|Pinterest|YandexBot|DuckDuckBot|Iframely|Embedly|Bufferbot|Google-InspectionTool/i;
+
 export default async function handler(request) {
   const url = new URL(request.url);
   const gameId = url.searchParams.get('gameId') || '';
   const ref = url.searchParams.get('ref') || '';
+  const userAgent = request.headers.get('user-agent') || '';
+
+  if (!CRAWLER_UA_PATTERN.test(userAgent)) {
+    const appShell = await fetch(new URL('/index.html', url.origin));
+    const html = await appShell.text();
+    return new Response(html, {
+      status: appShell.status,
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    });
+  }
 
   const result = await fetchPublicDoc('games', gameId);
   const game = result.status === 'ok' ? result.data : null;
