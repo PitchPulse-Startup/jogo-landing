@@ -502,14 +502,12 @@ function CrewProof({ details, memberCount }) {
   );
 }
 
-// Same numbers/places the homepage (App.jsx) already publishes — keep the
-// two in sync rather than inventing separate figures for this page.
+// Same numbers the homepage (App.jsx) already publishes — keep the two in
+// sync rather than inventing separate figures for this page.
 const PROOF_STATS = [
   { value: '4,000+', label: 'Players' },
   { value: '2,000+', label: 'Games created' },
-  { value: '8+', label: 'States' },
 ];
-const STATES = ['NJ', 'NY', 'CA', 'TX', 'FL', 'IL', 'PA', 'MO'];
 
 // What's actually inside a crew in the app (CrewPageScreen's Feed / Games /
 // Chat tabs + push notifications) — nothing here the app doesn't do.
@@ -882,7 +880,7 @@ export default function Crew() {
             <Reveal className="mt-8">
               <div className="relative bg-[#0F1411] rounded-3xl overflow-hidden text-white px-6 pt-7 pb-0 sm:px-8">
                 <div className="absolute -top-24 -right-16 w-72 h-72 bg-emerald-500/25 rounded-full blur-[80px] pointer-events-none" />
-                <div className="relative grid grid-cols-3 gap-2 text-center mb-5">
+                <div className="relative grid grid-cols-2 gap-2 text-center mb-7">
                   {PROOF_STATS.map((s) => (
                     <div key={s.label}>
                       <div className="text-2xl sm:text-3xl font-black bg-gradient-to-br from-white to-emerald-300 bg-clip-text text-transparent">
@@ -890,13 +888,6 @@ export default function Crew() {
                       </div>
                       <div className="text-[11px] text-white/55 mt-0.5">{s.label}</div>
                     </div>
-                  ))}
-                </div>
-                <div className="relative flex flex-wrap justify-center gap-1.5 mb-6">
-                  {STATES.map((st) => (
-                    <span key={st} className="text-[10px] font-bold tracking-wide text-white/70 border border-white/15 rounded-full px-2 py-0.5">
-                      {st}
-                    </span>
                   ))}
                 </div>
 
