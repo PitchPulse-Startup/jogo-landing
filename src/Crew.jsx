@@ -7,7 +7,7 @@
 // joinCrewViaLink Cloud Function. A shared link is the invitation itself,
 // so public (open or request-to-join) and private crews all join instantly.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -88,7 +88,7 @@ const joinCrewViaLink = httpsCallable(functions, 'joinCrewViaLink');
 // Renders inline under the crew card. Handles the auth step and the join
 // itself — the actual membership write happens in the joinCrewViaLink
 // Cloud Function, which works the same for public and private crews.
-function JoinCrewButton({ squadId, crewName }) {
+function JoinCrewButton({ squadId, crewName, isMember, onJoined }) {
   const [user, setUser] = useState(() => auth.currentUser);
   const [mode, setMode] = useState(null); // null | 'login' | 'signup' | 'reset'
   const [name, setName] = useState('');
@@ -102,21 +102,29 @@ function JoinCrewButton({ squadId, crewName }) {
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
-  // Remembered locally so a refresh after joining doesn't show the button again.
+  // Membership comes from the server (getCrewInviteDetails' viewerIsMember),
+  // never from a local "I joined once" flag — that went stale the moment
+  // someone left the crew in the app, and the page kept saying "You're in".
+  // justJoinedRef stops a details fetch that raced the join (and so still
+  // says "not a member") from flipping a fresh join back to the button.
+  const justJoinedRef = useRef(false);
   useEffect(() => {
-    if (!user) return;
-    try {
-      if (localStorage.getItem(`jogo_joined_${squadId}_${user.uid}`)) setJoinState('joined');
-    } catch {}
-  }, [user, squadId]);
+    if (isMember == null) return;
+    setJoinState((prev) => {
+      if (prev === 'joining') return prev;
+      if (isMember) return 'joined';
+      return prev === 'joined' && !justJoinedRef.current ? 'idle' : prev;
+    });
+  }, [isMember]);
 
   const runJoin = async (displayName) => {
     setJoinState('joining');
     setJoinError('');
     try {
       await joinCrewViaLink({ crewId: squadId, displayName: displayName || undefined });
-      try { localStorage.setItem(`jogo_joined_${squadId}_${auth.currentUser?.uid}`, '1'); } catch {}
+      justJoinedRef.current = true;
       setJoinState('joined');
+      onJoined?.();
     } catch (e) {
       console.error('Error joining crew:', e);
       setJoinError(joinErrorMessage(e));
@@ -242,7 +250,7 @@ function JoinCrewButton({ squadId, crewName }) {
           Joining as {user.displayName || user.email} ·{' '}
           <button
             type="button"
-            onClick={() => { signOut(auth); setJoinState('idle'); setJoinError(''); }}
+            onClick={() => { justJoinedRef.current = false; signOut(auth); setJoinState('idle'); setJoinError(''); }}
             className="underline underline-offset-2 hover:text-[#6b7280]"
           >
             Not you?
@@ -575,6 +583,10 @@ export default function Crew() {
   const [loading, setLoading] = useState(true);
   const [crew, setCrew] = useState(null);
   const [details, setDetails] = useState(null);
+  // Who's viewing (undefined until Firebase Auth restores the session) —
+  // details are fetched per viewer so viewerIsMember is about *them*.
+  const [viewerUid, setViewerUid] = useState(undefined);
+  const [detailsVersion, setDetailsVersion] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -613,14 +625,19 @@ export default function Crew() {
 
   // Proof-of-life (owner, faces, games, next game) — loads alongside the
   // preview and simply stays hidden if it fails; the page works without it.
+  useEffect(() => onAuthStateChanged(auth, (u) => setViewerUid(u?.uid ?? null)), []);
+
   useEffect(() => {
-    if (!squadId) return;
+    if (!squadId || viewerUid === undefined) return;
     let cancelled = false;
     getCrewInviteDetails({ crewId: squadId })
-      .then((res) => { if (!cancelled) setDetails(res.data); })
+      .then((res) => { if (!cancelled) setDetails({ ...res.data, forUid: viewerUid }); })
       .catch((e) => console.warn('Crew details unavailable:', e?.message));
     return () => { cancelled = true; };
-  }, [squadId]);
+  }, [squadId, viewerUid, detailsVersion]);
+
+  // null = not known yet for this viewer (don't guess either way).
+  const viewerIsMember = details && details.forUid === viewerUid ? !!details.viewerIsMember : null;
 
   useEffect(() => {
     if (crew?.name) document.title = `Join ${crew.name} · Jogo`;
@@ -810,7 +827,12 @@ export default function Crew() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, delay: 0.2, ease: EASE }}
               >
-                <JoinCrewButton squadId={squadId} crewName={crew?.name} />
+                <JoinCrewButton
+                  squadId={squadId}
+                  crewName={crew?.name}
+                  isMember={viewerIsMember}
+                  onJoined={() => setDetailsVersion((v) => v + 1)}
+                />
                 <div className="flex items-center justify-center gap-4 mt-3 text-[12px] text-[#6b7280]">
                   {['Free to join', 'Takes 30 seconds', 'No credit card'].map((t) => (
                     <span key={t} className="inline-flex items-center gap-1">
