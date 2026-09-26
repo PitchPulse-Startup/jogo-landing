@@ -69,7 +69,7 @@ export default async function handler(request) {
     <div class="card-body">
       <h1 class="entity-name">${escapeHtml(gameTitle)}</h1>
       ${avatarsMarkup}
-      <p class="hint">Open the app to see the field, date, and time — and grab your spot.</p>
+      <p class="hint">Tap the link to grab your spot in seconds.</p>
     </div>
   ` : `
     <div class="empty-state">
