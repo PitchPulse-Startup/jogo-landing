@@ -82,7 +82,7 @@ export default async function handler(request) {
       ${memberCount != null ? `<div class="meta-row">${USERS_ICON_SVG}${memberCount} member${memberCount === 1 ? '' : 's'}</div>` : ''}
       ${homeArea ? `<div class="meta-row">${PIN_ICON_SVG}${escapeHtml(homeArea)}</div>` : ''}
       ${description ? `<p class="entity-desc">${escapeHtml(description)}</p>` : ''}
-      <p class="hint">Open the app to see games, chat, and join the crew.</p>
+      <p class="hint">Tap the link to join the crew in seconds.</p>
     </div>
   ` : `
     <div class="empty-state">

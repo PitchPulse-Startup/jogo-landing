@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getFunctions } from "firebase/functions";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -26,3 +27,9 @@ export const db = getFirestore(app);
 // same email/password auth) — used by Crew.jsx's "Join Crew" flow so
 // someone can accept an invite without leaving the browser.
 export const auth = getAuth(app);
+
+// Crew.jsx's "Join Crew" calls the joinCrewViaLink Cloud Function (jogo-APP
+// functions/index.js) rather than writing squads/{id} directly — it can
+// handle private crews, skips double-joins, blocks kicked members, and
+// notifies the crew's admins.
+export const functions = getFunctions(app);
