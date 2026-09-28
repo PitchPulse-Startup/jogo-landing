@@ -21,6 +21,10 @@
       "destination": "/api/invite-page?gameId=:gameId"
     },
     {
+      "source": "/event/:eventId",
+      "destination": "/api/event-page?eventId=:eventId"
+    },
+    {
       "source": "/((?!app/).*)",
       "destination": "/index.html"
     }

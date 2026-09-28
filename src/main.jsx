@@ -15,6 +15,7 @@ import EmailVerified from './EmailVerified.jsx'
 import AuthAction from './AuthAction.jsx'
 import Invite from './Invite.jsx'
 import Crew from './Crew.jsx'
+import Event from './Event.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/auth-action" element={<AuthAction />} />
         <Route path="/invite/:gameId" element={<Invite />} />
         <Route path="/crew/:squadId" element={<Crew />} />
+        <Route path="/event/:eventId" element={<Event />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
