@@ -6,11 +6,11 @@
 // mirrors the app's own join — a plain event adds you to its participants,
 // a team event puts you on the team with the most open spots.
 //
-// Deliberately NOT the game page's look: games are light and pitch-green;
-// events are a dark "ticket" — the event's own photo as an ambient
+// Light like the rest of Jogo, but deliberately not the game page's look:
+// events are a "ticket" — the event's own photo as a soft ambient
 // backdrop, a poster with a date block, a torn perforation, and a stub with
-// a live countdown. Same visual language as the app's ShareEventModal, so
-// the share and the landing feel like one thing.
+// a live countdown. Same visual language as the app's ShareEventModal and
+// event screens, so the share and the landing feel like one thing.
 //
 // The link IS the invitation: a crew-only event (visibility 'crew') is
 // joinable here exactly like a public one. Paid events (?type=paid, the
@@ -43,7 +43,7 @@ const APP_STORE_URL =
   'https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244';
 const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
-const BG = '#07090A';
+const BG = '#F5F6F8';
 
 const joinEventViaLink = httpsCallable(functions, 'joinEventViaLink');
 
@@ -159,7 +159,7 @@ function Perforation() {
     <div className="relative h-6 flex items-center">
       <span className="absolute -left-3 w-6 h-6 rounded-full" style={{ background: BG }} />
       <span className="absolute -right-3 w-6 h-6 rounded-full" style={{ background: BG }} />
-      <div className="mx-5 w-full border-t-2 border-dashed border-white/10" />
+      <div className="mx-5 w-full border-t-2 border-dashed border-[#DDE1E5]" />
     </div>
   );
 }
@@ -238,7 +238,7 @@ function JoinEvent({ eventId, onResult }) {
     }
   };
 
-  const inputClass = 'w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-[15px] text-white placeholder:text-white/35 outline-none focus:border-lime-400/70 focus:bg-white/[0.09] transition-colors';
+  const inputClass = 'w-full bg-[#F7F8F9] border border-[#E5E7EB] rounded-xl px-4 py-3 text-[15px] text-[#111111] placeholder:text-[#9CA3AF] outline-none focus:border-emerald-400 focus:bg-white transition-colors';
 
   return (
     <div>
@@ -248,21 +248,21 @@ function JoinEvent({ eventId, onResult }) {
         whileTap={{ scale: 0.97 }}
         onClick={handlePrimary}
         disabled={joining}
-        className="ev-glow relative overflow-hidden flex items-center justify-center gap-2 w-full bg-lime-400 hover:bg-lime-300 text-[#07090A] font-black text-[17px] py-4 rounded-2xl disabled:opacity-80"
+        className="ev-glow relative overflow-hidden flex items-center justify-center gap-2 w-full bg-[#111111] hover:bg-[#262626] text-white font-black text-[17px] py-4 rounded-2xl disabled:opacity-80"
       >
-        <span className="ev-shine absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+        <span className="ev-shine absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         {joining ? <><Loader2 size={18} className="animate-spin" /> Saving your spot…</> : <><Ticket size={19} strokeWidth={2.6} /> Claim your spot</>}
       </motion.button>
 
       {user && !mode && (
-        <p className="text-center text-[11px] text-white/40 mt-2.5">
+        <p className="text-center text-[11px] text-[#9CA3AF] mt-2.5">
           Joining as {user.displayName || user.email} ·{' '}
-          <button type="button" onClick={() => signOut(auth)} className="underline underline-offset-2 hover:text-white/70">
+          <button type="button" onClick={() => signOut(auth)} className="underline underline-offset-2 hover:text-[#6b7280]">
             Not you?
           </button>
         </p>
       )}
-      {joinError && <p className="text-center text-xs text-red-400 mt-2">{joinError}</p>}
+      {joinError && <p className="text-center text-xs text-red-500 mt-2">{joinError}</p>}
 
       <AnimatePresence>
         {mode && (
@@ -274,17 +274,17 @@ function JoinEvent({ eventId, onResult }) {
             onSubmit={handleSubmit}
             className="overflow-hidden"
           >
-            <div className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-4 mt-3">
+            <div className="bg-white border border-[#DDE1E5] rounded-2xl p-4 mt-3 shadow-sm">
               {mode === 'reset' ? (
-                <p className="text-sm text-white/60 mb-3">Enter your email and we’ll send you a reset link.</p>
+                <p className="text-sm text-[#6b7280] mb-3">Enter your email and we’ll send you a reset link.</p>
               ) : (
-                <div className="flex bg-white/[0.06] rounded-xl p-1 mb-3">
+                <div className="flex bg-[#F1F2F4] rounded-xl p-1 mb-3">
                   {[['signup', "I'm new"], ['login', 'I have an account']].map(([m, label]) => (
                     <button
                       key={m}
                       type="button"
                       onClick={() => switchMode(m)}
-                      className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-all ${mode === m ? 'bg-white text-[#07090A] shadow' : 'text-white/55'}`}
+                      className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-all ${mode === m ? 'bg-white text-[#111111] shadow-sm' : 'text-[#6b7280]'}`}
                     >
                       {label}
                     </button>
@@ -306,25 +306,25 @@ function JoinEvent({ eventId, onResult }) {
                 )}
               </div>
               {mode === 'signup' && (
-                <p className="text-[11px] text-white/35 mt-2">8+ characters, with an uppercase letter and a number.</p>
+                <p className="text-[11px] text-[#9CA3AF] mt-2">8+ characters, with an uppercase letter and a number.</p>
               )}
 
-              {authError && <p className="text-xs text-red-400 mt-2">{authError}</p>}
-              {resetSent && <p className="text-xs text-lime-300 mt-2">Check your inbox for a reset link.</p>}
+              {authError && <p className="text-xs text-red-500 mt-2">{authError}</p>}
+              {resetSent && <p className="text-xs text-emerald-700 mt-2">Check your inbox for a reset link.</p>}
 
               <button type="submit" disabled={submitting}
-                className="w-full bg-white hover:bg-white/90 text-[#07090A] font-bold py-3 rounded-xl mt-3 disabled:opacity-70 flex items-center justify-center gap-2">
+                className="w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-3 rounded-xl mt-3 disabled:opacity-70 flex items-center justify-center gap-2">
                 {submitting && <Loader2 size={16} className="animate-spin" />}
                 {mode === 'signup' ? 'Create account & claim spot' : mode === 'login' ? 'Log in & claim spot' : 'Send reset link'}
               </button>
 
-              <div className="flex justify-between text-[11px] text-white/35 mt-2">
+              <div className="flex justify-between text-[11px] text-[#9CA3AF] mt-2">
                 <span>Same account as the Jogo app.</span>
                 {mode === 'login' && (
-                  <button type="button" onClick={() => switchMode('reset')} className="underline underline-offset-2 hover:text-white/70">Forgot password?</button>
+                  <button type="button" onClick={() => switchMode('reset')} className="underline underline-offset-2 hover:text-[#6b7280]">Forgot password?</button>
                 )}
                 {mode === 'reset' && (
-                  <button type="button" onClick={() => switchMode('login')} className="underline underline-offset-2 hover:text-white/70">Back to log in</button>
+                  <button type="button" onClick={() => switchMode('login')} className="underline underline-offset-2 hover:text-[#6b7280]">Back to log in</button>
                 )}
               </div>
             </div>
@@ -347,14 +347,14 @@ function YourTicket({ result, eventUrl, viewerName }) {
       initial={{ opacity: 0, y: 18, rotate: -2, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 160, damping: 16 }}
-      className="relative rounded-[28px] overflow-hidden bg-gradient-to-br from-lime-300 via-lime-400 to-emerald-500 text-[#07090A] shadow-[0_24px_60px_-20px_rgba(163,230,53,0.55)]"
+      className="relative rounded-[28px] overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-[0_24px_60px_-20px_rgba(5,150,105,0.55)]"
     >
       <div className="px-6 pt-6 pb-5 flex items-center gap-4">
         <motion.div
           initial={{ scale: 0, rotate: -40 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: 'spring', stiffness: 260, damping: 13, delay: 0.15 }}
-          className="w-14 h-14 rounded-2xl bg-[#07090A] text-lime-300 flex items-center justify-center flex-shrink-0"
+          className="w-14 h-14 rounded-2xl bg-white text-emerald-600 flex items-center justify-center flex-shrink-0"
         >
           <Check size={30} strokeWidth={3.4} />
         </motion.div>
@@ -368,7 +368,7 @@ function YourTicket({ result, eventUrl, viewerName }) {
       <div className="relative h-6 flex items-center">
         <span className="absolute -left-3 w-6 h-6 rounded-full" style={{ background: BG }} />
         <span className="absolute -right-3 w-6 h-6 rounded-full" style={{ background: BG }} />
-        <div className="mx-5 w-full border-t-2 border-dashed border-[#07090A]/25" />
+        <div className="mx-5 w-full border-t-2 border-dashed border-white/35" />
       </div>
 
       <div className="px-6 pt-3 pb-6">
@@ -386,13 +386,13 @@ function YourTicket({ result, eventUrl, viewerName }) {
         <div className="grid grid-cols-2 gap-2">
           {maps && (
             <a href={maps} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#07090A] hover:bg-[#1a1f1c] text-lime-300 text-sm font-bold py-3 rounded-xl transition-colors">
+              className="flex items-center justify-center gap-2 bg-white hover:bg-white/90 text-emerald-700 text-sm font-bold py-3 rounded-xl transition-colors">
               <Navigation size={15} /> Directions
             </a>
           )}
           {cal && (
             <a href={cal} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#07090A]/10 hover:bg-[#07090A]/20 text-[#07090A] text-sm font-bold py-3 rounded-xl transition-colors">
+              className="flex items-center justify-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-bold py-3 rounded-xl transition-colors">
               <CalendarPlus size={15} /> Add to calendar
             </a>
           )}
@@ -473,11 +473,11 @@ export default function Event() {
     : null;
 
   return (
-    <div className="min-h-screen text-white font-sans antialiased flex flex-col relative overflow-x-hidden" style={{ background: BG }}>
+    <div className="min-h-screen text-[#111111] font-sans antialiased flex flex-col relative overflow-x-hidden" style={{ background: BG }}>
       <style>{`
         @keyframes ev-shine { 0% { transform: translateX(0); } 60%, 100% { transform: translateX(450%); } }
         .ev-shine { animation: ev-shine 3s ease-in-out infinite; }
-        @keyframes ev-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(163,230,53,0.45), 0 18px 40px -12px rgba(163,230,53,0.55); } 50% { box-shadow: 0 0 0 10px rgba(163,230,53,0), 0 18px 40px -12px rgba(163,230,53,0.55); } }
+        @keyframes ev-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.35), 0 18px 40px -14px rgba(17,17,17,0.45); } 50% { box-shadow: 0 0 0 10px rgba(22,163,74,0), 0 18px 40px -14px rgba(17,17,17,0.45); } }
         .ev-glow { animation: ev-pulse 2.6s ease-in-out infinite; }
         @keyframes ev-float { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(24px,-18px) scale(1.08); } }
         .ev-orb { animation: ev-float 12s ease-in-out infinite; }
@@ -487,24 +487,24 @@ export default function Event() {
       {/* Ambient backdrop — the event's own photo, blurred into the page */}
       <div className="absolute inset-x-0 top-0 h-[720px] pointer-events-none overflow-hidden">
         {event?.imageUrl && (
-          <img src={event.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover scale-125 blur-3xl opacity-35" />
+          <img src={event.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover scale-125 blur-3xl opacity-30" />
         )}
-        <div className="ev-orb absolute -top-40 left-1/2 -translate-x-1/2 w-[620px] h-[620px] rounded-full bg-lime-400/15 blur-[130px]" />
-        <div className="ev-orb ev-orb-2 absolute top-40 -left-32 w-[380px] h-[380px] rounded-full bg-emerald-500/15 blur-[110px]" />
+        <div className="ev-orb absolute -top-40 left-1/2 -translate-x-1/2 w-[620px] h-[620px] rounded-full bg-emerald-300/30 blur-[130px]" />
+        <div className="ev-orb ev-orb-2 absolute top-40 -left-32 w-[380px] h-[380px] rounded-full bg-teal-300/25 blur-[110px]" />
         <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(7,9,10,0.2), ${BG} 92%)` }} />
         <div className="absolute inset-0 opacity-[0.07]"
-          style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+          style={{ backgroundImage: 'radial-gradient(rgba(17,17,17,0.7) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
       </div>
 
       <header className="relative z-10 px-4 pt-4">
-        <div className="max-w-md mx-auto flex items-center justify-between bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-2xl pl-3 pr-2 py-2">
+        <div className="max-w-md mx-auto flex items-center justify-between bg-white/75 backdrop-blur-xl border border-white rounded-2xl pl-3 pr-2 py-2 shadow-sm">
           <a href="/" className="flex items-center gap-2">
             <img src={appIcon} alt="" className="w-8 h-8 rounded-[10px]" />
             <span className="text-lg font-black tracking-tight">jogo</span>
-            <span className="text-[10px] font-black tracking-[0.18em] text-lime-300/90 border border-lime-300/30 rounded-full px-2 py-0.5 ml-1">EVENTS</span>
+            <span className="text-[10px] font-black tracking-[0.18em] text-emerald-700 border border-emerald-600/30 rounded-full px-2 py-0.5 ml-1">EVENTS</span>
           </a>
           <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 bg-white hover:bg-white/90 text-[#07090A] text-xs font-bold px-3.5 py-2 rounded-xl transition-colors">
+            className="inline-flex items-center gap-1.5 bg-[#111111] hover:bg-[#2a2a2a] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors">
             <AppleLogo size={14} /> Get the app
           </a>
         </div>
@@ -514,12 +514,12 @@ export default function Event() {
         <div className="w-full max-w-md mx-auto">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}
             className="text-center mb-5">
-            <div className="inline-flex items-center gap-2 bg-white/[0.06] backdrop-blur-md border border-white/10 rounded-full pl-1 pr-3.5 py-1">
-              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-lime-300 to-emerald-500 text-[#07090A] text-xs font-black flex items-center justify-center">
+            <div className="inline-flex items-center gap-2 bg-white border border-[#DDE1E5] shadow-sm rounded-full pl-1 pr-3.5 py-1">
+              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xs font-black flex items-center justify-center">
                 {ref ? ref.trim().charAt(0).toUpperCase() : <Sparkles size={13} />}
               </span>
-              <span className="text-sm text-white/75">
-                {ref ? <><span className="font-bold text-white">{ref}</span> sent you an invite</> : "You're on the list"}
+              <span className="text-sm text-[#374151]">
+                {ref ? <><span className="font-bold text-[#111111]">{ref}</span> sent you an invite</> : "You're on the list"}
               </span>
             </div>
           </motion.div>
@@ -529,23 +529,23 @@ export default function Event() {
             initial={{ opacity: 0, y: 24, rotate: -1.5 }}
             animate={{ opacity: 1, y: 0, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 120, damping: 16, delay: 0.05 }}
-            className="relative rounded-[28px] bg-[#111614] border border-white/10 shadow-[0_30px_80px_-24px_rgba(16,185,129,0.35)] mb-5"
+            className="relative rounded-[28px] bg-white border border-[#DDE1E5] shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)] mb-5"
           >
             {loading ? (
               <div className="animate-pulse">
-                <div className="h-72 bg-white/[0.04] rounded-t-[28px]" />
-                <div className="p-6"><div className="h-4 w-1/2 bg-white/[0.06] rounded mb-3" /><div className="h-4 w-2/3 bg-white/[0.06] rounded" /></div>
+                <div className="h-72 bg-[#EEF0F2] rounded-t-[28px]" />
+                <div className="p-6"><div className="h-4 w-1/2 bg-[#EEF0F2] rounded mb-3" /><div className="h-4 w-2/3 bg-[#EEF0F2] rounded" /></div>
               </div>
             ) : event ? (
               <>
                 {/* Poster */}
-                <div className="relative h-72 overflow-hidden rounded-t-[28px] bg-gradient-to-br from-emerald-500 via-emerald-800 to-[#07090A]">
+                <div className="relative h-72 overflow-hidden rounded-t-[28px] bg-gradient-to-br from-emerald-500 to-teal-700">
                   {event.imageUrl ? (
                     <img src={event.imageUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <span className="absolute -right-6 -bottom-10 text-[180px] opacity-[0.12] select-none">🏆</span>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#111614] via-[#111614]/20 to-black/20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/20" />
 
                   <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-3">
                     <div className="flex flex-wrap gap-1.5">
@@ -574,7 +574,7 @@ export default function Event() {
                   </div>
 
                   <div className="absolute left-5 right-5 bottom-4">
-                    <h1 className="text-[32px] font-black leading-[1.02] tracking-tight drop-shadow-lg">
+                    <h1 className="text-[32px] font-black leading-[1.02] tracking-tight drop-shadow-lg text-white">
                       {event.title || 'Jogo event'}
                     </h1>
                     <p className="mt-2 text-lime-300 font-bold text-[15px]">
@@ -588,17 +588,17 @@ export default function Event() {
                 {/* Stub */}
                 <div className="px-5 pb-5 grid grid-cols-3 gap-3">
                   <div>
-                    <p className="text-[10px] font-black tracking-[0.18em] text-white/40">ENTRY</p>
+                    <p className="text-[10px] font-black tracking-[0.18em] text-[#9CA3AF]">ENTRY</p>
                     <p className="text-xl font-black mt-0.5">{!needsTicket ? 'Free' : price > 0 ? `$${price}` : 'Ticket'}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black tracking-[0.18em] text-white/40">GOING</p>
+                    <p className="text-[10px] font-black tracking-[0.18em] text-[#9CA3AF]">GOING</p>
                     <p className="text-xl font-black mt-0.5">
-                      {count}{capacity ? <span className="text-white/35 text-base">/{capacity}</span> : null}
+                      {count}{capacity ? <span className="text-[#9CA3AF] text-base">/{capacity}</span> : null}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black tracking-[0.18em] text-white/40">STARTS IN</p>
+                    <p className="text-[10px] font-black tracking-[0.18em] text-[#9CA3AF]">STARTS IN</p>
                     <p className="text-xl font-black mt-0.5 tabular-nums">
                       {countdown
                         ? (countdown.d > 0 ? `${countdown.d}d ${countdown.h}h` : `${countdown.h}h ${String(countdown.m).padStart(2, '0')}m`)
@@ -606,63 +606,63 @@ export default function Event() {
                     </p>
                   </div>
                   {capacity && (
-                    <div className="col-span-3 h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
+                    <div className="col-span-3 h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${fillPct}%` }} transition={{ duration: 1, delay: 0.4, ease: EASE }}
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-lime-300" />
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" />
                     </div>
                   )}
                 </div>
 
                 {(faces.length > 0 || event.description) && (
-                  <div className="px-5 pb-5 border-t border-white/[0.06] pt-4">
+                  <div className="px-5 pb-5 border-t border-[#EEF0F2] pt-4">
                     {faces.length > 0 && (
                       <div className="flex items-center gap-3">
                         <div className="flex -space-x-2.5 flex-shrink-0">
                           {faces.map((p, i) => (
                             p.photoURL ? (
-                              <img key={p.userId || i} src={p.photoURL} alt="" className="w-9 h-9 rounded-full border-2 border-[#111614] object-cover" />
+                              <img key={p.userId || i} src={p.photoURL} alt="" className="w-9 h-9 rounded-full border-2 border-white object-cover" />
                             ) : (
-                              <span key={p.userId || i} className="w-9 h-9 rounded-full border-2 border-[#111614] bg-lime-300/15 text-lime-300 text-xs font-black flex items-center justify-center">
+                              <span key={p.userId || i} className="w-9 h-9 rounded-full border-2 border-white bg-emerald-50 text-emerald-700 text-xs font-black flex items-center justify-center">
                                 {(p.displayName || '?').charAt(0).toUpperCase()}
                               </span>
                             )
                           ))}
                           {extraFaces > 0 && (
-                            <span className="w-9 h-9 rounded-full border-2 border-[#111614] bg-white/10 text-white/80 text-[11px] font-black flex items-center justify-center">+{extraFaces}</span>
+                            <span className="w-9 h-9 rounded-full border-2 border-white bg-[#F4F5F7] text-[#374151] text-[11px] font-black flex items-center justify-center">+{extraFaces}</span>
                           )}
                         </div>
-                        <p className="text-[13px] text-white/60">
-                          <span className="font-bold text-white">{(faces[0]?.displayName || 'People').split(' ')[0]}</span>
+                        <p className="text-[13px] text-[#6b7280]">
+                          <span className="font-bold text-[#111111]">{(faces[0]?.displayName || 'People').split(' ')[0]}</span>
                           {count > 1 ? ` and ${count - 1} other${count - 1 === 1 ? '' : 's'} are going` : ' is going'}
                         </p>
                       </div>
                     )}
                     {event.description && (
-                      <p className={`text-sm text-white/65 leading-relaxed whitespace-pre-line line-clamp-5 ${faces.length > 0 ? 'mt-4' : ''}`}>{event.description}</p>
+                      <p className={`text-sm text-[#374151] leading-relaxed whitespace-pre-line line-clamp-5 ${faces.length > 0 ? 'mt-4' : ''}`}>{event.description}</p>
                     )}
                   </div>
                 )}
 
                 {!result && !unavailable && !needsTicket && event.location && (
-                  <div className="mx-5 mb-5 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-4 py-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] text-white/40 flex items-center justify-center"><MapPin size={16} /></div>
+                  <div className="mx-5 mb-5 rounded-2xl border border-dashed border-[#D5DAE0] bg-[#FAFBFB] px-4 py-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-[#E5E7EB] text-[#9CA3AF] flex items-center justify-center"><MapPin size={16} /></div>
                     <div className="flex-1">
-                      <p className="text-[10px] font-black tracking-[0.18em] text-white/40">LOCATION</p>
-                      <div className="h-3 w-36 rounded bg-white/15 mt-1.5 blur-[2px]" />
+                      <p className="text-[10px] font-black tracking-[0.18em] text-[#9CA3AF]">LOCATION</p>
+                      <div className="h-3 w-36 rounded bg-[#E5E7EB] mt-1.5 blur-[2px]" />
                     </div>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-lime-300/90"><Lock size={12} /> Unlocks on join</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700"><Lock size={12} /> Unlocks on join</span>
                   </div>
                 )}
 
                 {needsTicket && !unavailable && event.location && (
                   <div className="mx-5 mb-5 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-lime-300/10 text-lime-300 flex items-center justify-center flex-shrink-0"><MapPin size={16} /></div>
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0"><MapPin size={16} /></div>
                     <p className="font-bold text-[15px] min-w-0">{event.location}</p>
                   </div>
                 )}
 
                 {unavailable && (
-                  <p className="px-5 pb-5 text-sm text-white/55">
+                  <p className="px-5 pb-5 text-sm text-[#6b7280]">
                     {event.status === 'cancelled' ? 'This event was cancelled.' : 'This event already happened.'} Find what’s next on Jogo.
                   </p>
                 )}
@@ -671,7 +671,7 @@ export default function Event() {
               <div className="text-center py-16 px-7">
                 <div className="text-5xl mb-3">🎟️</div>
                 <h2 className="text-xl font-black mb-2">This event isn't available</h2>
-                <p className="text-white/55 text-sm leading-relaxed">It may have been deleted. Open Jogo to find events near you.</p>
+                <p className="text-[#6b7280] text-sm leading-relaxed">It may have been deleted. Open Jogo to find events near you.</p>
               </div>
             )}
           </motion.div>
@@ -682,21 +682,21 @@ export default function Event() {
               {needsTicket ? (
                 <>
                   <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
-                    className="ev-glow flex items-center justify-center gap-2.5 w-full bg-lime-400 hover:bg-lime-300 text-[#07090A] font-black text-[17px] py-4 rounded-2xl">
+                    className="ev-glow flex items-center justify-center gap-2.5 w-full bg-[#111111] hover:bg-[#262626] text-white font-black text-[17px] py-4 rounded-2xl">
                     <Ticket size={20} strokeWidth={2.6} /> Get tickets in the app
                   </a>
-                  <p className="text-center text-[12px] text-white/45 mt-3">Tickets are sold securely in the Jogo app.</p>
+                  <p className="text-center text-[12px] text-[#6b7280] mt-3">Tickets are sold securely in the Jogo app.</p>
                 </>
               ) : result ? (
                 <YourTicket result={result} eventUrl={eventUrl} viewerName={viewer?.displayName} />
               ) : isFull ? (
-                <div className="text-center bg-white/[0.05] border border-white/10 rounded-2xl py-4 font-black text-white/60">Sold out — every spot is taken</div>
+                <div className="text-center bg-white border border-[#DDE1E5] rounded-2xl py-4 font-black text-[#6b7280]">Sold out — every spot is taken</div>
               ) : (
                 <>
                   <JoinEvent eventId={eventId} onResult={setResult} />
-                  <div className="flex items-center justify-center gap-4 mt-3.5 text-[12px] text-white/50">
+                  <div className="flex items-center justify-center gap-4 mt-3.5 text-[12px] text-[#6b7280]">
                     {['Free', 'No app needed', '30 seconds'].map((t) => (
-                      <span key={t} className="inline-flex items-center gap-1"><Check size={13} strokeWidth={3} className="text-lime-300" />{t}</span>
+                      <span key={t} className="inline-flex items-center gap-1"><Check size={13} strokeWidth={3} className="text-emerald-600" />{t}</span>
                     ))}
                   </div>
                 </>
@@ -707,28 +707,28 @@ export default function Event() {
           {!loading && (!event || unavailable) && (
             <div className="flex flex-col items-center gap-3">
               <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 w-full bg-white hover:bg-white/90 text-[#07090A] font-bold py-4 rounded-2xl">
+                className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-4 rounded-2xl">
                 <AppleLogo />
-                <span className="text-left leading-tight"><span className="block text-[10px] font-normal text-black/50">Find events near you on the</span><span className="block text-lg font-bold">App Store</span></span>
+                <span className="text-left leading-tight"><span className="block text-[10px] font-normal text-white/60">Find events near you on the</span><span className="block text-lg font-bold">App Store</span></span>
               </a>
-              <a href={WEB_APP_URL} className="text-xs text-white/50 underline underline-offset-4">Continue on the web instead →</a>
+              <a href={WEB_APP_URL} className="text-xs text-[#6b7280] underline underline-offset-4">Continue on the web instead →</a>
             </div>
           )}
 
-          <div className="mt-10 flex items-center justify-center gap-2 text-[12px] text-white/40">
+          <div className="mt-10 flex items-center justify-center gap-2 text-[12px] text-[#6b7280]">
             <img src={appIcon} alt="" className="w-5 h-5 rounded-md opacity-80" />
             <span>Events, games & crews — all on Jogo</span>
           </div>
         </div>
       </main>
 
-      <footer className="relative border-t border-white/[0.06] px-4 py-5">
-        <div className="max-w-md mx-auto flex flex-col items-center gap-2 text-xs text-white/40">
+      <footer className="relative border-t border-[#DDE1E5] bg-white/60 px-4 py-5">
+        <div className="max-w-md mx-auto flex flex-col items-center gap-2 text-xs text-[#6b7280]">
           <nav className="flex items-center gap-4">
-            <a href="/policy" className="hover:text-white">Privacy</a>
-            <a href="/terms" className="hover:text-white">Terms</a>
-            <a href="/support" className="hover:text-white">Support</a>
-            <a href="mailto:jogo.tech@outlook.com" className="hover:text-white">Contact</a>
+            <a href="/policy" className="hover:text-[#111111]">Privacy</a>
+            <a href="/terms" className="hover:text-[#111111]">Terms</a>
+            <a href="/support" className="hover:text-[#111111]">Support</a>
+            <a href="mailto:jogo.tech@outlook.com" className="hover:text-[#111111]">Contact</a>
           </nav>
           <span>© {new Date().getFullYear()} Jogo · Made in New Jersey</span>
         </div>
