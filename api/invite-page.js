@@ -150,7 +150,13 @@ export default async function handler(request) {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=86400',
+      // Never cached by Vercel's CDN: its cache key is the URL, not the
+      // user agent, so a cached copy of this crawler-only page (fetched
+      // first by e.g. iMessage's link preview) was then served to the
+      // real person tapping the link — the old static page instead of the
+      // React one. Crawler traffic is tiny, so skipping the cache is free.
+      'cache-control': 'private, no-store',
+      vary: 'User-Agent',
     },
   });
 }
