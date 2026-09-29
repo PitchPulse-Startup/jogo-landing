@@ -28,7 +28,7 @@ import {
   Users, MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Clock, Zap, Trophy,
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
-import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo } from './appLinks';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, StoreButtons } from './appLinks';
 
 const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
@@ -702,6 +702,12 @@ export default function Invite() {
               </a>
               <a href={WEB_APP_URL} className="text-xs text-[#6b7280] underline underline-offset-4">Continue on the web instead →</a>
             </div>
+          )}
+
+          {/* Both app stores, visible before joining — after joining, the
+              joined card has its own; unavailable games show them above. */}
+          {!loading && game && !unavailable && !result && (
+            <StoreButtons className="mt-8" />
           )}
 
           {/* Trust — same figures the homepage publishes */}

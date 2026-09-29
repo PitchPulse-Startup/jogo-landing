@@ -38,7 +38,7 @@ import {
   MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Ticket, Shield, Sparkles, Users, Zap,
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
-import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo } from './appLinks';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, StoreButtons } from './appLinks';
 
 const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
@@ -717,6 +717,12 @@ export default function Event() {
               </a>
               <a href={WEB_APP_URL} className="text-xs text-[#6b7280] underline underline-offset-4">Continue on the web instead →</a>
             </div>
+          )}
+
+          {/* Both app stores, always visible on a live event (unavailable
+              events show them above instead). */}
+          {!loading && event && !unavailable && (
+            <StoreButtons className="mt-8" />
           )}
 
           <div className="mt-10 flex items-center justify-center gap-2 text-[12px] text-[#6b7280]">
