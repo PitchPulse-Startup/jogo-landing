@@ -57,3 +57,22 @@ export function StoreButtons({ label = 'Get the Jogo app', className = '' }) {
     </div>
   );
 }
+
+// Header "Get the app" — one dark pill holding BOTH stores as their own tap
+// targets (Apple + Google Play icons), instead of a single button whose
+// Apple icon made the app look iPhone-only.
+export function HeaderStoreLinks() {
+  return (
+    <div className="inline-flex items-center bg-[#111111] text-white rounded-xl pl-3 pr-1 py-1 gap-1">
+      <span className="text-xs font-bold pr-1">Get the app</span>
+      <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Download on the App Store"
+        className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+        <AppleLogo size={14} />
+      </a>
+      <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Get it on Google Play"
+        className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+        <PlayLogo size={12} />
+      </a>
+    </div>
+  );
+}

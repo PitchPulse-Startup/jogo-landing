@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
 import appScreenshot from './assets/jogopic1.png';
-import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo } from './appLinks';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, HeaderStoreLinks } from './appLinks';
 
 const WEB_APP_URL = 'https://www.jogous.io/app';
 
@@ -710,15 +710,7 @@ export default function Crew() {
             <img src={appIcon} alt="" className="w-8 h-8 rounded-[10px]" />
             <span className="text-lg font-black tracking-tight">jogo</span>
           </a>
-          <a
-            href={APP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 bg-[#111111] hover:bg-[#2a2a2a] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors"
-          >
-            <AppleLogo size={14} />
-            Get the app
-          </a>
+          <HeaderStoreLinks />
         </div>
       </header>
 

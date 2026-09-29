@@ -28,7 +28,7 @@ import {
   Users, MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Clock, Zap, Trophy,
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
-import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, StoreButtons } from './appLinks';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, StoreButtons, HeaderStoreLinks } from './appLinks';
 
 const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
@@ -534,10 +534,7 @@ export default function Invite() {
             <img src={appIcon} alt="" className="w-8 h-8 rounded-[10px]" />
             <span className="text-lg font-black tracking-tight">jogo</span>
           </a>
-          <a href={APP_URL} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 bg-[#111111] hover:bg-[#2a2a2a] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors">
-            <AppleLogo size={14} /> Get the app
-          </a>
+          <HeaderStoreLinks />
         </div>
       </header>
 
