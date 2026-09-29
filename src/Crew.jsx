@@ -27,9 +27,8 @@ import {
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
 import appScreenshot from './assets/jogopic1.png';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo } from './appLinks';
 
-const APP_STORE_URL =
-  'https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244';
 const WEB_APP_URL = 'https://www.jogous.io/app';
 
 function AppleLogo({ size = 22 }) {
@@ -560,6 +559,25 @@ function AppStoreButton({ className = '' }) {
   );
 }
 
+function GooglePlayButton({ className = '' }) {
+  return (
+    <motion.a
+      whileHover={{ scale: 1.03, y: -2 }}
+      whileTap={{ scale: 0.97 }}
+      href={PLAY_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`inline-flex items-center justify-center gap-3 bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg shadow-black/15 ${className}`}
+    >
+      <PlayLogo size={20} />
+      <span className="text-left leading-tight">
+        <span className="block text-[10px] font-normal text-white/60">Get it on</span>
+        <span className="block text-lg font-bold">Google Play</span>
+      </span>
+    </motion.a>
+  );
+}
+
 function CrewCardSkeleton() {
   return (
     <div className="animate-pulse">
@@ -693,7 +711,7 @@ export default function Crew() {
             <span className="text-lg font-black tracking-tight">jogo</span>
           </a>
           <a
-            href={APP_STORE_URL}
+            href={APP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 bg-[#111111] hover:bg-[#2a2a2a] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors"
@@ -845,6 +863,7 @@ export default function Crew() {
             {!loading && !crew && (
               <div className="flex flex-col items-center gap-3">
                 <AppStoreButton className="w-full" />
+                <GooglePlayButton className="w-full" />
                 <a href={WEB_APP_URL} className="text-xs text-[#6b7280] underline underline-offset-4">
                   Continue on the web instead →
                 </a>
@@ -901,6 +920,7 @@ export default function Crew() {
 
             <Reveal className="mt-6 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
               <AppStoreButton />
+              <GooglePlayButton />
               <a
                 href={WEB_APP_URL}
                 className="text-sm font-semibold text-[#374151] hover:text-emerald-700 px-4 py-3 transition-colors"

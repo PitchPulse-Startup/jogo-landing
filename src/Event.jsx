@@ -15,7 +15,7 @@
 // The link IS the invitation: a crew-only event (visibility 'crew') is
 // joinable here exactly like a public one. Paid events (?type=paid, the
 // separate paidEvents collection) need a ticket bought in the app, so they
-// get the details and an App Store button instead of a join button.
+// get the details and App Store / Google Play buttons instead of a join button.
 //
 // The location stays locked until you've joined, same reasoning as the game
 // page — people shouldn't just show up off a forwarded link.
@@ -38,9 +38,8 @@ import {
   MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Ticket, Shield, Sparkles, Users, Zap,
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo } from './appLinks';
 
-const APP_STORE_URL =
-  'https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244';
 const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
 const BG = '#F5F6F8';
@@ -503,7 +502,7 @@ export default function Event() {
             <span className="text-lg font-black tracking-tight">jogo</span>
             <span className="text-[10px] font-black tracking-[0.18em] text-emerald-700 border border-emerald-600/30 rounded-full px-2 py-0.5 ml-1">EVENTS</span>
           </a>
-          <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
+          <a href={APP_URL} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 bg-[#111111] hover:bg-[#2a2a2a] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors">
             <AppleLogo size={14} /> Get the app
           </a>
@@ -681,7 +680,7 @@ export default function Event() {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.2, ease: EASE }}>
               {needsTicket ? (
                 <>
-                  <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
+                  <a href={APP_URL} target="_blank" rel="noopener noreferrer"
                     className="ev-glow flex items-center justify-center gap-2.5 w-full bg-[#111111] hover:bg-[#262626] text-white font-black text-[17px] py-4 rounded-2xl">
                     <Ticket size={20} strokeWidth={2.6} /> Get tickets in the app
                   </a>
@@ -710,6 +709,11 @@ export default function Event() {
                 className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-4 rounded-2xl">
                 <AppleLogo />
                 <span className="text-left leading-tight"><span className="block text-[10px] font-normal text-white/60">Find events near you on the</span><span className="block text-lg font-bold">App Store</span></span>
+              </a>
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-4 rounded-2xl">
+                <PlayLogo size={20} />
+                <span className="text-left leading-tight"><span className="block text-[10px] font-normal text-white/60">Or get it on</span><span className="block text-lg font-bold">Google Play</span></span>
               </a>
               <a href={WEB_APP_URL} className="text-xs text-[#6b7280] underline underline-offset-4">Continue on the web instead →</a>
             </div>

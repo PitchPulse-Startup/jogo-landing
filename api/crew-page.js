@@ -13,7 +13,7 @@
 // for why this looks just as premium as the React version despite being
 // plain HTML/CSS (every animation here is CSS, needs no JS to run).
 import { fetchPublicDoc, escapeHtml } from './_firestoreRest.js';
-import { SHARE_PAGE_STYLES, USERS_ICON_SVG, PIN_ICON_SVG, APPLE_LOGO_SVG, APP_STORE_URL, WEB_APP_URL, SITE_URL } from './_shareStyles.js';
+import { SHARE_PAGE_STYLES, USERS_ICON_SVG, PIN_ICON_SVG, APPLE_LOGO_SVG, PLAY_LOGO_SVG, APP_STORE_URL, PLAY_STORE_URL, WEB_APP_URL, SITE_URL } from './_shareStyles.js';
 
 export const config = { runtime: 'edge' };
 
@@ -131,6 +131,10 @@ export default async function handler(request) {
       <a href="${APP_STORE_URL}" class="cta" target="_blank" rel="noopener noreferrer">
         ${APPLE_LOGO_SVG}
         <span class="cta-text"><span class="cta-sub">Download on the</span><span class="cta-main">App Store</span></span>
+      </a>
+      <a href="${PLAY_STORE_URL}" class="cta" target="_blank" rel="noopener noreferrer">
+        ${PLAY_LOGO_SVG}
+        <span class="cta-text"><span class="cta-sub">Get it on</span><span class="cta-main">Google Play</span></span>
       </a>
       <p class="cta-hint">Free to join. Find your crew's next game in seconds.</p>
       <div class="web-link-wrap"><a href="${WEB_APP_URL}" class="web-link">Continue on the web instead →</a></div>

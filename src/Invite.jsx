@@ -28,9 +28,8 @@ import {
   Users, MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Clock, Zap, Trophy,
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo } from './appLinks';
 
-const APP_STORE_URL =
-  'https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244';
 const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -395,6 +394,14 @@ function JoinedCard({ result, gameUrl }) {
             <span className="block text-base font-bold">App Store</span>
           </span>
         </a>
+        <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer"
+          className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-3.5 rounded-2xl mt-2.5">
+          <PlayLogo size={18} />
+          <span className="text-left leading-tight">
+            <span className="block text-[10px] font-normal text-white/60">Or get it on</span>
+            <span className="block text-base font-bold">Google Play</span>
+          </span>
+        </a>
         <p className="text-center text-[11px] text-[#9CA3AF] mt-2">Log in with the same email to see this game in the app.</p>
       </div>
     </motion.div>
@@ -527,7 +534,7 @@ export default function Invite() {
             <img src={appIcon} alt="" className="w-8 h-8 rounded-[10px]" />
             <span className="text-lg font-black tracking-tight">jogo</span>
           </a>
-          <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
+          <a href={APP_URL} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 bg-[#111111] hover:bg-[#2a2a2a] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors">
             <AppleLogo size={14} /> Get the app
           </a>
@@ -687,6 +694,11 @@ export default function Invite() {
                 className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-4 rounded-2xl">
                 <AppleLogo />
                 <span className="text-left leading-tight"><span className="block text-[10px] font-normal text-white/60">Find games near you on the</span><span className="block text-lg font-bold">App Store</span></span>
+              </a>
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-4 rounded-2xl">
+                <PlayLogo size={20} />
+                <span className="text-left leading-tight"><span className="block text-[10px] font-normal text-white/60">Or get it on</span><span className="block text-lg font-bold">Google Play</span></span>
               </a>
               <a href={WEB_APP_URL} className="text-xs text-[#6b7280] underline underline-offset-4">Continue on the web instead →</a>
             </div>

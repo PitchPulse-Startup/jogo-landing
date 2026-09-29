@@ -18,23 +18,13 @@ import screenThree from './assets/jogopic3.png';
 import screenFour from './assets/jogopic4.png';
 import soccerBg from './assets/soccer.jpeg';
 import founderPhoto from './assets/Team.jpeg';
-
-const APP_STORE_URL =
-  'https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244';
+import { APP_STORE_URL, PLAY_STORE_URL, PlayLogo, isAndroid } from './appLinks';
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 function AppleLogo({ size = 24 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-    </svg>
-  );
-}
-
-function AndroidLogo({ size = 24 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M17.523 15.341c-.551 0-.999-.449-.999-.999s.448-.999.999-.999c.551 0 .999.449.999.999s-.448.999-.999.999zm-11.046 0c-.551 0-.999-.449-.999-.999s.448-.999.999-.999c.551 0 .999.449.999.999s-.448.999-.999.999zm11.405-6.02l1.997-3.459a.416.416 0 00-.152-.568.416.416 0 00-.568.152l-2.022 3.503C15.59 8.244 13.853 7.851 12 7.851s-3.59.393-5.137 1.073L4.841 5.421a.416.416 0 00-.568-.152.416.416 0 00-.152.568l1.997 3.459C3.702 10.565 2.3 12.349 2 14.4H22c-.3-2.051-1.702-3.835-4.118-5.079z" />
     </svg>
   );
 }
@@ -71,21 +61,31 @@ function AppStoreBtn({ large = false, invert = false }) {
   );
 }
 
-function AndroidBtn({ large = false, invert = false }) {
+function GooglePlayBtn({ large = false, invert = false }) {
   return (
-    <div
-      className={`inline-flex items-center gap-2.5 font-semibold rounded-2xl cursor-not-allowed select-none border ${
+    <motion.a
+      href={PLAY_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      whileHover={{ scale: 1.035, y: -2 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      className={`inline-flex items-center gap-2.5 font-semibold rounded-2xl ${
         invert
-          ? 'bg-white/10 text-white/40 border-white/15'
-          : 'bg-white text-[#9CA3AF] border-[#DDE1E5]'
+          ? 'bg-white text-black hover:bg-gray-100 shadow-xl shadow-black/30'
+          : 'bg-[#111111] text-white hover:bg-[#2a2a2a] shadow-lg shadow-black/15'
       } ${large ? 'px-5 py-3 sm:px-8 sm:py-4' : 'px-5 py-2.5'}`}
     >
-      <AndroidLogo size={large ? 22 : 18} />
+      <PlayLogo size={large ? 20 : 16} />
       <div className="text-left leading-tight">
-        <div className="text-[10px] font-normal leading-none mb-0.5">Coming Soon</div>
-        <div className={`font-bold leading-none ${large ? 'text-base sm:text-xl' : 'text-sm'}`}>Android</div>
+        <div className={`text-[10px] font-normal leading-none mb-0.5 ${invert ? 'text-black/60' : 'text-white/60'}`}>
+          Get it on
+        </div>
+        <div className={`font-bold leading-none ${large ? 'text-base sm:text-xl' : 'text-sm'}`}>
+          Google Play
+        </div>
       </div>
-    </div>
+    </motion.a>
   );
 }
 
@@ -354,15 +354,24 @@ export default function App() {
                 'linear-gradient(to top, rgba(237,238,241,1) 65%, rgba(237,238,241,0))',
             }}
           >
-            <a
-              href={APP_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-4 rounded-2xl text-base transition-all shadow-2xl shadow-emerald-600/30"
-            >
-              <AppleLogo size={20} />
-              Download Free on App Store
-            </a>
+            {/* Both stores always shown; the visitor's own store goes first */}
+            <div className={`flex gap-2.5 ${isAndroid ? 'flex-row-reverse' : ''}`}>
+              {[
+                { href: APP_STORE_URL, icon: <AppleLogo size={18} />, label: 'App Store' },
+                { href: PLAY_STORE_URL, icon: <PlayLogo size={16} />, label: 'Google Play' },
+              ].map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-4 rounded-2xl text-[15px] transition-all shadow-2xl shadow-emerald-600/30"
+                >
+                  {s.icon}
+                  {s.label}
+                </a>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -395,7 +404,11 @@ export default function App() {
             </a>
           </nav>
 
-          <AppStoreBtn />
+          {/* Both on desktop; on phones only the visitor's own store fits */}
+          <div className="flex items-center gap-2">
+            <div className={isAndroid ? 'hidden sm:block' : ''}><AppStoreBtn /></div>
+            <div className={isAndroid ? '' : 'hidden sm:block'}><GooglePlayBtn /></div>
+          </div>
         </div>
       </header>
 
@@ -486,7 +499,7 @@ export default function App() {
                   className="flex flex-row items-center justify-center lg:justify-start gap-3 mb-6 sm:mb-8"
                 >
                   <AppStoreBtn large />
-                  <AndroidBtn large />
+                  <GooglePlayBtn large />
                 </motion.div>
 
                 <motion.div
@@ -808,7 +821,10 @@ export default function App() {
               <p className="text-white/60 text-xl mb-10 max-w-lg mx-auto">
                 Somewhere near you, a pickup game is starting soon. Find it and get on the field.
               </p>
-              <AppStoreBtn large invert />
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <AppStoreBtn large invert />
+                <GooglePlayBtn large invert />
+              </div>
             </Reveal>
           </div>
         </section>
@@ -905,7 +921,7 @@ export default function App() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <AppStoreBtn large />
-                <AndroidBtn large />
+                <GooglePlayBtn large />
               </div>
             </Reveal>
           </div>
@@ -923,8 +939,10 @@ export default function App() {
               </p>
             </div>
             <div className="flex flex-col sm:items-end gap-4">
-              <AppStoreBtn />
-              <div className="text-[#9CA3AF] text-xs">Android coming soon</div>
+              <div className="flex flex-wrap gap-3">
+                <AppStoreBtn />
+                <GooglePlayBtn />
+              </div>
             </div>
           </div>
 
