@@ -469,7 +469,7 @@ export default function App() {
                   className="inline-flex items-center gap-2 bg-[#F1F8F3] border border-emerald-400/25 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-emerald-700 mb-5 sm:mb-7"
                 >
                   <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-500 rounded-full animate-pulse" />
-                  Now Available on iOS
+                  Now Available on iOS &amp; Android
                 </motion.div>
 
                 <motion.h1
