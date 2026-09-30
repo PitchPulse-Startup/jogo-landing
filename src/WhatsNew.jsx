@@ -250,8 +250,8 @@ export default function WhatsNew() {
                 transition={{ duration: 0.75, delay: 0.08, ease: EASE }}
                 className="text-[2.6rem] leading-[1.04] sm:text-7xl font-black tracking-tight"
               >
-                Run your crew<br />
-                <span className="wn-g-text">like a club.</span>
+                Run your crews<br />
+                <span className="wn-g-text">like a pro.</span>
               </motion.h1>
 
               <motion.p
