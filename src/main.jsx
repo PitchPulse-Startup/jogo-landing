@@ -16,6 +16,7 @@ import AuthAction from './AuthAction.jsx'
 import Invite from './Invite.jsx'
 import Crew from './Crew.jsx'
 import Event from './Event.jsx'
+import WhatsNew from './WhatsNew.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -40,6 +41,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/invite/:gameId" element={<Invite />} />
         <Route path="/crew/:squadId" element={<Crew />} />
         <Route path="/event/:eventId" element={<Event />} />
+        <Route path="/whats-new" element={<WhatsNew />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

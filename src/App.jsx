@@ -398,6 +398,10 @@ export default function App() {
                 <span className="absolute left-0 -bottom-0.5 h-[1.5px] w-0 bg-emerald-500 group-hover:w-full transition-all duration-300" />
               </a>
             ))}
+            <Link to="/whats-new" className="relative group py-1 hover:text-[#111111] transition-colors">
+              What's New
+              <span className="absolute left-0 -bottom-0.5 h-[1.5px] w-0 bg-emerald-500 group-hover:w-full transition-all duration-300" />
+            </Link>
             <a href="https://www.jogous.io/app" target="_blank" rel="noopener noreferrer" className="relative group py-1 hover:text-[#111111] transition-colors">
               Sign Up
               <span className="absolute left-0 -bottom-0.5 h-[1.5px] w-0 bg-emerald-500 group-hover:w-full transition-all duration-300" />
@@ -947,6 +951,7 @@ export default function App() {
           </div>
 
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#6b7280] mb-10">
+            <Link to="/whats-new" className="hover:text-[#111111] transition-colors">What's New</Link>
             <Link to="/blog" className="hover:text-[#111111] transition-colors">Blog</Link>
             <Link to="/media" className="hover:text-[#111111] transition-colors">Media</Link>
             <Link to="/feedback" className="hover:text-[#111111] transition-colors">Feedback</Link>
