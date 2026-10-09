@@ -1,20 +1,23 @@
-// src/WhatsNew.jsx — release page for Jogo 2.0.1 (jogous.io/whats-new)
+// src/WhatsNew.jsx — release page for Jogo 2.1.0 (jogous.io/whats-new)
 //
 // Walks through what changed in the update using real screenshots from
-// assets/2.0.1Finalized. Copy only describes what those screens actually
-// show — same rule as index.html: never claim a feature the app doesn't have.
+// assets/2.1.0 (and assets/2.0.1Finalized for the 2.0 features still shown
+// further down). Copy only describes what those screens actually show —
+// same rule as index.html: never claim a feature the app doesn't have.
 
 import React, { useEffect } from 'react';
 import { motion, MotionConfig } from 'framer-motion';
 import {
   Users, Trophy, ShieldCheck, Megaphone, User, Check, Navigation,
-  Images, Flag, SlidersHorizontal, CalendarPlus, ArrowRight,
+  Images, Flag, SlidersHorizontal, CalendarPlus, ArrowRight, Award, Sparkles,
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
-import crewsHub from './assets/2.0.1Finalized/Screenshot_20260930-114733.png';
-import crewPage from './assets/2.0.1Finalized/Screenshot_20260930-114740.png';
-import gameType from './assets/2.0.1Finalized/Screenshot_20260930-114823.png';
-import newEvent from './assets/2.0.1Finalized/Screenshot_20260930-114830.png';
+import matchday from './assets/2.1.0/Screenshot_20261009-121904.png';
+import kingMatchday from './assets/2.1.0/Screenshot_20261009-123555.png';
+import crewPage from './assets/2.1.0/Screenshot_20261009-123633.png';
+import pickTournament from './assets/2.1.0/Screenshot_20261009-123653.png';
+import pickKing from './assets/2.1.0/Screenshot_20261009-123657.png';
+import newCrew from './assets/2.1.0/newcrew.png';
 import gameScreen from './assets/2.0.1Finalized/Screenshot_20260930-114838.png';
 import statsScreen from './assets/2.0.1Finalized/Screenshot_20260930-114850.png';
 import leaderboard from './assets/2.0.1Finalized/Screenshot_20260930-114855.png';
@@ -22,11 +25,12 @@ import {
   APP_STORE_URL, PLAY_STORE_URL, PlayLogo, AppleLogo, HeaderStoreLinks, isAndroid,
 } from './appLinks';
 
-const VERSION = '2.0.1';
+const VERSION = '2.1.0';
 const EASE = [0.22, 1, 0.36, 1];
 
 const SECTIONS = [
-  { href: '#crews', label: 'Crews' },
+  { href: '#crews', label: 'Crews, revamped' },
+  { href: '#game-modes', label: 'Game modes' },
   { href: '#leaderboard', label: 'Leaderboard' },
   { href: '#game-screen', label: 'Game screen' },
   { href: '#events', label: 'Crew events' },
@@ -39,6 +43,22 @@ const ROLES = [
   { icon: ShieldCheck, name: 'Admin', tone: 'bg-emerald-100 text-emerald-700', desc: 'Removes members and opens crew settings.' },
   { icon: Megaphone, name: 'Organizer', tone: 'bg-blue-100 text-blue-700', desc: 'Creates pickup games and crew events.' },
   { icon: User, name: 'Member', tone: 'bg-[#EEF0F2] text-[#6b7280]', desc: 'Joins games and chats with the crew.' },
+];
+
+// Straight from the "What kind of pickup?" step of the new game flow.
+const GAME_MODES = [
+  {
+    icon: Trophy,
+    name: 'Mini tournament',
+    rule: "Split into teams. Lose and you're out — last team standing wins.",
+    tag: 'Knockout',
+  },
+  {
+    icon: Award,
+    name: 'King of the field',
+    rule: 'Winner stays on, loser goes to the back. Most wins takes the crown.',
+    tag: 'Winner stays on',
+  },
 ];
 
 const GAME_SCREEN_DETAILS = [
@@ -250,8 +270,8 @@ export default function WhatsNew() {
                 transition={{ duration: 0.75, delay: 0.08, ease: EASE }}
                 className="text-[2.6rem] leading-[1.04] sm:text-7xl font-black tracking-tight"
               >
-                Run your crews<br />
-                <span className="wn-g-text">like a pro.</span>
+                Pickup just<br />
+                <span className="wn-g-text">leveled up.</span>
               </motion.h1>
 
               <motion.p
@@ -260,8 +280,9 @@ export default function WhatsNew() {
                 transition={{ duration: 0.6, delay: 0.18 }}
                 className="text-base sm:text-xl text-[#6b7280] mt-5 max-w-2xl mx-auto leading-relaxed"
               >
-                Jogo {VERSION} puts crews at the center: a feed, games and chat for your group,
-                a weekly points race, a rebuilt game screen, and events you create straight from your crew.
+                Jogo {VERSION} is our biggest crew drop yet. A ground-up redesign of Crews built
+                around matchday, plus two brand-new competitive game modes: Mini tournament and
+                King of the field. Same crew, whole new game.
               </motion.p>
 
               <motion.div
@@ -299,7 +320,7 @@ export default function WhatsNew() {
                   transition={{ duration: 0.9, delay: 0.35, ease: EASE }}
                   className="w-[34%] max-w-[200px] -mr-[7%] mb-[-4%] origin-bottom-right"
                 >
-                  <Phone src={leaderboard} alt="Jogo leaderboard showing the weekly points race" eager />
+                  <Phone src={crewPage} alt="Redesigned crew page for Union County Pickup" eager />
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 60 }}
@@ -307,7 +328,7 @@ export default function WhatsNew() {
                   transition={{ duration: 0.9, delay: 0.25, ease: EASE }}
                   className="w-[44%] max-w-[260px] relative z-10"
                 >
-                  <Phone src={crewsHub} alt="Jogo Crews tab listing your crews" eager />
+                  <Phone src={kingMatchday} alt="Crews tab with a King of the field matchday card and four teams" eager />
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 60, rotate: 0 }}
@@ -315,7 +336,7 @@ export default function WhatsNew() {
                   transition={{ duration: 0.9, delay: 0.45, ease: EASE }}
                   className="w-[34%] max-w-[200px] -ml-[7%] mb-[-4%] origin-bottom-left"
                 >
-                  <Phone src={gameScreen} alt="Jogo game screen for a Thursday pickup game" eager />
+                  <Phone src={pickTournament} alt="New game flow asking what kind of pickup, with Mini tournament selected" eager />
                 </motion.div>
               </div>
             </div>
@@ -327,30 +348,75 @@ export default function WhatsNew() {
           <section id="crews" className="wn-anchor px-4 sm:px-8 py-16 sm:py-24">
             <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               <Reveal>
-                <Eyebrow>Crews</Eyebrow>
+                <div className="flex items-center gap-2">
+                  <Eyebrow>Crews, revamped</Eyebrow>
+                  <span className="mb-4 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider rounded-full px-2.5 py-1">
+                    New in {VERSION}
+                  </span>
+                </div>
                 <h2 className="text-3xl sm:text-5xl font-black leading-[1.08] tracking-tight">
-                  Ditch the group chat.
+                  Cleaner. Bolder.<br />Matchday-ready.
                 </h2>
                 <p className="text-[#6b7280] text-base sm:text-lg mt-4 leading-relaxed max-w-xl">
-                  Every crew gets its own page with a feed, games, chat, and an about tab. A new game
-                  shows up in the feed with the field, the time, and who's going, so the RSVP is one
-                  tap instead of forty texts.
+                  We rebuilt Crews from the ground up. Your next game now takes over the screen as a
+                  full-bleed matchday card: when, where, who's in, and how many spots are left. One
+                  tap and you're on the lineup. Zero friction, all signal.
                 </p>
                 <Points
                   items={[
-                    'Crews has its own tab, with every crew you belong to and its next game.',
-                    'Search any crew by name, or browse Discover Crews to find one.',
-                    'Free to create, free to join, free to play.',
+                    'Your crews live in a swipeable row up top, so switching is instant.',
+                    'Matchday card shows the lineup live, like 14 / 16, with a one-tap "Take a spot".',
+                    'A fresh crew page: cover photo, badge, location, player count, and Manage crew right up front.',
+                    'Feed, Games, Chat, and About, plus join activity so you see the crew growing.',
+                    'Crews Near You, to find your next run on the same tab.',
+                    'A redesigned New Crew flow: build your crew in three quick steps.',
                   ]}
                 />
               </Reveal>
               <Reveal delay={0.1}>
                 <PhonePair
-                  back={{ src: crewsHub, alt: 'Crews tab with Your Crews and Discover Crews' }}
-                  front={{ src: crewPage, alt: 'A crew page with Feed, Games, Chat and About tabs' }}
+                  back={{ src: matchday, alt: 'Crews tab with a Tonight matchday card, lineup, and Take a spot button' }}
+                  front={{ src: crewPage, alt: 'Redesigned crew page with cover photo, Manage crew, New game, and Feed tab' }}
                 />
               </Reveal>
             </div>
+
+            {/* New crew flow */}
+            <Reveal className="max-w-6xl mx-auto mt-16 sm:mt-24">
+              <div className="relative bg-[#0d0f12] text-white rounded-3xl overflow-hidden p-6 sm:p-10">
+                <div className="absolute top-0 right-0 h-full w-1/3 bg-emerald-700/80 [clip-path:polygon(35%_0,100%_0,100%_100%,0_100%)] pointer-events-none" />
+                <div className="relative grid lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-10 lg:gap-12 items-center">
+                  <div>
+                    <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider mb-4 border bg-white/5 border-white/15 text-emerald-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      New crew
+                    </div>
+                    <h3 className="text-2xl sm:text-4xl font-black leading-tight">
+                      Launch a crew in three steps.
+                    </h3>
+                    <p className="text-white/60 text-sm sm:text-base mt-3 leading-relaxed max-w-lg">
+                      A brand-new creation flow that builds your crew's identity live as you type.
+                      Name it, pick a color, drop a badge and a cover photo, and your crew card comes
+                      to life before you hit Next.
+                    </p>
+                    <Points
+                      dark
+                      items={[
+                        'Live crew card preview with your badge, name, and est. year.',
+                        'Eight team colors to make the crew unmistakably yours.',
+                        'Set a home area so nearby players can find you.',
+                        'Add a short about line, up to 140 characters.',
+                      ]}
+                    />
+                  </div>
+                  <Phone
+                    src={newCrew}
+                    alt="New Crew screen, step 1 of 3, with a crew card preview, name, team color, home area and about fields"
+                    className="w-[62%] max-w-[260px] mx-auto rotate-2"
+                  />
+                </div>
+              </div>
+            </Reveal>
 
             {/* Roles */}
             <Reveal className="max-w-6xl mx-auto mt-16 sm:mt-24">
@@ -382,6 +448,117 @@ export default function WhatsNew() {
                 </div>
               </div>
             </Reveal>
+          </section>
+
+          {/* ── GAME MODES ────────────────────────────────────────────── */}
+          <section id="game-modes" className="wn-anchor relative px-4 sm:px-8 py-20 sm:py-28 bg-[#140a26] text-white overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div
+                className="wn-grid-pan absolute inset-0 opacity-[0.05]"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px)',
+                  backgroundSize: '64px 64px',
+                }}
+              />
+              <div className="wn-blob absolute top-[-15%] right-[5%] w-[440px] h-[440px] bg-violet-500/30 rounded-full blur-[120px]" />
+              <div className="wn-blob wn-blob-2 absolute bottom-[-20%] left-[5%] w-[420px] h-[420px] bg-amber-400/15 rounded-full blur-[120px]" />
+            </div>
+
+            <div className="relative max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              <Reveal>
+                <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider mb-4 border bg-white/5 border-white/15 text-amber-300">
+                  <Sparkles size={12} />
+                  Game modes
+                </div>
+                <h2 className="text-3xl sm:text-5xl font-black leading-[1.08] tracking-tight">
+                  Not just pickup.<br />
+                  <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">Competition.</span>
+                </h2>
+                <p className="text-white/60 text-base sm:text-lg mt-4 leading-relaxed max-w-xl">
+                  Two new formats, built right into your crew. When you create a game, just pick a
+                  style. Jogo handles the teams so you can focus on bragging rights.
+                </p>
+
+                <div className="grid sm:grid-cols-2 gap-3 mt-7">
+                  {GAME_MODES.map(({ icon: Icon, name, rule, tag }) => (
+                    <div key={name} className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="w-10 h-10 rounded-xl bg-amber-400/15 text-amber-300 flex items-center justify-center">
+                          <Icon size={19} />
+                        </span>
+                        <span className="bg-black text-emerald-400 text-[10px] font-black uppercase tracking-wider rounded-full px-2.5 py-1">
+                          Beta
+                        </span>
+                      </div>
+                      <p className="font-black text-lg leading-tight">{name}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-amber-300/80 mt-1">{tag}</p>
+                      <p className="text-sm text-white/60 leading-relaxed mt-2">{rule}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <Points
+                  dark
+                  items={[
+                    'Pick Regular, Mini tournament, or King of the field when you start a new game.',
+                    'Color-coded teams (Green, Black, Orange, Blue) with live spots per team.',
+                    'Choose your team when you join, and your matchday card shows where you landed.',
+                  ]}
+                />
+              </Reveal>
+              <Reveal delay={0.1}>
+                <PhonePair
+                  back={{ src: pickKing, alt: 'What kind of pickup screen with King of the field selected' }}
+                  front={{ src: kingMatchday, alt: 'King of the field matchday card with Green, Black, Orange and Blue teams' }}
+                />
+              </Reveal>
+            </div>
+          </section>
+
+          {/* ── FROM 2.0 ──────────────────────────────────────────────── */}
+          <div className="px-4 sm:px-8 pt-20 sm:pt-28 text-center">
+            <Reveal>
+              <Eyebrow>Still fresh from 2.0</Eyebrow>
+              <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
+                Plus everything that got your crew here.
+              </h2>
+            </Reveal>
+          </div>
+
+          {/* ── GAME SCREEN ───────────────────────────────────────────── */}
+          <section id="game-screen" className="wn-anchor px-4 sm:px-8 py-16 sm:py-24">
+            <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              <Reveal>
+                <Eyebrow>Game screen</Eyebrow>
+                <h2 className="text-3xl sm:text-5xl font-black leading-[1.08] tracking-tight">
+                  The game screen,<br />rebuilt.
+                </h2>
+                <p className="text-[#6b7280] text-base sm:text-lg mt-4 leading-relaxed max-w-xl">
+                  When, where, and how to get there, in that order. The rest stays out of the way
+                  until you need it.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3 mt-7">
+                  {GAME_SCREEN_DETAILS.map(({ icon: Icon, title, desc }) => (
+                    <div key={title} className="bg-white border border-[#DDE1E5] rounded-2xl p-4 shadow-sm">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3">
+                        <Icon size={18} />
+                      </div>
+                      <p className="font-bold text-sm mb-1">{title}</p>
+                      <p className="text-xs text-[#6b7280] leading-relaxed">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </Reveal>
+              <Reveal delay={0.1} className="relative flex justify-center">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-[420px] aspect-square bg-emerald-300/35 rounded-full blur-[90px] pointer-events-none" />
+                <Phone
+                  src={gameScreen}
+                  alt="Game screen with field photo, date, location, and map"
+                  className="relative w-[62%] max-w-[280px]"
+                />
+              </Reveal>
+            </div>
           </section>
 
           {/* ── LEADERBOARD ───────────────────────────────────────────── */}
@@ -443,50 +620,44 @@ export default function WhatsNew() {
             </div>
           </section>
 
-          {/* ── GAME SCREEN ───────────────────────────────────────────── */}
-          <section id="game-screen" className="wn-anchor px-4 sm:px-8 py-16 sm:py-24">
-            <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              <Reveal>
-                <Eyebrow>Game screen</Eyebrow>
-                <h2 className="text-3xl sm:text-5xl font-black leading-[1.08] tracking-tight">
-                  The game screen,<br />rebuilt.
-                </h2>
-                <p className="text-[#6b7280] text-base sm:text-lg mt-4 leading-relaxed max-w-xl">
-                  When, where, and how to get there, in that order. The rest stays out of the way
-                  until you need it.
-                </p>
-                <div className="grid sm:grid-cols-2 gap-3 mt-7">
-                  {GAME_SCREEN_DETAILS.map(({ icon: Icon, title, desc }) => (
-                    <div key={title} className="bg-white border border-[#DDE1E5] rounded-2xl p-4 shadow-sm">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3">
-                        <Icon size={18} />
-                      </div>
-                      <p className="font-bold text-sm mb-1">{title}</p>
-                      <p className="text-xs text-[#6b7280] leading-relaxed">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </Reveal>
-              <Reveal delay={0.1} className="relative flex justify-center">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-[420px] aspect-square bg-emerald-300/35 rounded-full blur-[90px] pointer-events-none" />
-                <Phone
-                  src={gameScreen}
-                  alt="Game screen with field photo, date, location, and map"
-                  className="relative w-[62%] max-w-[280px]"
-                />
-              </Reveal>
-            </div>
-          </section>
-
           {/* ── CREW EVENTS ───────────────────────────────────────────── */}
-          <section id="events" className="wn-anchor px-4 sm:px-8 pb-16 sm:pb-24">
+          <section id="events" className="wn-anchor px-4 sm:px-8 py-16 sm:py-24">
             <div className="max-w-6xl mx-auto bg-gradient-to-br from-[#F1F8F3] via-white to-emerald-50 border border-emerald-400/25 rounded-[32px] sm:rounded-[40px] px-5 py-10 sm:p-14 overflow-hidden">
               <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                 <Reveal className="order-2 lg:order-1">
-                  <PhonePair
-                    back={{ src: gameType, alt: 'New game flow asking to pick Pickup Game or Events' }}
-                    front={{ src: newEvent, alt: 'New Event form with cover photo, title, date, time and location' }}
-                  />
+                  {/* Real Jogo games, not app screens: this section is about the vibe of an event. */}
+                  <div className="relative pb-[18%] sm:pb-[14%]">
+                    <div className="rounded-3xl overflow-hidden shadow-[0_30px_60px_-20px_rgba(6,78,59,0.45)] ring-1 ring-black/5 -rotate-2">
+                      <img
+                        src="/images/jogo-tournament.webp"
+                        alt="A Jogo crew lined up under the floodlights before a night game"
+                        loading="lazy"
+                        className="w-full aspect-[4/3] object-cover block"
+                      />
+                    </div>
+                    <div className="absolute -bottom-2 left-[4%] w-[36%] rounded-2xl overflow-hidden border-4 border-white shadow-xl rotate-[-6deg]">
+                      <img
+                        src="/verified/photos/web/pic8.jpg"
+                        alt="Players gathering on a lit turf field at night"
+                        loading="lazy"
+                        className="w-full aspect-[3/4] object-cover block"
+                      />
+                    </div>
+                    <div className="absolute -bottom-6 right-[4%] w-[36%] rounded-2xl overflow-hidden border-4 border-white shadow-xl rotate-[5deg]">
+                      <img
+                        src="/verified/photos/web/pic5.jpg"
+                        alt="A player on the ball during an evening pickup game"
+                        loading="lazy"
+                        className="w-full aspect-[3/4] object-cover object-[50%_40%] block"
+                      />
+                    </div>
+                    <div className="absolute top-4 left-4 inline-flex items-center gap-2 bg-[#111111]/85 backdrop-blur text-white rounded-full pl-2 pr-3.5 py-1.5 text-xs font-bold shadow-lg">
+                      <span className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <CalendarPlus size={13} />
+                      </span>
+                      Crew event
+                    </div>
+                  </div>
                 </Reveal>
                 <Reveal delay={0.1} className="order-1 lg:order-2">
                   <div className="flex items-center gap-2">
