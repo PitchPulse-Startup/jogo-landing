@@ -16,6 +16,7 @@
 // joinable here exactly like a public one. Paid events (?type=paid, the
 // separate paidEvents collection) need a ticket bought in the app, so they
 // get the details and App Store / Google Play buttons instead of a join button.
+// Events with `ticketing` (paid entry set in the app) render src/PaidEvent.jsx.
 //
 // The location stays locked until you've joined, same reasoning as the game
 // page — people shouldn't just show up off a forwarded link.
@@ -39,6 +40,7 @@ import {
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
 import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, StoreButtons, HeaderStoreLinks } from './appLinks';
+import PaidEvent from './PaidEvent';
 
 const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
@@ -470,6 +472,10 @@ export default function Event() {
   const scarcity = !unavailable && spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5
     ? (spotsLeft === 1 ? 'Last spot left' : `Only ${spotsLeft} spots left`)
     : null;
+
+  // Paid-entry events (the app's "Collect payment in the app" switch) get
+  // the official-programme page with the live seat map instead.
+  if (!loading && event?.ticketing) return <PaidEvent event={event} refName={ref} />;
 
   return (
     <div className="min-h-screen text-[#111111] font-sans antialiased flex flex-col relative overflow-x-hidden" style={{ background: BG }}>
