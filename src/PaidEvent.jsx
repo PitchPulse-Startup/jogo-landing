@@ -7,7 +7,8 @@
 // index (spots left, entry, teams, format, live kickoff countdown), then
 // the seat map: every spot a circle, a face or a soccer ball once taken,
 // grey while someone is checking out, dashed gold while open. Live via
-// the parent's onSnapshot. Spots are paid in the Jogo app.
+// the parent's onSnapshot. Spots are bought in the Jogo app (that's where
+// the ticket, team chat and QR check-in live), so the pay bar sends there.
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -251,10 +252,10 @@ export default function PaidEvent({ event, refName }) {
                 className="h-[46px] px-6 rounded-full bg-white flex items-center text-[15.5px] font-extrabold"
                 style={{ color: INK }}
               >
-                {selling ? (left > 0 ? 'Get your spot' : 'Join waitlist') : 'Open in Jogo'}
+                {selling ? (left > 0 ? 'Get the app & join' : 'Get the app · waitlist') : 'Open in Jogo'}
               </a>
             </div>
-            <p className="text-center text-[11.5px] font-semibold mt-1.5" style={{ color: MUTED }}>Spots are paid securely in the Jogo app · full refund until sign-ups lock</p>
+            <p className="text-center text-[11.5px] font-semibold mt-1.5" style={{ color: MUTED }}>Your spot, ticket, team chat and check-in all live in the Jogo app</p>
           </div>
         </div>
       ) : null}
