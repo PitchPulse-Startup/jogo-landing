@@ -473,9 +473,20 @@ export default function Event() {
     ? (spotsLeft === 1 ? 'Last spot left' : `Only ${spotsLeft} spots left`)
     : null;
 
+  // Until the doc arrives we don't know which page this is, so show a
+  // neutral splash — drawing this file's ticket page first made paid links
+  // flash the old look before switching to PaidEvent.
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <img src={appIcon} alt="Jogo" className="w-14 h-14 rounded-2xl animate-pulse" />
+      </div>
+    );
+  }
+
   // Paid-entry events (the app's "Collect payment in the app" switch) get
-  // the official-programme page with the live seat map instead.
-  if (!loading && event?.ticketing) return <PaidEvent event={event} refName={ref} />;
+  // the campaign-drop page, the web twin of the app's paid event screen.
+  if (event?.ticketing) return <PaidEvent event={event} refName={ref} />;
 
   return (
     <div className="min-h-screen text-[#111111] font-sans antialiased flex flex-col relative overflow-x-hidden" style={{ background: BG }}>
@@ -533,12 +544,7 @@ export default function Event() {
             transition={{ type: 'spring', stiffness: 120, damping: 16, delay: 0.05 }}
             className="relative rounded-[28px] bg-white border border-[#DDE1E5] shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)] mb-5"
           >
-            {loading ? (
-              <div className="animate-pulse">
-                <div className="h-72 bg-[#EEF0F2] rounded-t-[28px]" />
-                <div className="p-6"><div className="h-4 w-1/2 bg-[#EEF0F2] rounded mb-3" /><div className="h-4 w-2/3 bg-[#EEF0F2] rounded" /></div>
-              </div>
-            ) : event ? (
+            {event ? (
               <>
                 {/* Poster */}
                 <div className="relative h-72 overflow-hidden rounded-t-[28px] bg-gradient-to-br from-emerald-500 to-teal-700">

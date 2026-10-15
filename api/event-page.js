@@ -59,12 +59,18 @@ export default async function handler(request) {
   const capacity = event?.maxParticipants || null;
   const eventTitle = event?.title || 'Jogo Event';
   const when = formatEventDate(event?.date, event?.time);
-  const price = typeof event?.price === 'number' ? event.price : 0;
+  // Paid entry (the app's ticketing switch) prices in cents and counts held
+  // spots against capacity — same math as src/PaidEvent.jsx.
+  const tk = event?.ticketing || null;
+  const price = tk ? (tk.priceCents || 0) / 100 : (typeof event?.price === 'number' ? event.price : 0);
+  const spotsLeft = tk && tk.capacity ? Math.max(0, tk.capacity - count - (tk.heldCount || 0)) : null;
 
   const pageTitle = event ? `${eventTitle} · Jogo` : 'Event Invite · Jogo';
-  const ogDescription = event
-    ? [when, capacity ? `${count}/${capacity} going` : `${count} going`, price > 0 ? `$${price}` : 'Free'].filter(Boolean).join(' — ')
-    : 'This event may have already happened. Open Jogo to see what’s happening near you.';
+  const ogDescription = !event
+    ? 'This event may have already happened. Open Jogo to see what’s happening near you.'
+    : tk
+      ? [when, spotsLeft === null ? null : spotsLeft > 0 ? `${spotsLeft} spots left` : 'Sold out · waitlist open', price > 0 ? `$${price} to play` : null].filter(Boolean).join(' — ')
+      : [when, capacity ? `${count}/${capacity} going` : `${count} going`, price > 0 ? `$${price}` : 'Free'].filter(Boolean).join(' — ');
   const ogImage = event?.imageUrl || `${SITE_URL}/jogolandscape-email.png`;
   const params = new URLSearchParams();
   if (isPaid) params.set('type', 'paid');
