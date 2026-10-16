@@ -18,7 +18,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import {
   onAuthStateChanged,
@@ -227,6 +227,14 @@ export default function Event() {
 
   useEffect(() => onAuthStateChanged(auth, (u) => setViewer(u ?? null)), []);
 
+  // A tournament event (tournaments/{eventId}, publicly readable) gets the
+  // live-scores / Champion-badge lines in the page's app pitch.
+  const [hasTournament, setHasTournament] = useState(false);
+  useEffect(() => {
+    if (!eventId || isPaidCollection) return;
+    getDoc(doc(db, 'tournaments', eventId)).then((snap) => setHasTournament(snap.exists())).catch(() => {});
+  }, [eventId, isPaidCollection]);
+
   const teams = Array.isArray(event?.teams) ? event.teams : [];
   const hasTeams = !!event?.enableTeams && teams.length > 0;
   const participants = Array.isArray(event?.participants) ? event.participants : [];
@@ -295,7 +303,7 @@ export default function Event() {
       <PaidEvent
         event={event}
         refName={ref}
-        join={{ result, joining, joinError, onJoin, needsTicket }}
+        join={{ result, joining, joinError, onJoin, needsTicket, hasTournament }}
       />
       {viewer ? (
         <p className="fixed z-30 left-0 right-0 text-center text-[11.5px] font-semibold pointer-events-none" style={{ bottom: 92, color: FAINT }}>

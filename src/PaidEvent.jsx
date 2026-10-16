@@ -25,8 +25,10 @@
 
 import React, { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowUpRight, ChevronDown, Lock, Check, Loader2 } from 'lucide-react';
-import { APP_URL, StoreButtons } from './appLinks';
+import {
+  ArrowUpRight, ChevronDown, Lock, Check, Loader2, Trophy, Users, MessageCircle, Bell, QrCode, Music, Award, MapPin,
+} from 'lucide-react';
+import { APP_URL, APP_STORE_URL, PLAY_STORE_URL, AppleLogo, PlayLogo, StoreButtons } from './appLinks';
 
 const INK = '#0A0A0A';
 const MUTED = '#6B7280';
@@ -89,6 +91,56 @@ function Lockup({ partner, color, size }) {
         </>
       ) : null}
     </span>
+  );
+}
+
+// Free events: what you only get in the app — built from what THIS event
+// actually uses, so the page never promises a feature it doesn't have.
+function AppPerks({ event, hasTeams, joined, tournament }) {
+  const perks = [
+    tournament && { Icon: Trophy, color: '#FACC15', t: 'Live scores & the bracket', d: 'Follow every game as it’s played, right to the final.' },
+    hasTeams
+      ? { Icon: Users, color: '#60A5FA', t: 'Your team’s chat', d: 'Plan with your teammates — or switch teams to play with friends.' }
+      : { Icon: MessageCircle, color: '#60A5FA', t: 'The group chat', d: 'Talk with everyone who’s going.' },
+    { Icon: Bell, color: '#F87171', t: 'Kickoff reminders', d: 'Plus a heads-up the moment anything changes.' },
+    event.qrCheckInEnabled && { Icon: QrCode, color: '#4ADE80', t: 'Check in at the field', d: 'Scan the code when you arrive — no list, no line.' },
+    event.musicMode && { Icon: Music, color: '#C084FC', t: 'Pick the music', d: 'Request the songs for the day.' },
+    tournament && { Icon: Award, color: '#FBBF24', t: 'Win the Champion badge', d: 'Winners get it on their profile for good.' },
+    { Icon: MapPin, color: '#4ADE80', t: 'Your next game', d: 'Pickup games near you, every week.' },
+  ].filter(Boolean).slice(0, 4);
+  return (
+    <section className="mt-10 rounded-[28px] overflow-hidden relative text-white" style={{ background: INK }}>
+      <div className="absolute pointer-events-none" style={{ top: -80, right: -110, width: 230, height: 420, transform: 'rotate(24deg)', background: '#0E7A43' }} />
+      <div className="relative px-5 pt-6 pb-5">
+        <p className="font-extrabold text-[11px] tracking-[2.2px]" style={{ color: '#8B93A1' }}>{joined ? 'YOUR SPOT IS SAVED' : 'FREE ON IPHONE & ANDROID'}</p>
+        <h2 className="mt-1 pr-16" style={{ ...ANTON, fontSize: 'clamp(30px, 8.5vw, 38px)' }}>{joined ? 'YOU’RE IN. NOW GET THE APP.' : 'IT’S BETTER IN THE APP'}</h2>
+        <p className="mt-1 text-[14.5px] leading-[21px] font-semibold text-white/75 pr-10">
+          {joined ? 'Log in with the same email — this event is already waiting for you.' : 'Joining here saves your spot. Everything else happens in Jogo.'}
+        </p>
+        <div className="mt-5 flex flex-col gap-3.5">
+          {perks.map(({ Icon, color, t, d }) => (
+            <div key={t} className="flex items-start gap-3.5">
+              <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <Icon size={19} color={color} strokeWidth={2.4} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[15.5px] font-extrabold">{t}</p>
+                <p className="text-[13.5px] font-semibold text-white/65 leading-[19px]">{d}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <a href={APP_URL} target="_blank" rel="noopener noreferrer"
+          className="mt-6 h-[56px] rounded-full bg-white flex items-center justify-center font-extrabold text-[16px] tracking-[0.6px] hover:opacity-90 active:scale-[0.98] transition"
+          style={{ color: INK }}>
+          GET THE APP — IT’S FREE
+        </a>
+        <div className="mt-3 flex items-center justify-center gap-5 text-[12.5px] font-bold text-white/60">
+          <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><AppleLogo size={14} /> App Store</a>
+          <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><PlayLogo size={12} /> Google Play</a>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -171,7 +223,7 @@ export default function PaidEvent({ event, refName, join = null }) {
             : { txt: `${left} spots left`, dot: '#4ADE80' };
 
   const bar = free ? (
-    joined ? { title: "You're in", sub: myTeamName ? (/^team/i.test(myTeamName) ? myTeamName : `Team ${myTeamName}`) : 'See you there', cta: mapsHref ? 'Directions' : 'Get Jogo', href: mapsHref || APP_URL, check: true }
+    joined ? { title: "You're in", sub: `${myTeamName ? (/^team\b/i.test(myTeamName) ? myTeamName : `Team ${myTeamName}`) : 'You'} · spot saved`, cta: 'Get the app', href: APP_URL, check: true }
       : cancelled ? { title: 'Cancelled', sub: 'Find another one on Jogo', cta: 'Get Jogo', href: APP_URL }
         : isPast ? { title: 'That’s a wrap', sub: 'Catch the next one on Jogo', cta: 'Get Jogo', href: APP_URL }
           : needsTicket ? { title: 'Ticketed', sub: 'Get your ticket in the app', cta: 'Tickets', href: APP_URL }
@@ -306,6 +358,9 @@ export default function PaidEvent({ event, refName, join = null }) {
           </>
         ) : null}
 
+        {/* Just joined: the app pitch comes first */}
+        {free && joined ? <AppPerks event={event} hasTeams={hasTeams} joined tournament={!!join?.hasTournament} /> : null}
+
         {/* 3 · About + details */}
         {event.description ? (
           <p className="mt-[30px] text-[17px] leading-[26px] font-medium whitespace-pre-line" style={{ color: '#262626' }}>{event.description}</p>
@@ -390,7 +445,11 @@ export default function PaidEvent({ event, refName, join = null }) {
           </section>
         ) : null}
 
-        {/* The sign-up nudge: the spot itself lives in the app */}
+        {/* Free, not joined yet: the app pitch after the teams */}
+        {free && !joined ? <AppPerks event={event} hasTeams={hasTeams} joined={false} tournament={!!join?.hasTournament} /> : null}
+
+        {/* Paid: the spot itself lives in the app */}
+        {!free ? (
         <section className="mt-12 rounded-3xl px-5 py-6" style={{ background: '#F5F5F5' }}>
           <h2 style={{ ...ANTON, fontSize: 26 }}>{free ? 'THE GROUP LIVES IN JOGO' : 'YOUR SPOT LIVES IN JOGO'}</h2>
           <p className="mt-1 text-[15px] leading-[22px] font-medium" style={{ color: '#404040' }}>
@@ -400,6 +459,7 @@ export default function PaidEvent({ event, refName, join = null }) {
           </p>
           <StoreButtons label="" className="mt-4" />
         </section>
+        ) : null}
 
         {/* 5 · Sign-off */}
         <div className="mt-14 flex flex-col items-center gap-1">
