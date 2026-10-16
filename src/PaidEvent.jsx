@@ -16,7 +16,7 @@
 // The web twin of the app's components/events/PaidEventLayout.js, so the
 // link and the app feel like one thing — a brand campaign drop:
 //   1. Cover — the whole first screen is the photo (or a black stadium
-//      night under a floodlight), the JOGO × PARTNER lockup up top, and at
+//      night under a floodlight), the PARTNER × JOGO lockup up top, and at
 //      the bottom whoever invited you, "Presented by", a huge Anton title,
 //      date · place and a live spots pill. The photo drifts slower than the
 //      scroll and the cover text fades as you leave it.
@@ -109,13 +109,13 @@ function Lockup({ partner, color, size }) {
   const word = { ...ANTON, fontSize: size, lineHeight: 1.3, letterSpacing: 1.2 };
   return (
     <span className="inline-flex items-center gap-[7px] max-w-full" style={{ color }}>
-      <span style={word}>JOGO</span>
       {partner ? (
         <>
-          <span style={{ fontSize: size * 0.9, fontWeight: 500, opacity: 0.7 }}>×</span>
           <span className="truncate" style={word}>{partner.toUpperCase()}</span>
+          <span style={{ fontSize: size * 0.9, fontWeight: 500, opacity: 0.7 }}>×</span>
         </>
       ) : null}
+      <span style={word}>JOGO</span>
     </span>
   );
 }
@@ -472,13 +472,13 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
     joined && start ? { k: 'CALENDAR', v: 'Add it to your calendar', href: calendarUrl(event, start, unlockedPlace) } : null,
     hasTeams ? { k: 'TEAMS', v: `${teams.length} teams of ${event.teamSize}` } : { k: 'SPOTS', v: cap ? `${cap} players` : 'Open — no limit' },
     event.squadName ? { k: 'CREW', v: `${event.squadName}${event.visibility === 'crew' ? ' · crew only' : ''}` } : null,
-    partner ? { k: 'PARTNER', v: partner } : null,
+    partner ? { k: 'PARTNER', v: `${partner} × Jogo` } : null,
   ].filter(Boolean) : [
     { k: 'WHEN', v: whenText },
     event.location ? { k: 'WHERE', v: event.location, href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}` } : null,
     hasTeams ? { k: 'TEAMS', v: `${teams.length} teams of ${event.teamSize}` } : { k: 'SPOTS', v: `${cap} players` },
     { k: 'REFUNDS', v: refundText(tk)?.short || 'Full refund until the roster locks' },
-    partner ? { k: 'PARTNER', v: partner } : null,
+    partner ? { k: 'PARTNER', v: `${partner} × Jogo` } : null,
   ].filter(Boolean);
 
   return (
@@ -530,12 +530,12 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
             ) : null}
             {free ? (
               <p className="text-white/75 font-extrabold text-[11.5px] tracking-[2.4px]">
-                {partner ? `PRESENTED BY ${partner.toUpperCase()}` : event.squadName ? `${event.squadName.toUpperCase()} PRESENTS` : 'PICKUP GAME'}
+                {partner ? `${partner.toUpperCase()} × JOGO` : event.squadName ? `${event.squadName.toUpperCase()} PRESENTS` : 'PICKUP GAME'}
               </p>
             ) : (
               <p className="flex max-w-full items-center gap-3 font-bold text-[11px] tracking-[3.2px]" style={{ color: CHAMP, textShadow: '0 1px 12px rgba(0,0,0,.8)' }}>
                 <span className="w-6 h-px flex-shrink-0" style={{ background: CHAMP }} />
-                <span className="truncate">{partner ? `PRESENTED BY ${partner.toUpperCase()}` : 'AN OFFICIAL JOGO EVENT'}</span>
+                <span className="truncate">{partner ? `${partner.toUpperCase()} × JOGO` : 'AN OFFICIAL JOGO EVENT'}</span>
               </p>
             )}
             <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: free ? 'clamp(44px, 13vw, 84px)' : 'clamp(48px, 14vw, 96px)', letterSpacing: free ? undefined : '0.01em', textShadow: '0 4px 24px rgba(0,0,0,.55)' }}>
