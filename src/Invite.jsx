@@ -32,7 +32,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { db, auth, functions } from './firebase';
 import {
-  MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Clock, ChevronDown, ArrowRight,
+  MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Clock, ChevronDown, ArrowRight, Trophy, Crown, Shirt,
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
 import { APP_STORE_URL, PLAY_STORE_URL, PlayLogo, AppleLogo, StoreButtons, HeaderStoreLinks } from './appLinks';
@@ -138,6 +138,28 @@ function themeOf(game) {
   return { bg: INK, band: game?.squadId ? hashColor(game.squadId) : '#0E7A43', label: null, labelColor: '#C3C9D2' };
 }
 
+// Game modes (services/miniTournament.js FORMATS in the app). A game is a
+// mode game once it has miniTournament.format + teams (set at creation).
+const MODES = {
+  knockout: {
+    label: 'Mini tournament', Icon: Trophy,
+    blurb: "Split into teams. Lose and you're out — last team standing wins.",
+    rules: (n, size) => [`${n} teams of ${size}`, "Lose and you're out", 'Last team standing wins'],
+  },
+  winnerStays: {
+    label: 'King of the field', Icon: Crown,
+    blurb: 'Winner stays on, loser goes to the back. Most wins takes the crown.',
+    rules: (n, size) => [`${n} teams of ${size}`, 'Winner stays on', 'Most wins takes the crown'],
+  },
+};
+function modeOf(game) {
+  const mt = game?.miniTournament;
+  const m = mt && MODES[mt.format];
+  if (!m || !Array.isArray(mt.teams) || !mt.teams.length) return null;
+  return { ...m, format: mt.format, teams: mt.teams, size: mt.teamSize || 0 };
+}
+const seatsOf = (p) => 1 + (Number(p?.guests) || 0);
+
 function Face({ p, size = 36, ring = '#FFFFFF', dark = false }) {
   const style = { width: size, height: size, borderColor: ring };
   return p?.photoURL ? (
@@ -153,6 +175,9 @@ function Face({ p, size = 36, ring = '#FFFFFF', dark = false }) {
 // ── The poster ─────────────────────────────────────────────────────────
 function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFull, fillPct, host, others, unavailable, result }) {
   const theme = themeOf(game);
+  const mode = modeOf(game);
+  const spotsK = mode ? 'TEAMS' : 'SPOTS';
+  const spotsV = mode ? `${mode.teams.length} × ${mode.size}` : (maxPlayers != null ? `${playerCount}/${maxPlayers}` : playerCount);
   const joined = !!result;
   const queued = result && (result.status === 'queued' || result.status === 'already_queued');
   const details = result?.details || null;
@@ -205,7 +230,10 @@ function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFu
 
       <div className="relative p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[11.5px] tracking-[0.18em] truncate" style={{ fontFamily: BARLOW, fontWeight: 800, color: theme.labelColor }}>{eyebrow}</p>
+          <p className="text-[11.5px] tracking-[0.18em] truncate flex items-center gap-1.5" style={{ fontFamily: BARLOW, fontWeight: 800, color: theme.labelColor }}>
+            {mode ? <mode.Icon size={14} strokeWidth={2.6} className="flex-shrink-0" /> : null}
+            <span className="truncate">{eyebrow}</span>
+          </p>
           {tag && (
             <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 h-6 text-[10.5px] tracking-[0.08em] flex-shrink-0"
               style={{ background: tag.bg, color: tag.fg, fontFamily: BARLOW, fontWeight: 800 }}>
@@ -247,8 +275,8 @@ function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFu
               <p className="text-[15px] mt-0.5" style={{ fontFamily: BARLOW, fontWeight: 800 }}>{when ? `${when.day} · ${when.time}`.toUpperCase() : 'TBA'}</p>
             </div>
             <div className="border-l border-white/[0.14] pl-4 ml-4">
-              <p className="text-[10px] tracking-[0.14em]" style={{ fontFamily: BARLOW, fontWeight: 800, color: '#8B93A1' }}>SPOTS</p>
-              <p className="text-[15px] mt-0.5" style={{ fontFamily: BARLOW, fontWeight: 800 }}>{maxPlayers != null ? `${playerCount}/${maxPlayers}` : playerCount}</p>
+              <p className="text-[10px] tracking-[0.14em]" style={{ fontFamily: BARLOW, fontWeight: 800, color: '#8B93A1' }}>{spotsK}</p>
+              <p className="text-[15px] mt-0.5" style={{ fontFamily: BARLOW, fontWeight: 800 }}>{spotsV}</p>
             </div>
             <div className="col-span-2 border-t border-white/[0.14] pt-3 min-w-0">
               <p className="text-[10px] tracking-[0.14em]" style={{ fontFamily: BARLOW, fontWeight: 800, color: '#8B93A1' }}>WHERE</p>
@@ -274,10 +302,8 @@ function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFu
             </div>
           ))}
           <div className="min-w-0 border-l border-white/[0.14] pl-3 ml-3">
-            <p className="text-[10px] tracking-[0.14em]" style={{ fontFamily: BARLOW, fontWeight: 800, color: '#8B93A1' }}>SPOTS</p>
-            <p className="text-[13.5px] mt-0.5" style={{ fontFamily: BARLOW, fontWeight: 800 }}>
-              {maxPlayers != null ? `${playerCount}/${maxPlayers}` : playerCount}
-            </p>
+            <p className="text-[10px] tracking-[0.14em]" style={{ fontFamily: BARLOW, fontWeight: 800, color: '#8B93A1' }}>{spotsK}</p>
+            <p className="text-[13.5px] mt-0.5" style={{ fontFamily: BARLOW, fontWeight: 800 }}>{spotsV}</p>
           </div>
         </div>
         )}
@@ -494,7 +520,7 @@ function JoinGame({ gameId, isFull, spotsLeft, onResult }) {
 
 // After joining: what to do next (the poster above already shows the
 // stamp and the unlocked time + place).
-function JoinedActions({ result, gameUrl }) {
+function JoinedActions({ result, gameUrl, myTeam = null }) {
   const queued = result.status === 'queued' || result.status === 'already_queued';
   const details = result.details;
   const cal = details ? googleCalendarUrl(details, gameUrl) : null;
@@ -508,9 +534,11 @@ function JoinedActions({ result, gameUrl }) {
             {queued ? <Clock size={21} strokeWidth={2.6} color={INK} /> : <Check size={23} strokeWidth={3.2} color={INK} />}
           </span>
           <div className="min-w-0">
-            <p className="uppercase" style={{ ...ANTON, fontSize: 24, color: INK }}>{queued ? `#${result.position || 1} on the waitlist` : 'See you on the field'}</p>
+            <p className="uppercase flex items-center gap-2" style={{ ...ANTON, fontSize: 24, color: INK }}>
+              {queued ? `#${result.position || 1} on the waitlist` : myTeam ? <>You're on <span style={{ color: myTeam.color === '#0F1115' ? INK : myTeam.color }}>{myTeam.name}</span></> : 'See you on the field'}
+            </p>
             <p className="text-[13.5px] -mt-0.5" style={{ color: SUB, fontWeight: 600 }}>
-              {queued ? "We'll notify you in the app the moment a spot opens." : 'Your spot is saved.'}
+              {queued ? "We'll notify you in the app the moment a spot opens." : myTeam ? 'Your spot is saved. Want to play with friends? Switch teams in the app.' : 'Your spot is saved.'}
             </p>
           </div>
         </div>
@@ -559,6 +587,76 @@ function JoinedActions({ result, gameUrl }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// What the mode is, in plain words, in the mode's own colours.
+function FormatCard({ game, mode }) {
+  const theme = themeOf(game);
+  return (
+    <section className="mt-8">
+      <h2 className="uppercase mb-2 ml-1" style={{ ...ANTON, fontSize: 24, color: INK }}>The format</h2>
+      <div className="rounded-[24px] p-5 text-white relative overflow-hidden" style={{ background: theme.bg }}>
+        <div className="absolute pointer-events-none" style={{ top: -70, right: -100, width: 200, height: 360, transform: 'rotate(24deg)', background: theme.band, opacity: 0.85 }} />
+        <div className="relative">
+          <span className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: theme.labelColor }}>
+            <mode.Icon size={22} strokeWidth={2.4} color={theme.bg} />
+          </span>
+          <p className="uppercase mt-3" style={{ ...ANTON, fontSize: 30 }}>{mode.label}</p>
+          <p className="text-[14.5px] text-white/80 pr-14" style={{ fontWeight: 600 }}>{mode.blurb}</p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {mode.rules(mode.teams.length, mode.size).map((r) => (
+              <span key={r} className="h-8 px-3 rounded-full bg-white/10 inline-flex items-center text-[13px]" style={{ fontWeight: 800 }}>{r}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// The teams: colour, who's on it, how full. Joining puts you on the team
+// with the most room (joinGameViaLink), so that one is marked.
+function TeamsList({ game, mode, viewerUid, joined }) {
+  const players = game.players || [];
+  const rows = mode.teams.map((t) => {
+    const on = players.filter((p) => p.team === t.id);
+    const seats = on.reduce((n, p) => n + seatsOf(p), 0);
+    return { ...t, on, seats, open: Math.max(0, mode.size - seats), mine: !!viewerUid && on.some((p) => p.userId === viewerUid) };
+  });
+  const mostRoom = joined ? null : rows.reduce((best, r) => (r.open > (best?.open ?? 0) ? r : best), null);
+  return (
+    <section className="mt-8">
+      <div className="flex items-baseline justify-between mb-2 mx-1">
+        <h2 className="uppercase" style={{ ...ANTON, fontSize: 24, color: INK }}>The teams</h2>
+        {!joined && <p className="text-[12.5px]" style={{ color: SUB, fontWeight: 700 }}>Switch teams in the app</p>}
+      </div>
+      <div className="bg-white rounded-[22px] divide-y divide-[#EEF0F3] shadow-[0_6px_20px_-12px_rgba(11,18,32,0.2)]">
+        {rows.map((t) => (
+          <div key={t.id} className="flex items-center gap-3 px-4 py-3.5">
+            <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: t.color }}>
+              <Shirt size={18} color="#FFFFFF" strokeWidth={2.4} />
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-[15px] uppercase tracking-[0.04em]" style={{ fontWeight: 800 }}>{t.name}</p>
+                {t.mine && <span className="text-[10px] px-2 h-5 rounded-full inline-flex items-center text-white" style={{ background: INK, fontWeight: 800 }}>YOU</span>}
+                {mostRoom && mostRoom.id === t.id && t.open > 0 && (
+                  <span className="text-[10px] px-2 h-5 rounded-full inline-flex items-center" style={{ background: '#DCFCE7', color: '#166534', fontWeight: 800 }}>MOST ROOM</span>
+                )}
+              </div>
+              <div className="h-1 rounded-full bg-[#EEF0F3] mt-2 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${mode.size ? Math.min(100, (t.seats / mode.size) * 100) : 0}%`, background: t.color }} />
+              </div>
+            </div>
+            <div className="flex -space-x-2 flex-shrink-0">
+              {t.on.slice(0, 3).map((p, i) => <Face key={p.userId || i} p={p} size={28} />)}
+            </div>
+            <p className="text-[13.5px] w-10 text-right flex-shrink-0" style={{ fontWeight: 800, color: t.open ? INK : FAINT }}>{t.seats}/{mode.size}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -669,6 +767,9 @@ export default function Invite() {
   const isPast = !!startMs && startMs < Date.now() && !game?.isLive;
   const unavailable = !game || game.status === 'cancelled' || isPast;
   const gameUrl = typeof window !== 'undefined' ? window.location.href.split('?')[0] : '';
+  const mode = modeOf(game);
+  const myTeamId = mode && viewerUid ? players.find((p) => p.userId === viewerUid)?.team : null;
+  const myTeam = myTeamId ? mode.teams.find((t) => t.id === myTeamId) || null : null;
 
   return (
     <div className="min-h-screen bg-[#F2F3F5] antialiased flex flex-col overflow-x-hidden" style={{ fontFamily: BARLOW, color: INK }}>
@@ -726,7 +827,7 @@ export default function Invite() {
           {!loading && game && !unavailable && (
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15, ease: EASE }} className="mt-5">
               {result ? (
-                <JoinedActions result={result} gameUrl={gameUrl} />
+                <JoinedActions result={result} gameUrl={gameUrl} myTeam={myTeam} />
               ) : (
                 <JoinGame gameId={gameId} isFull={isFull} spotsLeft={spotsLeft} onResult={setResult} />
               )}
@@ -747,6 +848,13 @@ export default function Invite() {
               <StoreButtons label="Find games near you" />
             </div>
           )}
+
+          {!loading && game && mode && !unavailable ? (
+            <>
+              <FormatCard game={game} mode={mode} />
+              <TeamsList game={game} mode={mode} viewerUid={viewerUid} joined={!!result} />
+            </>
+          ) : null}
 
           {!loading && game?.description ? <About text={game.description} /> : null}
 
