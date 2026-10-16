@@ -2,7 +2,11 @@
 // Paid = events/{id} with `ticketing` (the app's "Collect payment in the
 // app" switch); free = no ticketing. Same split as the app, where both
 // render components/events/PaidEventLayout.js:
-//   • paid — the full campaign drop below; every button goes to the app.
+//   • paid — the premium tier, built like a luxury invitation: the
+//     cinematic cover, then a BLACK page with restraint — hairlines, small
+//     spaced capitals, one muted champagne accent, quiet fade-ins. No join
+//     on the web: payment, team pick and refunds live in the app, so the
+//     page explains how to get in and every button goes to the app.
 //   • free — deliberately plainer: a shorter cover (green pitch with no
 //     photo), "<CREW> PRESENTS", FREE, no JOGO lockup, a white bottom bar
 //     with an ink JOIN. Joining happens right here in the browser —
@@ -23,11 +27,10 @@
 // Paying, picking a team, chat and check-in all happen in the app, so every
 // button sends people to the app store. Live via the parent's onSnapshot.
 
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowUpRight, ChevronDown, Lock, Check, Loader2, Trophy, Users, MessageCircle, Bell, QrCode, Music, Award, MapPin,
-  Ticket, ShieldCheck,
 } from 'lucide-react';
 import { APP_URL, APP_STORE_URL, PLAY_STORE_URL, AppleLogo, PlayLogo, StoreButtons } from './appLinks';
 
@@ -36,8 +39,9 @@ const MUTED = '#6B7280';
 const FAINT = '#A3A3A3';
 const LINE = '#EBEBEB';
 const RED = '#DC2626';
-// Paid events are the premium tier — gold, like the app's paid page.
-const GOLD = '#E3B341';
+// Paid events: one muted champagne accent on black — used sparingly.
+const CHAMP = '#CBB283';
+const PAGE_DARK = '#0A0A0A';
 const EASE = [0.22, 1, 0.36, 1];
 // Anton: line-height >= 1.25 × font-size or the caps get clipped.
 const ANTON = { fontFamily: "'Anton', Impact, sans-serif", fontWeight: 400, lineHeight: 1.25 };
@@ -147,216 +151,185 @@ function AppPerks({ event, hasTeams, joined, tournament }) {
   );
 }
 
-// ── Paid "drop" pieces ─────────────────────────────────────────────
+// ── Paid: the premium body (below the cover) ─────────────────────────
+const Reveal = ({ children, className = '', delay = 0 }) => (
+  <motion.div className={className} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.8, ease: EASE, delay }}>
+    {children}
+  </motion.div>
+);
+const Label = ({ children }) => (
+  <p className="font-bold text-[10.5px] tracking-[3px]" style={{ color: CHAMP }}>{children}</p>
+);
 
-// Gold ticker band under the cover — the event's headline facts on a loop.
-function Marquee({ items }) {
-  const row = items.join('  ✦  ') + '  ✦  ';
-  return (
-    <div className="overflow-hidden py-2.5" style={{ background: GOLD }}>
-      <div className="pe-marquee flex whitespace-nowrap w-max" style={{ ...ANTON, fontSize: 19, lineHeight: '24px', color: INK, letterSpacing: 1 }}>
-        <span className="pr-2">{row}</span><span className="pr-2">{row}</span><span className="pr-2">{row}</span><span className="pr-2">{row}</span>
-      </div>
-    </div>
-  );
-}
-
-// The hero: a black ticket with a moving gold foil, perforation and a stub.
-// Tilts toward the pointer on desktop; floats gently on phones.
-function HoloTicket({ title, price, dateLine, place, facts, fillPct, soldOut }) {
-  const rx = useMotionValue(0); const ry = useMotionValue(0);
-  const srx = useSpring(rx, { stiffness: 140, damping: 14 }); const sry = useSpring(ry, { stiffness: 140, damping: 14 });
-  const onMove = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    ry.set(((e.clientX - r.left) / r.width - 0.5) * 14);
-    rx.set(-((e.clientY - r.top) / r.height - 0.5) * 10);
-  };
-  const bars = Array.from({ length: 46 }, (_, i) => (((i * 7) % 5) + 1));
-  return (
-    <div style={{ perspective: 1100 }} className="mt-7 relative z-10">
-      <motion.div
-        onPointerMove={onMove} onPointerLeave={() => { rx.set(0); ry.set(0); }}
-        initial={{ opacity: 0, y: 40, rotateX: 12 }} animate={{ opacity: 1, y: 0, rotateX: 0 }}
-        transition={{ duration: 0.9, ease: EASE, delay: 0.15 }}
-        style={{ rotateX: srx, rotateY: sry, transformStyle: 'preserve-3d', background: '#0B0B0C' }}
-        className="pe-float relative rounded-[26px] overflow-hidden text-white shadow-[0_40px_80px_-30px_rgba(0,0,0,0.65),0_0_0_1px_rgba(227,179,65,0.35)]"
-      >
-        {/* foil */}
-        <div className="pe-foil absolute inset-0 pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none opacity-[0.08]" style={{ backgroundImage: 'repeating-linear-gradient(135deg, #fff 0 1px, transparent 1px 9px)' }} />
-
-        <div className="relative px-5 pt-5 pb-4">
-          <div className="flex items-center justify-between">
-            <span className="font-extrabold text-[11px] tracking-[2.6px]" style={{ color: GOLD }}>ADMIT ONE ✦ OFFICIAL</span>
-            <span className="h-7 px-3 rounded-full flex items-center font-extrabold text-[13px]" style={{ background: GOLD, color: INK }}>{price}</span>
-          </div>
-          <p className="mt-2 break-words" style={{ ...ANTON, fontSize: 'clamp(30px, 9vw, 42px)' }}>{title}</p>
-          <p className="font-extrabold text-[12.5px] tracking-[1.4px] text-white/80 truncate">{dateLine}{place ? `  ·  ${place}` : ''}</p>
-
-          <div className="mt-4 grid grid-cols-3 rounded-2xl py-3 px-3.5" style={{ background: 'rgba(255,255,255,0.06)' }}>
-            {facts.map((x, i) => (
-              <div key={x.k} className={`min-w-0 ${i > 0 ? 'border-l border-white/10 pl-3 ml-1' : ''}`}>
-                <p className="font-extrabold text-[9.5px] tracking-[1.6px] text-white/45">{x.k}</p>
-                <p className="truncate" style={{ ...ANTON, fontSize: 22, color: x.hot ? '#F87171' : '#FFFFFF' }}>{x.v}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 h-[3px] rounded-full overflow-hidden bg-white/10">
-            <motion.div className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${GOLD}, #FFE7A3)` }}
-              initial={{ width: 0 }} animate={{ width: `${fillPct}%` }} transition={{ delay: 0.8, duration: 1.2, ease: EASE }} />
-          </div>
-        </div>
-
-        {/* perforation */}
-        <div className="relative h-6 flex items-center">
-          <span className="absolute -left-3 w-6 h-6 rounded-full bg-white" />
-          <span className="absolute -right-3 w-6 h-6 rounded-full bg-white" />
-          <div className="mx-5 w-full border-t-2 border-dashed" style={{ borderColor: 'rgba(227,179,65,0.35)' }} />
-        </div>
-
-        {/* stub */}
-        <div className="relative px-5 pb-5 pt-1 flex items-end justify-between gap-4">
-          <div className="min-w-0">
-            <p className="font-extrabold text-[10px] tracking-[2px] text-white/45">{soldOut ? 'SOLD OUT' : 'YOUR TICKET'}</p>
-            <p className="text-[14px] font-extrabold">{soldOut ? 'Waitlist in the Jogo app' : 'Held in the Jogo app'}</p>
-          </div>
-          <div className="flex items-end gap-[2px] h-9 flex-shrink-0 opacity-90">
-            {bars.map((h, i) => <span key={i} className="block bg-white" style={{ width: i % 3 === 0 ? 2 : 1, height: `${40 + h * 12}%` }} />)}
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// KICKOFF IN — live, ticking.
-function Countdown({ start }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
-  const ms = start ? start.getTime() - now : 0;
-  if (!start || ms <= 0) return null;
-  const parts = [
-    ['DAYS', Math.floor(ms / 86400000)],
-    ['HRS', Math.floor((ms % 86400000) / 3600000)],
-    ['MIN', Math.floor((ms % 3600000) / 60000)],
-    ['SEC', Math.floor((ms % 60000) / 1000)],
+function PremiumBody({
+  event, price, left, taken, cap, fillPct, selling, live, cancelled, hasTeams, teams, tk, start,
+  table, partner, tournament,
+}) {
+  const soldOut = selling && left === 0;
+  const days = start ? Math.max(0, Math.floor((start.getTime() - Date.now()) / 86400000)) : null;
+  const kickoff = !live || !start ? null : days >= 2 ? `Kickoff in ${days} days` : days === 1 ? 'Kickoff tomorrow' : 'Kickoff today';
+  const numbers = [
+    { k: 'ENTRY', v: price },
+    { k: selling ? 'SPOTS LEFT' : 'PLAYING', v: cancelled ? '—' : `${selling ? left : taken}` },
+    { k: 'FORMAT', v: event.format ? event.format.toUpperCase() : hasTeams ? `${event.teamSize}V${event.teamSize}` : 'PICKUP' },
   ];
-  return (
-    <motion.section initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, ease: EASE }} className="mt-9">
-      <p className="font-extrabold text-[11px] tracking-[2.4px]" style={{ color: MUTED }}>KICKOFF IN</p>
-      <div className="mt-1 grid grid-cols-4 gap-2">
-        {parts.map(([k, v]) => (
-          <div key={k} className="rounded-2xl text-center py-2.5" style={{ background: '#F5F5F5' }}>
-            <p className="tabular-nums" style={{ ...ANTON, fontSize: 'clamp(30px, 10vw, 44px)', color: INK }}>{String(v).padStart(2, '0')}</p>
-            <p className="font-extrabold text-[10px] tracking-[1.8px] -mt-1" style={{ color: MUTED }}>{k}</p>
-          </div>
-        ))}
-      </div>
-    </motion.section>
-  );
-}
-
-// Teams as kit tiles — colour, a fill ring, who's on it, what's open.
-function TeamTiles({ teams, size, heldFor }) {
-  return (
-    <div className="mt-4 grid grid-cols-2 gap-3">
-      {teams.map((t, idx) => {
-        const players = t.players || [];
-        const held = heldFor(t);
-        const open = Math.max(0, size - players.length - held);
-        const color = t.color || TEAM_PALETTE[idx % TEAM_PALETTE.length];
-        const pct = size ? Math.min(1, players.length / size) : 0;
-        const R = 17; const C = 2 * Math.PI * R;
-        return (
-          <motion.div key={t.id || idx}
-            initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, ease: EASE, delay: (idx % 2) * 0.06 }}
-            className="relative rounded-[22px] overflow-hidden p-4 text-white" style={{ background: color }}>
-            <div className="absolute pointer-events-none" style={{ top: -40, right: -50, width: 110, height: 200, transform: 'rotate(24deg)', background: 'rgba(255,255,255,0.12)' }} />
-            <div className="relative flex items-start justify-between">
-              <span style={{ ...ANTON, fontSize: 15, opacity: 0.7 }}>{two(idx + 1)}</span>
-              <svg width="42" height="42" viewBox="0 0 42 42" className="-mr-1 -mt-1">
-                <circle cx="21" cy="21" r={R} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="4" />
-                <motion.circle cx="21" cy="21" r={R} fill="none" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round"
-                  transform="rotate(-90 21 21)" strokeDasharray={C}
-                  initial={{ strokeDashoffset: C }} whileInView={{ strokeDashoffset: C * (1 - pct) }} viewport={{ once: true }} transition={{ duration: 1, ease: EASE }} />
-                <text x="21" y="25" textAnchor="middle" fontSize="11" fontWeight="800" fill="#FFFFFF">{players.length}</text>
-              </svg>
-            </div>
-            <p className="relative mt-3 truncate" style={{ ...ANTON, fontSize: 22 }}>{(t.name || '').toUpperCase()}</p>
-            <div className="relative mt-2 flex items-center justify-between">
-              <span className="flex">
-                {players.slice(0, 3).map((p, i) => <span key={p.userId || i} style={i ? { marginLeft: -7 } : null}><Face player={p} size={22} /></span>)}
-              </span>
-              <span className="font-extrabold text-[11px] tracking-[1.2px] px-2 h-6 rounded-full flex items-center" style={{ background: open ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.25)', color: open ? INK : '#FFFFFF' }}>
-                {open ? `${open} OPEN` : 'FULL'}
-              </span>
-            </div>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
-
-// Paid events: you can't buy a spot on the web (payment, team pick and
-// refunds all live in the app), so the page says exactly how to get in —
-// three steps — and what the ticket gets you, in the paid tier's black +
-// gold, with one big gold button to the app.
-function PaidGetIn({ price, hasTeams, tournament, soldOut }) {
   const steps = [
-    ['01', 'Download Jogo', 'Free on iPhone and Android.'],
-    ['02', 'Sign up', 'Takes 30 seconds.'],
-    ['03', soldOut ? 'Join the waitlist' : `Pay ${price} & you’re in`, soldOut ? 'We’ll ping you the second a spot opens.' : hasTeams ? 'Pick your team as you check out.' : 'Your spot is saved the moment you pay.'],
+    ['I', 'Download Jogo', 'Free on iPhone and Android.'],
+    ['II', 'Create your account', 'Thirty seconds.'],
+    ['III', soldOut ? 'Join the waitlist' : `Reserve your spot — ${price}`, soldOut ? 'You’ll hear the moment a place opens.' : hasTeams ? 'Choose your team at checkout.' : 'Confirmed the moment you pay.'],
   ];
   const perks = [
-    { Icon: ShieldCheck, t: 'Full refund until teams lock' },
-    hasTeams ? { Icon: Users, t: 'Your team’s chat' } : { Icon: MessageCircle, t: 'The group chat' },
-    { Icon: QrCode, t: 'QR check-in at the field' },
-    tournament ? { Icon: Trophy, t: 'Live scores & the bracket' } : { Icon: Bell, t: 'Kickoff reminders' },
+    'Full refund until teams lock',
+    hasTeams ? 'Private team chat' : 'The group chat',
+    'QR check-in at the field',
+    tournament ? 'Live scores & the bracket' : 'Kickoff reminders',
   ];
   return (
-    <section className="mt-9 rounded-[28px] overflow-hidden relative text-white" style={{ background: INK }}>
-      <div className="absolute pointer-events-none" style={{ top: -90, right: -120, width: 240, height: 440, transform: 'rotate(24deg)', background: 'linear-gradient(180deg, rgba(227,179,65,0.28), rgba(227,179,65,0.05))' }} />
-      <div className="relative px-5 pt-6 pb-5">
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-[1.5px]" style={{ background: GOLD }} />
-          <p className="font-extrabold text-[11px] tracking-[2.2px]" style={{ color: GOLD }}>TICKETS ARE IN THE APP</p>
-        </div>
-        <h2 className="mt-1.5" style={{ ...ANTON, fontSize: 'clamp(32px, 9vw, 40px)' }}>HOW TO GET IN</h2>
-
-        <div className="mt-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.06)' }}>
-          {steps.map(([n, t, d], i) => (
-            <div key={n} className={`flex items-center gap-4 px-4 py-3.5 ${i > 0 ? 'border-t border-white/10' : ''}`}>
-              <span style={{ ...ANTON, fontSize: 24, color: GOLD, width: 30 }}>{n}</span>
-              <div className="min-w-0">
-                <p className="text-[16px] font-extrabold">{t}</p>
-                <p className="text-[13.5px] font-semibold text-white/60">{d}</p>
-              </div>
+    <main className="max-w-xl mx-auto px-[22px] pt-12 pb-44 text-white">
+      {/* The numbers */}
+      <Reveal>
+        <div className="grid grid-cols-3 border-y" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+          {numbers.map((x, i) => (
+            <div key={x.k} className={`py-6 min-w-0 ${i > 0 ? 'pl-4 border-l' : ''}`} style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+              <p className="font-bold text-[10px] tracking-[2.6px] text-white/45">{x.k}</p>
+              <p className="mt-1 truncate" style={{ ...ANTON, fontSize: 'clamp(30px, 9.5vw, 42px)' }}>{x.v}</p>
             </div>
           ))}
         </div>
-
-        <p className="mt-5 font-extrabold text-[11px] tracking-[2px] text-white/50">YOUR TICKET GETS YOU</p>
-        <div className="mt-2.5 grid grid-cols-2 gap-2">
-          {perks.map(({ Icon, t }) => (
-            <div key={t} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <Icon size={16} color={GOLD} strokeWidth={2.4} className="flex-shrink-0" />
-              <span className="text-[13px] font-bold leading-[17px]">{t}</span>
+        {!cancelled && cap ? (
+          <>
+            <div className="mt-5 h-px relative" style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <motion.div className="absolute left-0 top-0 h-px" style={{ background: CHAMP }}
+                initial={{ width: 0 }} whileInView={{ width: `${fillPct}%` }} viewport={{ once: true }} transition={{ duration: 1.6, ease: EASE, delay: 0.2 }} />
             </div>
-          ))}
-        </div>
+            <div className="mt-3 flex justify-between gap-3 text-[12.5px] font-semibold text-white/50">
+              <span>{taken} of {cap} claimed</span>
+              {kickoff ? <span>{kickoff}</span> : null}
+            </div>
+          </>
+        ) : null}
+      </Reveal>
 
-        <a href={APP_URL} target="_blank" rel="noopener noreferrer"
-          className="mt-6 h-[58px] rounded-full flex items-center justify-center gap-2 font-extrabold text-[16.5px] tracking-[0.6px] hover:opacity-90 active:scale-[0.98] transition"
-          style={{ background: GOLD, color: INK }}>
-          <Ticket size={19} strokeWidth={2.6} /> {soldOut ? 'GET THE APP & JOIN THE WAITLIST' : 'GET THE APP & YOUR TICKET'}
-        </a>
-        <div className="mt-3 flex items-center justify-center gap-5 text-[12.5px] font-bold text-white/60">
-          <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><AppleLogo size={14} /> App Store</a>
-          <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><PlayLogo size={12} /> Google Play</a>
+      {/* About */}
+      {event.description ? (
+        <Reveal className="mt-16">
+          <Label>THE EVENT</Label>
+          <p className="mt-4 text-[17px] leading-[29px] font-medium whitespace-pre-line text-white/80">{event.description}</p>
+        </Reveal>
+      ) : null}
+
+      {/* Details */}
+      <Reveal className="mt-16">
+        <Label>THE DETAILS</Label>
+        <div className="mt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+          {table.map((r) => {
+            const inner = (
+              <>
+                <span className="w-[86px] flex-shrink-0 font-bold text-[10px] tracking-[2.4px] text-white/40">{r.k}</span>
+                <span className="flex-1 min-w-0 font-semibold text-[15.5px] line-clamp-2 text-white/90">{r.v}</span>
+                {r.href ? <ArrowUpRight size={15} color={CHAMP} /> : null}
+              </>
+            );
+            const cls = 'flex items-center gap-3 py-4 border-b';
+            const st = { borderColor: 'rgba(255,255,255,0.1)' };
+            return r.href ? (
+              <a key={r.k} href={r.href} target="_blank" rel="noopener noreferrer" className={`${cls} hover:opacity-70 transition-opacity`} style={st}>{inner}</a>
+            ) : (
+              <div key={r.k} className={cls} style={st}>{inner}</div>
+            );
+          })}
         </div>
+      </Reveal>
+
+      {/* Admission — tickets live in the app */}
+      {live ? (
+        <Reveal className="mt-20">
+          <Label>ADMISSION</Label>
+          <h2 className="mt-3" style={{ ...ANTON, fontSize: 'clamp(36px, 11vw, 52px)' }}>{soldOut ? 'THE WAITLIST' : 'HOW TO GET IN'}</h2>
+          <p className="mt-2 text-[15px] leading-[23px] font-medium text-white/55 max-w-[34ch]">
+            Tickets are reserved in the Jogo app — payment, your team and refunds all live there.
+          </p>
+          <ol className="mt-8 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            {steps.map(([n, t, d]) => (
+              <li key={n} className="flex items-baseline gap-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                <span className="w-8 flex-shrink-0 font-semibold text-[13px] tracking-[2px]" style={{ color: CHAMP }}>{n}</span>
+                <div className="min-w-0">
+                  <p className="text-[17px] font-bold">{t}</p>
+                  <p className="text-[14px] font-medium text-white/45 mt-0.5">{d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-3">
+            {perks.map((p) => (
+              <p key={p} className="flex items-start gap-2 text-[13.5px] font-medium text-white/70 leading-[19px]">
+                <Check size={14} color={CHAMP} strokeWidth={2.4} className="mt-[2px] flex-shrink-0" />{p}
+              </p>
+            ))}
+          </div>
+          <a href={APP_URL} target="_blank" rel="noopener noreferrer"
+            className="mt-10 h-[58px] rounded-full flex items-center justify-center gap-2 font-bold text-[15.5px] tracking-[1.6px] hover:opacity-90 active:scale-[0.99] transition"
+            style={{ background: CHAMP, color: PAGE_DARK }}>
+            GET THE JOGO APP <ArrowUpRight size={18} strokeWidth={2.4} />
+          </a>
+          <div className="mt-4 flex items-center justify-center gap-6 text-[12.5px] font-semibold text-white/45">
+            <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white transition-colors"><AppleLogo size={13} /> App Store</a>
+            <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white transition-colors"><PlayLogo size={11} /> Google Play</a>
+          </div>
+        </Reveal>
+      ) : (
+        <Reveal className="mt-20 text-center">
+          <p className="text-[15px] font-medium text-white/55">{cancelled ? 'This event was cancelled — everyone was refunded.' : 'That’s a wrap. The next one is on Jogo.'}</p>
+          <a href={APP_URL} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex h-[52px] px-8 rounded-full items-center font-bold text-[14px] tracking-[1.6px]" style={{ background: CHAMP, color: PAGE_DARK }}>GET THE JOGO APP</a>
+        </Reveal>
+      )}
+
+      {/* The teams */}
+      {!cancelled && hasTeams ? (
+        <Reveal className="mt-20">
+          <div className="flex items-baseline justify-between">
+            <Label>THE TEAMS</Label>
+            {selling && live ? <span className="text-[12px] font-semibold text-white/40">Choose yours in the app</span> : null}
+          </div>
+          <div className="mt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            {teams.map((t, idx) => {
+              const players = t.players || [];
+              const size = event.teamSize || 0;
+              const held = (tk.teamHeld || {})[t.id] || 0;
+              const open = Math.max(0, size - players.length - held);
+              const color = t.color || TEAM_PALETTE[idx % TEAM_PALETTE.length];
+              const pct = size ? Math.min(1, players.length / size) : 0;
+              return (
+                <div key={t.id || idx} className="py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 flex-shrink-0 font-semibold text-[12px] tracking-[1.5px] text-white/30">{two(idx + 1)}</span>
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+                    <span className="truncate font-bold text-[14px] tracking-[1.4px]">{(t.name || '').toUpperCase()}</span>
+                    <span className="flex flex-shrink-0 ml-1">
+                      {players.slice(0, 3).map((p, i) => <span key={p.userId || i} style={i ? { marginLeft: -6 } : null}><Face player={p} size={20} /></span>)}
+                    </span>
+                    <span className="ml-auto flex-shrink-0 font-semibold text-[12px] tracking-[1.2px]" style={{ color: open ? CHAMP : 'rgba(255,255,255,0.3)' }}>
+                      {open ? `${open} OPEN` : 'FULL'}
+                    </span>
+                  </div>
+                  <div className="mt-3 ml-9 h-px relative" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <motion.div className="absolute left-0 top-0 h-px" style={{ background: color }}
+                      initial={{ width: 0 }} whileInView={{ width: `${pct * 100}%` }} viewport={{ once: true }} transition={{ duration: 1.2, ease: EASE }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Reveal>
+      ) : null}
+
+      {/* Sign-off */}
+      <div className="mt-24 flex flex-col items-center gap-2">
+        <Lockup partner={partner} color="#FFFFFF" size={20} />
+        <span className="font-semibold text-[10px] tracking-[3px] text-white/30">{partner ? 'IN PARTNERSHIP' : 'AN OFFICIAL JOGO EVENT'}</span>
       </div>
-    </section>
+    </main>
   );
 }
 
@@ -486,19 +459,12 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
   ].filter(Boolean);
 
   return (
-    <div className="min-h-screen antialiased bg-white" style={{ fontFamily: BARLOW, color: INK }}>
+    <div className="min-h-screen antialiased" style={{ fontFamily: BARLOW, color: free ? INK : '#FFFFFF', background: free ? '#FFFFFF' : PAGE_DARK }}>
       <style>{`
         @keyframes pe-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
         .pe-bob { animation: pe-bob 1.8s ease-in-out infinite; }
         @keyframes pe-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
         .pe-pulse { animation: pe-pulse 1.4s ease-in-out infinite; }
-        @keyframes pe-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .pe-marquee { animation: pe-marquee 26s linear infinite; }
-        @keyframes pe-foil { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
-        .pe-foil { background: linear-gradient(115deg, transparent 20%, rgba(227,179,65,0.0) 30%, rgba(255,231,163,0.28) 42%, rgba(227,179,65,0.12) 50%, transparent 62%); background-size: 200% 100%; animation: pe-foil 4.5s linear infinite; mix-blend-mode: screen; }
-        @keyframes pe-float { 0%,100% { translate: 0 0; } 50% { translate: 0 -6px; } }
-        @media (hover: none) { .pe-float { animation: pe-float 5s ease-in-out infinite; } }
-        @media (prefers-reduced-motion: reduce) { .pe-marquee, .pe-foil, .pe-float { animation: none; } }
       `}</style>
 
       {/* 1 · Cover — the first screen, less the bottom bar and a peek of the page */}
@@ -515,7 +481,9 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
           )}
         </motion.div>
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'linear-gradient(180deg, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,.15) 50%, rgba(0,0,0,.88) 100%)',
+          background: free
+            ? 'linear-gradient(180deg, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,.15) 50%, rgba(0,0,0,.88) 100%)'
+            : 'linear-gradient(180deg, rgba(10,10,10,.55) 0%, rgba(10,10,10,0) 22%, rgba(10,10,10,.5) 48%, rgba(10,10,10,.9) 70%, rgba(10,10,10,1) 100%)',
         }} />
 
         {!free ? (
@@ -542,12 +510,12 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
                 {partner ? `PRESENTED BY ${partner.toUpperCase()}` : event.squadName ? `${event.squadName.toUpperCase()} PRESENTS` : 'PICKUP GAME'}
               </p>
             ) : (
-              <p className="inline-flex max-w-full items-center gap-2 font-extrabold text-[11.5px] tracking-[2.4px] rounded-full pl-3 pr-3.5 h-7" style={{ color: GOLD, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
-                <span className="w-[18px] h-[1.5px] flex-shrink-0" style={{ background: GOLD }} />
-                <span className="truncate">{partner ? `OFFICIAL · PRESENTED BY ${partner.toUpperCase()}` : 'OFFICIAL JOGO EVENT'}</span>
+              <p className="flex max-w-full items-center gap-3 font-bold text-[11px] tracking-[3.2px]" style={{ color: CHAMP, textShadow: '0 1px 12px rgba(0,0,0,.8)' }}>
+                <span className="w-6 h-px flex-shrink-0" style={{ background: CHAMP }} />
+                <span className="truncate">{partner ? `PRESENTED BY ${partner.toUpperCase()}` : 'AN OFFICIAL JOGO EVENT'}</span>
               </p>
             )}
-            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: free ? 'clamp(44px, 13vw, 84px)' : 'clamp(56px, 17vw, 112px)', textShadow: '0 4px 24px rgba(0,0,0,.55)' }}>
+            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: free ? 'clamp(44px, 13vw, 84px)' : 'clamp(48px, 14vw, 96px)', letterSpacing: free ? undefined : '0.01em', textShadow: '0 4px 24px rgba(0,0,0,.55)' }}>
               {(event.title || 'Event').toUpperCase()}
             </h1>
             <p className="text-white font-extrabold text-[13px] tracking-[1.6px] truncate">
@@ -565,35 +533,16 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
       </section>
 
       {!free ? (
-        <Marquee items={[
-          partner ? `JOGO × ${partner.toUpperCase()}` : 'OFFICIAL JOGO EVENT',
-          dateLine,
-          dollars(tk.priceCents || 0),
-          hasTeams ? `${teams.length} TEAMS OF ${event.teamSize}` : `${cap} PLAYERS`,
-          cancelled ? 'CANCELLED' : left === 0 ? 'SOLD OUT · WAITLIST OPEN' : lowStock ? `ONLY ${left} SPOTS LEFT` : `${left} SPOTS LEFT`,
-        ]} />
+        <PremiumBody
+          event={event} price={dollars(tk.priceCents || 0)} left={left} taken={taken} cap={cap} fillPct={fillPct}
+          selling={selling} live={live} cancelled={cancelled} hasTeams={hasTeams} teams={teams} tk={tk} start={start}
+          table={table} partner={partner} tournament={hasTournament}
+        />
       ) : null}
 
-      {/* White page */}
-      <main className={`max-w-xl mx-auto px-[22px] ${free ? 'pt-7' : 'pt-0'} pb-44`}>
-        {/* Paid: the ticket is the hero */}
-        {!free ? (
-          <HoloTicket
-            title={(event.title || 'Event').toUpperCase()}
-            price={dollars(tk.priceCents || 0)}
-            dateLine={dateLine}
-            place={placeOf(event.location)?.toUpperCase()}
-            facts={[
-              { k: selling ? 'SPOTS LEFT' : 'PLAYING', v: cancelled ? '—' : `${selling ? left : taken}`, hot: lowStock },
-              { k: hasTeams ? 'TEAMS' : 'SPOTS', v: `${hasTeams ? teams.length : cap}` },
-              { k: 'FORMAT', v: event.format ? event.format.toUpperCase() : hasTeams ? `${event.teamSize}V${event.teamSize}` : 'PICKUP' },
-            ]}
-            fillPct={fillPct}
-            soldOut={selling && left === 0}
-          />
-        ) : null}
-        {!free && live ? <Countdown start={start} /> : null}
-
+      {/* White page (free) */}
+      {free ? (
+      <main className="max-w-xl mx-auto px-[22px] pt-7 pb-44">
         {/* 2 · Facts (free) */}
         {free ? (
         <div className="flex">
@@ -608,7 +557,7 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
         {free && !cancelled && cap ? (
           <>
             <div className="mt-[22px] h-[3px] overflow-hidden" style={{ background: LINE }}>
-              <motion.div className="h-full" style={{ background: free ? INK : GOLD }}
+              <motion.div className="h-full" style={{ background: INK }}
                 initial={{ width: 0 }} animate={{ width: `${fillPct}%` }} transition={{ delay: 0.5, duration: 1, ease: EASE }} />
             </div>
             <div className="mt-2 flex justify-between gap-2.5 text-[12.5px] font-bold" style={{ color: MUTED }}>
@@ -617,9 +566,6 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
             </div>
           </>
         ) : null}
-
-        {/* Paid: how to get in (the app), right under the numbers */}
-        {!free && live ? <PaidGetIn price={dollars(tk.priceCents || 0)} hasTeams={hasTeams} tournament={hasTournament} soldOut={selling && left === 0} /> : null}
 
         {/* Just joined: the app pitch comes first */}
         {free && joined ? <AppPerks event={event} hasTeams={hasTeams} joined tournament={!!join?.hasTournament} /> : null}
@@ -656,9 +602,7 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
             {free && hasTeams && selling && live && !joined ? (
               <p className="mt-2 text-[13px] font-bold" style={{ color: MUTED }}>Joining puts you on the team with the most room — switch in the app.</p>
             ) : null}
-            {hasTeams && !free ? (
-              <TeamTiles teams={teams} size={event.teamSize || 0} heldFor={(t) => (tk.teamHeld || {})[t.id] || 0} />
-            ) : hasTeams ? teams.map((t, idx) => {
+            {hasTeams ? teams.map((t, idx) => {
               const players = t.players || [];
               const size = event.teamSize || 0;
               const held = free ? 0 : ((tk.teamHeld || {})[t.id] || 0);
@@ -693,7 +637,7 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
                       ? <span className="flex-shrink-0 h-[30px] px-[13px] rounded-full flex items-center font-extrabold text-[11.5px] tracking-[1.2px] text-white" style={{ background: INK }}>YOU</span>
                       : <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: open > 0 ? MUTED : FAINT }}>{open > 0 ? `${open} OPEN` : 'FULL'}</span>
                   ) : canJoin ? (
-                    <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: GOLD }}>{open} OPEN</span>
+                    <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: CHAMP }}>{open} OPEN</span>
                   ) : (
                     <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: FAINT }}>FULL</span>
                   )}
@@ -732,9 +676,10 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
           <span className="font-bold text-[10.5px] tracking-[2.4px]" style={{ color: FAINT }}>{partner ? 'IN PARTNERSHIP' : free ? 'SEE YOU THERE · BUILT BY SOCCER PLAYERS' : 'OFFICIAL EVENT'}</span>
         </div>
       </main>
+      ) : null}
 
       {/* One bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-20" style={free ? { background: '#FFFFFF', borderTop: `1px solid ${LINE}` } : { background: INK, borderTop: '1px solid rgba(227,179,65,0.45)' }}>
+      <div className="fixed inset-x-0 bottom-0 z-20" style={free ? { background: '#FFFFFF', borderTop: `1px solid ${LINE}` } : { background: 'rgba(10,10,10,0.82)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderTop: '1px solid rgba(203,178,131,0.25)' }}>
         {free && join?.joinError ? <p className="text-center text-[13px] font-bold text-red-600 pt-2 px-4">{join.joinError}</p> : null}
         <div className="max-w-xl mx-auto flex items-center gap-3 px-[22px] pt-3.5 pb-[max(14px,env(safe-area-inset-bottom))]">
           <div className="flex-1 min-w-0">
@@ -754,7 +699,7 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
           ) : (
             <a href={bar.href || APP_URL} target="_blank" rel="noopener noreferrer"
               className="flex-shrink-0 h-[52px] min-w-[128px] px-[26px] rounded-full flex items-center justify-center font-extrabold text-[15px] tracking-[1.4px] hover:opacity-90 active:scale-[0.97] transition"
-              style={free ? { background: INK, color: '#FFFFFF' } : { background: GOLD, color: INK }}>
+              style={free ? { background: INK, color: '#FFFFFF' } : { background: CHAMP, color: PAGE_DARK }}>
               {bar.cta.toUpperCase()}
             </a>
           )}
