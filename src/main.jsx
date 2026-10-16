@@ -20,7 +20,7 @@ import WhatsNew from './WhatsNew.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
-import faviconUrl from './assets/jogo-logo2.png'
+import faviconUrl from './assets/jogo-app-icon.png'
 document.querySelector('link[rel="icon"]').setAttribute('href', faviconUrl)
 // -------------------------
 

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, ExternalLink, Users, Sparkles, Play, MessageCircle } from 'lucide-react';
-import jogoLogo from './assets/jogo-logo2.png';
+import jogoLogo from './assets/jogo-logo-2026-white.png';
 import soccerBackground from './assets/soccer.jpeg';
 import AnimatedBackdrop from './components/AnimatedBackdrop';
 
@@ -101,7 +101,7 @@ const Media = ({ onBackToMain }) => {
                 <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
                 <span className="font-medium">Back to Home</span>
               </button>
-              <img src={jogoLogo} alt="Jogo Logo" className="h-12 w-auto" />
+              <img src={jogoLogo} alt="Jogo Logo" className="h-9 w-auto" />
             </div>
           </div>
         </header>

@@ -120,7 +120,7 @@ export default async function handler(request) {
 <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
 <meta name="twitter:description" content="${escapeHtml(ogDescription)}" />
 <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
-<link rel="icon" href="/jogo-logo2.png" />
+<link rel="icon" href="/jogo-app-icon.png" />
 <style>${SHARE_PAGE_STYLES}</style>
 </head>
 <body>

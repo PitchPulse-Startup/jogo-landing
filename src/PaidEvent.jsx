@@ -32,6 +32,8 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowUpRight, ChevronDown, Lock, Check, Loader2, Trophy, Users, MessageCircle, Bell, QrCode, Music, Award, MapPin,
 } from 'lucide-react';
+import jogoLogoInk from './assets/jogo-logo-2026.png';
+import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import { APP_URL, APP_STORE_URL, PLAY_STORE_URL, AppleLogo, PlayLogo, StoreButtons } from './appLinks';
 
 const INK = '#0A0A0A';
@@ -115,7 +117,7 @@ function Lockup({ partner, color, size }) {
           <span style={{ fontSize: size * 0.9, fontWeight: 500, opacity: 0.7 }}>×</span>
         </>
       ) : null}
-      <span style={word}>JOGO</span>
+      <img src={color === '#FFFFFF' ? jogoLogoWhite : jogoLogoInk} alt="Jogo" className="flex-shrink-0" style={{ height: Math.round(size * 0.95), width: 'auto' }} />
     </span>
   );
 }

@@ -26,6 +26,7 @@ import {
   MessageCircle, CalendarDays, Newspaper, Bell, BadgeCheck,
 } from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
+import jogoLogo from './assets/jogo-logo-2026.png';
 import appScreenshot from './assets/jogopic1.png';
 import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, HeaderStoreLinks } from './appLinks';
 
@@ -706,9 +707,8 @@ export default function Crew() {
       {/* ── TOP BAR ─────────────────────────────────────────────── */}
       <header className="relative z-10 px-4 sm:px-8 pt-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between bg-white/70 backdrop-blur-md border border-white/80 rounded-2xl pl-3 pr-2 py-2 shadow-sm">
-          <a href="/" className="flex items-center gap-2">
-            <img src={appIcon} alt="" className="w-8 h-8 rounded-[10px]" />
-            <span className="text-lg font-black tracking-tight">jogo</span>
+          <a href="/" className="flex items-center pl-1" aria-label="Jogo">
+            <img src={jogoLogo} alt="Jogo" className="h-[22px] w-auto" />
           </a>
           <HeaderStoreLinks />
         </div>

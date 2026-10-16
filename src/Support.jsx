@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, Mail, HeadphonesIcon } from 'lucide-react';
-import jogoLogo from './assets/jogo-logo2.png';
+import jogoLogo from './assets/jogo-logo-2026-white.png';
 import soccerBackground from './assets/soccer.jpeg';
 import AnimatedBackdrop from './components/AnimatedBackdrop';
 
@@ -29,7 +29,7 @@ const Support = ({ onBackToMain }) => {
               <span className="text-sm font-medium">Home</span>
             </button>
             <div className="flex items-center gap-3">
-              <img src={jogoLogo} alt="Jogo Logo" className="h-8 w-auto opacity-90" />
+              <img src={jogoLogo} alt="Jogo Logo" className="h-6 w-auto" />
               <span className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
                 Support
               </span>

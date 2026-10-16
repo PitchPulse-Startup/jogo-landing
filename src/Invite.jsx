@@ -34,7 +34,7 @@ import { db, auth, functions } from './firebase';
 import {
   MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Clock, ChevronDown, ArrowRight, Trophy, Crown, Shirt,
 } from 'lucide-react';
-import appIcon from './assets/jogo-app-icon.png';
+import jogoLogo from './assets/jogo-logo-2026.png';
 import { APP_STORE_URL, PLAY_STORE_URL, PlayLogo, AppleLogo, StoreButtons, HeaderStoreLinks } from './appLinks';
 
 const WEB_APP_URL = 'https://www.jogous.io/app';
@@ -813,9 +813,8 @@ export default function Invite() {
 
       <header className="px-4 pt-4">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
-            <img src={appIcon} alt="" className="w-9 h-9 rounded-[11px] shadow-sm" />
-            <span className="uppercase" style={{ ...ANTON, fontSize: 22, letterSpacing: '0.04em' }}>Jogo</span>
+          <a href="/" className="flex items-center" aria-label="Jogo">
+            <img src={jogoLogo} alt="Jogo" className="h-6 w-auto" />
           </a>
           <HeaderStoreLinks />
         </div>

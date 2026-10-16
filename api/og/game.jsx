@@ -62,16 +62,8 @@ export default async function handler(request) {
           }}
         />
 
-        <div style={{ position: 'absolute', top: 44, left: 56, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.95)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
-            }}
-          >
-            ⚽
-          </div>
-          <div style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: -0.5, display: 'flex' }}>JOGO</div>
+        <div style={{ position: 'absolute', top: 48, left: 56, display: 'flex' }}>
+          <img src={`${url.origin}/jogo-logo-2026-white.png`} width={172} height={36} alt="" />
         </div>
 
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', padding: '0 56px 56px', gap: 14 }}>

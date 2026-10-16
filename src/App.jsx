@@ -11,7 +11,7 @@ import {
   Shield, Coffee, Heart, Instagram
 } from 'lucide-react';
 
-import jogoLogo from './assets/jogo-logo2.png';
+import jogoLogo from './assets/jogo-logo-2026.png';
 import screenOne from './assets/jogopic1.png';
 import screenTwo from './assets/jogopic2.png';
 import screenThree from './assets/jogopic3.png';
@@ -384,7 +384,7 @@ export default function App() {
       >
         <div className="max-w-7xl mx-auto px-8 py-2 flex items-center justify-between gap-4">
           <a href="/" className="flex items-center flex-shrink-0">
-            <img src={jogoLogo} alt="Jogo" className="h-9 w-auto" />
+            <img src={jogoLogo} alt="Jogo" className="h-7 w-auto" />
           </a>
 
           <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-[#6b7280]">
@@ -937,7 +937,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 mb-10">
             <div>
-              <img src={jogoLogo} alt="Jogo" className="h-9 w-auto mb-3" />
+              <img src={jogoLogo} alt="Jogo" className="h-7 w-auto mb-4" />
               <p className="text-[#9CA3AF] text-sm max-w-xs">
                 Free pickup soccer finder. Built in New Jersey.
               </p>
