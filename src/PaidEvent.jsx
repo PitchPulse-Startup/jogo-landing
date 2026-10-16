@@ -68,6 +68,25 @@ function parseStart(event) {
   return new Date(y, m - 1, d, hh || 0, mm || 0);
 }
 
+// The refund rule with the real date — same as the app's refundPolicy:
+// full refund until the lock date (capped at kickoff); then final.
+function refundText(tk) {
+  const ms = (ts) => (ts?.toMillis ? ts.toMillis() : 0);
+  if (!tk) return null;
+  if (tk.status === 'cancelled') return { short: 'Cancelled — everyone refunded', line: null };
+  const start = ms(tk.startsAt) || Infinity;
+  const lockMs = Math.min(ms(tk.deadlineAt) || start, start);
+  const locked = tk.status === 'locked' || Date.now() >= lockMs;
+  if (locked) return { short: 'No refunds — the roster is final', line: null };
+  const when = Number.isFinite(lockMs)
+    ? new Date(lockMs).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : 'kickoff';
+  return {
+    short: `Full refund until ${when}`,
+    line: `Drop out before ${when} for a full refund. That day the roster locks${tk.minPlayers ? ` — and if fewer than ${tk.minPlayers} players have joined, it's cancelled and everyone is refunded` : ''}.`,
+  };
+}
+
 const dollars = (cents) => `$${(cents / 100) % 1 === 0 ? cents / 100 : (cents / 100).toFixed(2)}`;
 const shortDate = (d) => d?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || '';
 const placeOf = (location) => (location ? String(location).split(',')[0].trim() : null);
@@ -163,6 +182,7 @@ const Label = ({ children }) => (
 );
 
 function PremiumBody({
+  refund,
   event, price, left, taken, cap, fillPct, selling, live, cancelled, hasTeams, teams, tk, start,
   table, partner, tournament,
 }) {
@@ -180,7 +200,7 @@ function PremiumBody({
     ['III', soldOut ? 'Join the waitlist' : `Reserve your spot — ${price}`, soldOut ? 'You’ll hear the moment a place opens.' : hasTeams ? 'Choose your team at checkout.' : 'Confirmed the moment you pay.'],
   ];
   const perks = [
-    'Full refund until teams lock',
+    refund?.short || 'Full refund until the roster locks',
     hasTeams ? 'Private team chat' : 'The group chat',
     'QR check-in at the field',
     tournament ? 'Live scores & the bracket' : 'Kickoff reminders',
@@ -268,6 +288,9 @@ function PremiumBody({
               </p>
             ))}
           </div>
+          {refund?.line ? (
+            <p className="mt-6 text-[13px] leading-[20px] font-medium text-white/45">{refund.line}</p>
+          ) : null}
           <a href={APP_URL} target="_blank" rel="noopener noreferrer"
             className="mt-10 h-[58px] rounded-full flex items-center justify-center gap-2 font-bold text-[15.5px] tracking-[1.6px] hover:opacity-90 active:scale-[0.99] transition"
             style={{ background: CHAMP, color: PAGE_DARK }}>
@@ -454,7 +477,7 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
     { k: 'WHEN', v: whenText },
     event.location ? { k: 'WHERE', v: event.location, href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}` } : null,
     hasTeams ? { k: 'TEAMS', v: `${teams.length} teams of ${event.teamSize}` } : { k: 'SPOTS', v: `${cap} players` },
-    { k: 'REFUNDS', v: 'Full refund until teams lock' },
+    { k: 'REFUNDS', v: refundText(tk)?.short || 'Full refund until the roster locks' },
     partner ? { k: 'PARTNER', v: partner } : null,
   ].filter(Boolean);
 
@@ -536,7 +559,7 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
         <PremiumBody
           event={event} price={dollars(tk.priceCents || 0)} left={left} taken={taken} cap={cap} fillPct={fillPct}
           selling={selling} live={live} cancelled={cancelled} hasTeams={hasTeams} teams={teams} tk={tk} start={start}
-          table={table} partner={partner} tournament={hasTournament}
+          table={table} partner={partner} tournament={hasTournament} refund={refundText(tk)}
         />
       ) : null}
 
