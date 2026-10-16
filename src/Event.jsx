@@ -1,25 +1,20 @@
 // src/Event.jsx — landing page for shared event links (jogous.io/event/:eventId)
 //
-// The event-link counterpart to src/Invite.jsx (games). Whoever taps a
-// shared event link lands here and can join right in the browser through
-// the joinEventViaLink Cloud Function (jogo-APP functions/index.js), which
+// Every event renders src/PaidEvent.jsx — the web twin of the app's event
+// page (components/events/PaidEventLayout.js), which draws paid and free
+// events alike. Paid (events/{id} with `ticketing`) sends every button to
+// the app. Free events can be joined right here in the browser through the
+// joinEventViaLink Cloud Function (jogo-APP functions/index.js), which
 // mirrors the app's own join — a plain event adds you to its participants,
-// a team event puts you on the team with the most open spots.
-//
-// Light like the rest of Jogo, but deliberately not the game page's look:
-// events are a "ticket" — the event's own photo as a soft ambient
-// backdrop, a poster with a date block, a torn perforation, and a stub with
-// a live countdown. Same visual language as the app's ShareEventModal and
-// event screens, so the share and the landing feel like one thing.
+// a team event puts you on the team with the most open spots. This file
+// owns that join: JOIN in the page's bottom bar joins straight away when
+// you're signed in, or opens the sign-up sheet below when you're not.
 //
 // The link IS the invitation: a crew-only event (visibility 'crew') is
-// joinable here exactly like a public one. Paid events (?type=paid, the
-// separate paidEvents collection) need a ticket bought in the app, so they
-// get the details and App Store / Google Play buttons instead of a join button.
-// Events with `ticketing` (paid entry set in the app) render src/PaidEvent.jsx.
-//
-// The location stays locked until you've joined, same reasoning as the game
-// page — people shouldn't just show up off a forwarded link.
+// joinable here exactly like a public one. The location stays locked until
+// you've joined, same reasoning as the game page — people shouldn't just
+// show up off a forwarded link. Legacy priced events (?type=paid → the
+// separate paidEvents collection, or a `price`) point to the app instead.
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -34,27 +29,19 @@ import {
   signOut,
 } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X, Loader2 } from 'lucide-react';
 import { db, auth, functions } from './firebase';
-import {
-  MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Ticket, Shield, Sparkles, Users, Zap,
-} from 'lucide-react';
 import appIcon from './assets/jogo-app-icon.png';
-import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, StoreButtons, HeaderStoreLinks } from './appLinks';
+import { StoreButtons } from './appLinks';
 import PaidEvent from './PaidEvent';
 
-const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
-const BG = '#F5F6F8';
+const INK = '#0A0A0A';
+const MUTED = '#6B7280';
+const FAINT = '#A3A3A3';
+const ANTON = { fontFamily: "'Anton', Impact, sans-serif", fontWeight: 400, lineHeight: 1.25 };
 
 const joinEventViaLink = httpsCallable(functions, 'joinEventViaLink');
-
-function AppleLogo({ size = 22 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-    </svg>
-  );
-}
 
 function authErrorMessage(error, mode) {
   switch (error?.code) {
@@ -87,118 +74,15 @@ function joinErrorMessage(error) {
   return 'Something went wrong joining. Please try again.';
 }
 
-// Event dates are local 'YYYY-MM-DD' + optional 'HH:MM' strings (see the
-// app's OrganizerEventFormScreen) — parsed as local time, same as the app.
-function parseEventStart(date, time) {
-  if (!date || typeof date !== 'string') return null;
-  const [y, m, d] = date.split('-').map(Number);
-  if (!y || !m || !d) return null;
-  let h = 0; let min = 0;
-  if (time) {
-    const [hh, mm] = String(time).split(':').map(Number);
-    h = hh || 0; min = mm || 0;
-  }
-  return new Date(y, m - 1, d, h, min);
-}
-
-function formatWhen(date, time) {
-  const start = parseEventStart(date, time);
-  if (!start) return null;
-  return {
-    day: start.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
-    weekday: start.toLocaleDateString(undefined, { weekday: 'long' }),
-    month: start.toLocaleDateString(undefined, { month: 'short' }).toUpperCase(),
-    dayNum: start.getDate(),
-    time: time ? start.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : null,
-  };
-}
-
-function googleCalendarUrl(details, eventUrl) {
-  const start = parseEventStart(details.date, details.time);
-  if (!start) return null;
-  const fmt = (dt) => dt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-  const end = new Date(start.getTime() + 2 * 3600 * 1000);
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: `🎟️ ${details.title || 'Jogo event'}`,
-    dates: `${fmt(start)}/${fmt(end)}`,
-    location: details.location || '',
-    details: `Event on Jogo: ${eventUrl}`,
-  });
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
-function mapsUrl(details) {
-  return details.location
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(details.location)}`
-    : null;
-}
-
-// Ticks every second while the event is upcoming.
-function useCountdown(target) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!target) return undefined;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [target]);
-  if (!target) return null;
-  const ms = target.getTime() - now;
-  if (ms <= 0) return null;
-  return {
-    d: Math.floor(ms / 86400000),
-    h: Math.floor((ms % 86400000) / 3600000),
-    m: Math.floor((ms % 3600000) / 60000),
-    s: Math.floor((ms % 60000) / 1000),
-  };
-}
-
-// The torn edge between poster and stub — notches punched out in the page
-// color, dashed line between them.
-function Perforation() {
-  return (
-    <div className="relative h-6 flex items-center">
-      <span className="absolute -left-3 w-6 h-6 rounded-full" style={{ background: BG }} />
-      <span className="absolute -right-3 w-6 h-6 rounded-full" style={{ background: BG }} />
-      <div className="mx-5 w-full border-t-2 border-dashed border-[#DDE1E5]" />
-    </div>
-  );
-}
-
-// ── Join flow ─────────────────────────────────────────────────────────
-function JoinEvent({ eventId, onResult }) {
-  const [user, setUser] = useState(() => auth.currentUser);
-  const [mode, setMode] = useState(null); // null | 'signup' | 'login' | 'reset'
+// ── Sign up / log in, then join — a bottom sheet over the event page ──
+function JoinSheet({ open, onClose, onSignedIn, eventTitle }) {
+  const [mode, setMode] = useState('signup'); // 'signup' | 'login' | 'reset'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [resetSent, setResetSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [joining, setJoining] = useState(false);
-  const [joinError, setJoinError] = useState('');
-
-  useEffect(() => onAuthStateChanged(auth, setUser), []);
-
-  const runJoin = async (displayName) => {
-    setJoining(true);
-    setJoinError('');
-    try {
-      const res = await joinEventViaLink({ eventId, displayName: displayName || undefined });
-      onResult(res.data);
-    } catch (e) {
-      console.error('Error joining event:', e);
-      setJoinError(joinErrorMessage(e));
-    } finally {
-      setJoining(false);
-    }
-  };
-
-  const handlePrimary = () => {
-    if (joining) return;
-    if (user) runJoin(user.displayName);
-    else setMode('signup'); // most people off a shared link are new
-  };
 
   const switchMode = (next) => { setMode(next); setAuthError(''); setResetSent(false); };
 
@@ -230,8 +114,7 @@ function JoinEvent({ eventId, onResult }) {
         const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
         displayName = cred.user.displayName;
       }
-      setMode(null);
-      await runJoin(displayName);
+      onSignedIn(displayName);
     } catch (err) {
       setAuthError(authErrorMessage(err, mode));
     } finally {
@@ -239,167 +122,76 @@ function JoinEvent({ eventId, onResult }) {
     }
   };
 
-  const inputClass = 'w-full bg-[#F7F8F9] border border-[#E5E7EB] rounded-xl px-4 py-3 text-[15px] text-[#111111] placeholder:text-[#9CA3AF] outline-none focus:border-emerald-400 focus:bg-white transition-colors';
+  const inputClass = 'w-full bg-[#F5F5F5] rounded-2xl px-4 py-3.5 text-[15.5px] font-semibold outline-none ring-2 ring-transparent focus:ring-[#0A0A0A] focus:bg-white transition-all placeholder:text-[#A3A3A3]';
 
   return (
-    <div>
-      <motion.button
-        type="button"
-        whileHover={{ scale: 1.015, y: -2 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={handlePrimary}
-        disabled={joining}
-        className="ev-glow relative overflow-hidden flex items-center justify-center gap-2 w-full bg-[#111111] hover:bg-[#262626] text-white font-black text-[17px] py-4 rounded-2xl disabled:opacity-80"
-      >
-        <span className="ev-shine absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        {joining ? <><Loader2 size={18} className="animate-spin" /> Saving your spot…</> : <><Ticket size={19} strokeWidth={2.6} /> Claim your spot</>}
-      </motion.button>
-
-      {user && !mode && (
-        <p className="text-center text-[11px] text-[#9CA3AF] mt-2.5">
-          Joining as {user.displayName || user.email} ·{' '}
-          <button type="button" onClick={() => signOut(auth)} className="underline underline-offset-2 hover:text-[#6b7280]">
-            Not you?
-          </button>
-        </p>
-      )}
-      {joinError && <p className="text-center text-xs text-red-500 mt-2">{joinError}</p>}
-
-      <AnimatePresence>
-        {mode && (
+    <AnimatePresence>
+      {open && (
+        <motion.div className="fixed inset-0 z-40 flex items-end justify-center"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <button type="button" aria-label="Close" className="absolute inset-0 bg-black/50" onClick={onClose} />
           <motion.form
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.28, ease: EASE }}
             onSubmit={handleSubmit}
-            className="overflow-hidden"
+            initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="relative w-full max-w-xl bg-white rounded-t-[28px] px-[22px] pt-5 pb-[max(22px,env(safe-area-inset-bottom))]"
+            style={{ fontFamily: "'Barlow', system-ui, sans-serif", color: INK }}
           >
-            <div className="bg-white border border-[#DDE1E5] rounded-2xl p-4 mt-3 shadow-sm">
-              {mode === 'reset' ? (
-                <p className="text-sm text-[#6b7280] mb-3">Enter your email and we’ll send you a reset link.</p>
-              ) : (
-                <div className="flex bg-[#F1F2F4] rounded-xl p-1 mb-3">
-                  {[['signup', "I'm new"], ['login', 'I have an account']].map(([m, label]) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => switchMode(m)}
-                      className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-all ${mode === m ? 'bg-white text-[#111111] shadow-sm' : 'text-[#6b7280]'}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex flex-col gap-2">
-                {mode === 'signup' && (
-                  <input type="text" autoComplete="given-name" placeholder="First name" value={name}
-                    onChange={(e) => setName(e.target.value)} className={inputClass} />
-                )}
-                <input type="email" autoComplete="email" placeholder="Email" value={email}
-                  onChange={(e) => setEmail(e.target.value)} className={inputClass} />
-                {mode !== 'reset' && (
-                  <input type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                    placeholder={mode === 'signup' ? 'Create a password' : 'Password'} value={password}
-                    onChange={(e) => setPassword(e.target.value)} className={inputClass} />
-                )}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-extrabold text-[11px] tracking-[2px]" style={{ color: MUTED }}>{mode === 'reset' ? 'RESET PASSWORD' : 'GRAB YOUR SPOT'}</p>
+                <p className="truncate" style={{ ...ANTON, fontSize: 28, color: INK }}>{(eventTitle || 'This event').toUpperCase()}</p>
               </div>
-              {mode === 'signup' && (
-                <p className="text-[11px] text-[#9CA3AF] mt-2">8+ characters, with an uppercase letter and a number.</p>
-              )}
-
-              {authError && <p className="text-xs text-red-500 mt-2">{authError}</p>}
-              {resetSent && <p className="text-xs text-emerald-700 mt-2">Check your inbox for a reset link.</p>}
-
-              <button type="submit" disabled={submitting}
-                className="w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-3 rounded-xl mt-3 disabled:opacity-70 flex items-center justify-center gap-2">
-                {submitting && <Loader2 size={16} className="animate-spin" />}
-                {mode === 'signup' ? 'Create account & claim spot' : mode === 'login' ? 'Log in & claim spot' : 'Send reset link'}
+              <button type="button" onClick={onClose} className="w-9 h-9 rounded-full bg-[#F5F5F5] flex items-center justify-center flex-shrink-0" aria-label="Close">
+                <X size={17} color={INK} />
               </button>
+            </div>
 
-              <div className="flex justify-between text-[11px] text-[#9CA3AF] mt-2">
-                <span>Same account as the Jogo app.</span>
-                {mode === 'login' && (
-                  <button type="button" onClick={() => switchMode('reset')} className="underline underline-offset-2 hover:text-[#6b7280]">Forgot password?</button>
-                )}
-                {mode === 'reset' && (
-                  <button type="button" onClick={() => switchMode('login')} className="underline underline-offset-2 hover:text-[#6b7280]">Back to log in</button>
-                )}
+            {mode !== 'reset' && (
+              <div className="flex bg-[#F5F5F5] rounded-full p-1 mt-3 mb-3">
+                {[['signup', "I'm new"], ['login', 'I have an account']].map(([m, label]) => (
+                  <button key={m} type="button" onClick={() => switchMode(m)}
+                    className={`flex-1 text-[14px] font-extrabold py-2 rounded-full transition-all ${mode === m ? 'bg-[#0A0A0A] text-white' : 'text-[#6B7280]'}`}>
+                    {label}
+                  </button>
+                ))}
               </div>
+            )}
+            {mode === 'reset' && <p className="text-[14px] font-semibold mt-2 mb-3" style={{ color: MUTED }}>Enter your email and we’ll send you a reset link.</p>}
+
+            <div className="flex flex-col gap-2">
+              {mode === 'signup' && (
+                <input type="text" autoComplete="given-name" placeholder="First name" value={name}
+                  onChange={(e) => setName(e.target.value)} className={inputClass} />
+              )}
+              <input type="email" autoComplete="email" placeholder="Email" value={email}
+                onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+              {mode !== 'reset' && (
+                <input type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  placeholder={mode === 'signup' ? 'Create a password' : 'Password'} value={password}
+                  onChange={(e) => setPassword(e.target.value)} className={inputClass} />
+              )}
+            </div>
+            {mode === 'signup' && <p className="text-[12px] font-semibold mt-2 ml-1" style={{ color: FAINT }}>8+ characters, with an uppercase letter and a number.</p>}
+            {authError && <p className="text-[13px] font-bold text-red-600 mt-2 ml-1">{authError}</p>}
+            {resetSent && <p className="text-[13px] font-bold text-emerald-700 mt-2 ml-1">Check your inbox for a reset link.</p>}
+
+            <button type="submit" disabled={submitting}
+              className="w-full h-[54px] rounded-full text-white mt-4 font-extrabold text-[16px] flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-70 transition-opacity"
+              style={{ background: INK }}>
+              {submitting && <Loader2 size={17} className="animate-spin" />}
+              {mode === 'signup' ? 'Create account & join' : mode === 'login' ? 'Log in & join' : 'Send reset link'}
+            </button>
+
+            <div className="flex justify-between text-[12px] font-semibold mt-3 px-1" style={{ color: FAINT }}>
+              <span>Free · same account as the Jogo app</span>
+              {mode === 'login' && <button type="button" onClick={() => switchMode('reset')} className="underline underline-offset-2">Forgot password?</button>}
+              {mode === 'reset' && <button type="button" onClick={() => switchMode('login')} className="underline underline-offset-2">Back to log in</button>}
             </div>
           </motion.form>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// Once you're in: your ticket — admit-one stub, unlocked location, next steps.
-function YourTicket({ result, eventUrl, viewerName }) {
-  const details = result.details || {};
-  const when = formatWhen(details.date, details.time);
-  const cal = googleCalendarUrl(details, eventUrl);
-  const maps = mapsUrl(details);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 18, rotate: -2, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
-      transition={{ type: 'spring', stiffness: 160, damping: 16 }}
-      className="relative rounded-[28px] overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-[0_24px_60px_-20px_rgba(5,150,105,0.55)]"
-    >
-      <div className="px-6 pt-6 pb-5 flex items-center gap-4">
-        <motion.div
-          initial={{ scale: 0, rotate: -40 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 13, delay: 0.15 }}
-          className="w-14 h-14 rounded-2xl bg-white text-emerald-600 flex items-center justify-center flex-shrink-0"
-        >
-          <Check size={30} strokeWidth={3.4} />
         </motion.div>
-        <div className="min-w-0">
-          <p className="text-[11px] font-black tracking-[0.2em] opacity-60">ADMIT ONE</p>
-          <p className="font-black text-2xl leading-tight tracking-tight">You're in{viewerName ? `, ${viewerName.split(' ')[0]}` : ''}!</p>
-          {result.teamName && <p className="text-sm font-bold opacity-75">Team: {result.teamName}</p>}
-        </div>
-      </div>
-
-      <div className="relative h-6 flex items-center">
-        <span className="absolute -left-3 w-6 h-6 rounded-full" style={{ background: BG }} />
-        <span className="absolute -right-3 w-6 h-6 rounded-full" style={{ background: BG }} />
-        <div className="mx-5 w-full border-t-2 border-dashed border-white/35" />
-      </div>
-
-      <div className="px-6 pt-3 pb-6">
-        <div className="grid grid-cols-2 gap-4 mb-5">
-          <div>
-            <p className="text-[10px] font-black tracking-[0.18em] opacity-55">WHEN</p>
-            <p className="font-black text-[15px] leading-snug">{when ? when.day : 'TBA'}</p>
-            {when?.time && <p className="text-sm font-bold opacity-70">{when.time}</p>}
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-black tracking-[0.18em] opacity-55">WHERE</p>
-            <p className="font-black text-[15px] leading-snug break-words">{details.location || 'TBA'}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {maps && (
-            <a href={maps} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-white hover:bg-white/90 text-emerald-700 text-sm font-bold py-3 rounded-xl transition-colors">
-              <Navigation size={15} /> Directions
-            </a>
-          )}
-          {cal && (
-            <a href={cal} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-bold py-3 rounded-xl transition-colors">
-              <CalendarPlus size={15} /> Add to calendar
-            </a>
-          )}
-        </div>
-      </div>
-    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -407,12 +199,15 @@ export default function Event() {
   const { eventId } = useParams();
   const [searchParams] = useSearchParams();
   const ref = searchParams.get('ref');
-  const isPaid = searchParams.get('type') === 'paid';
+  const isPaidCollection = searchParams.get('type') === 'paid';
 
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState(null);
   const [viewer, setViewer] = useState(undefined);
   const [result, setResult] = useState(null);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState('');
+  const [sheetOpen, setSheetOpen] = useState(false);
   const autoCheckedRef = useRef(null);
   const viewerUid = viewer === undefined ? undefined : viewer?.uid ?? null;
 
@@ -420,7 +215,7 @@ export default function Event() {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!eventId) { setLoading(false); return undefined; }
-    return onSnapshot(doc(db, isPaid ? 'paidEvents' : 'events', eventId), (snap) => {
+    return onSnapshot(doc(db, isPaidCollection ? 'paidEvents' : 'events', eventId), (snap) => {
       setEvent(snap.exists() ? { id: snap.id, ...snap.data() } : null);
       setLoading(false);
     }, (e) => {
@@ -428,7 +223,7 @@ export default function Event() {
       setEvent(null);
       setLoading(false);
     });
-  }, [eventId, isPaid]);
+  }, [eventId, isPaidCollection]);
 
   useEffect(() => onAuthStateChanged(auth, (u) => setViewer(u ?? null)), []);
 
@@ -436,10 +231,32 @@ export default function Event() {
   const hasTeams = !!event?.enableTeams && teams.length > 0;
   const participants = Array.isArray(event?.participants) ? event.participants : [];
   const everyone = hasTeams ? teams.flatMap((t) => t.players || []) : participants;
+  const needsTicket = isPaidCollection || (typeof event?.price === 'number' && event.price > 0);
 
-  // Someone already signed up (came back to the link) gets their ticket
-  // without tapping — joinEventViaLink is idempotent for them.
-  const viewerIn = !isPaid && !!viewerUid && everyone.some((p) => p.userId === viewerUid);
+  const runJoin = async (displayName) => {
+    setJoining(true);
+    setJoinError('');
+    try {
+      const res = await joinEventViaLink({ eventId, displayName: displayName || undefined });
+      setResult(res.data);
+    } catch (e) {
+      console.error('Error joining event:', e);
+      setJoinError(joinErrorMessage(e));
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  // JOIN in the bottom bar: straight in when signed in, else the sheet.
+  const onJoin = () => {
+    if (joining) return;
+    if (auth.currentUser) runJoin(auth.currentUser.displayName);
+    else setSheetOpen(true);
+  };
+
+  // Someone already signed up (came back to the link) gets their unlocked
+  // details without tapping — joinEventViaLink is idempotent for them.
+  const viewerIn = !needsTicket && !!viewerUid && everyone.some((p) => p.userId === viewerUid);
   useEffect(() => {
     if (!viewerIn || result || autoCheckedRef.current === viewerUid) return;
     autoCheckedRef.current = viewerUid;
@@ -449,33 +266,7 @@ export default function Event() {
     if (viewerUid === null) { setResult(null); autoCheckedRef.current = null; }
   }, [viewerUid]);
 
-  useEffect(() => {
-    if (event?.title) document.title = `${event.title} · Jogo`;
-  }, [event?.title]);
-
-  const start = parseEventStart(event?.date, event?.time);
-  const countdown = useCountdown(start);
-  const when = formatWhen(event?.date, event?.time);
-  const count = everyone.length;
-  const capacity = event?.maxParticipants || (hasTeams && event?.teamSize ? teams.length * event.teamSize : null) || null;
-  const spotsLeft = capacity ? Math.max(0, capacity - count) : null;
-  const isFull = spotsLeft === 0;
-  const fillPct = capacity ? Math.min(100, Math.round((count / capacity) * 100)) : 0;
-  const isPast = !!start && start.getTime() < Date.now() - 12 * 3600 * 1000;
-  const price = typeof event?.price === 'number' ? event.price : 0;
-  const needsTicket = isPaid || price > 0;
-  const unavailable = !event || event.status === 'cancelled' || isPast;
-  const isCrewEvent = event?.visibility === 'crew';
-  const faces = everyone.slice(0, 5);
-  const extraFaces = Math.max(0, count - faces.length);
-  const eventUrl = typeof window !== 'undefined' ? window.location.href.split('?')[0] : '';
-  const scarcity = !unavailable && spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5
-    ? (spotsLeft === 1 ? 'Last spot left' : `Only ${spotsLeft} spots left`)
-    : null;
-
-  // Until the doc arrives we don't know which page this is, so show a
-  // neutral splash — drawing this file's ticket page first made paid links
-  // flash the old look before switching to PaidEvent.
+  // Until the doc arrives we don't know which page this is — a neutral splash.
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -484,274 +275,44 @@ export default function Event() {
     );
   }
 
-  // Paid-entry events (the app's "Collect payment in the app" switch) get
-  // the campaign-drop page, the web twin of the app's paid event screen.
-  if (event?.ticketing) return <PaidEvent event={event} refName={ref} />;
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <img src={appIcon} alt="" className="w-14 h-14 rounded-2xl mx-auto" />
+          <p className="mt-4" style={{ ...ANTON, fontSize: 30, color: INK }}>EVENT NOT FOUND</p>
+          <p className="text-[15px] font-semibold mt-1 mb-6" style={{ color: MUTED }}>It may have been deleted. Open Jogo to find what’s on near you.</p>
+          <StoreButtons label="" />
+        </div>
+      </div>
+    );
+  }
+
+  if (event.ticketing) return <PaidEvent event={event} refName={ref} />;
 
   return (
-    <div className="min-h-screen text-[#111111] font-sans antialiased flex flex-col relative overflow-x-hidden" style={{ background: BG }}>
-      <style>{`
-        @keyframes ev-shine { 0% { transform: translateX(0); } 60%, 100% { transform: translateX(450%); } }
-        .ev-shine { animation: ev-shine 3s ease-in-out infinite; }
-        @keyframes ev-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.35), 0 18px 40px -14px rgba(17,17,17,0.45); } 50% { box-shadow: 0 0 0 10px rgba(22,163,74,0), 0 18px 40px -14px rgba(17,17,17,0.45); } }
-        .ev-glow { animation: ev-pulse 2.6s ease-in-out infinite; }
-        @keyframes ev-float { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(24px,-18px) scale(1.08); } }
-        .ev-orb { animation: ev-float 12s ease-in-out infinite; }
-        .ev-orb-2 { animation-delay: -6s; }
-      `}</style>
-
-      {/* Ambient backdrop — the event's own photo, blurred into the page */}
-      <div className="absolute inset-x-0 top-0 h-[720px] pointer-events-none overflow-hidden">
-        {event?.imageUrl && (
-          <img src={event.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover scale-125 blur-3xl opacity-30" />
-        )}
-        <div className="ev-orb absolute -top-40 left-1/2 -translate-x-1/2 w-[620px] h-[620px] rounded-full bg-emerald-300/30 blur-[130px]" />
-        <div className="ev-orb ev-orb-2 absolute top-40 -left-32 w-[380px] h-[380px] rounded-full bg-teal-300/25 blur-[110px]" />
-        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(7,9,10,0.2), ${BG} 92%)` }} />
-        <div className="absolute inset-0 opacity-[0.07]"
-          style={{ backgroundImage: 'radial-gradient(rgba(17,17,17,0.7) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-      </div>
-
-      <header className="relative z-10 px-4 pt-4">
-        <div className="max-w-md mx-auto flex items-center justify-between bg-white/75 backdrop-blur-xl border border-white rounded-2xl pl-3 pr-2 py-2 shadow-sm">
-          <a href="/" className="flex items-center gap-2">
-            <img src={appIcon} alt="" className="w-8 h-8 rounded-[10px]" />
-            <span className="text-lg font-black tracking-tight">jogo</span>
-            <span className="text-[10px] font-black tracking-[0.18em] text-emerald-700 border border-emerald-600/30 rounded-full px-2 py-0.5 ml-1">EVENTS</span>
-          </a>
-          <HeaderStoreLinks />
-        </div>
-      </header>
-
-      <main className="relative flex-1 px-4 pt-7 pb-14">
-        <div className="w-full max-w-md mx-auto">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}
-            className="text-center mb-5">
-            <div className="inline-flex items-center gap-2 bg-white border border-[#DDE1E5] shadow-sm rounded-full pl-1 pr-3.5 py-1">
-              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xs font-black flex items-center justify-center">
-                {ref ? ref.trim().charAt(0).toUpperCase() : <Sparkles size={13} />}
-              </span>
-              <span className="text-sm text-[#374151]">
-                {ref ? <><span className="font-bold text-[#111111]">{ref}</span> sent you an invite</> : "You're on the list"}
-              </span>
-            </div>
-          </motion.div>
-
-          {/* The ticket */}
-          <motion.div
-            initial={{ opacity: 0, y: 24, rotate: -1.5 }}
-            animate={{ opacity: 1, y: 0, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 120, damping: 16, delay: 0.05 }}
-            className="relative rounded-[28px] bg-white border border-[#DDE1E5] shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)] mb-5"
-          >
-            {event ? (
-              <>
-                {/* Poster */}
-                <div className="relative h-72 overflow-hidden rounded-t-[28px] bg-gradient-to-br from-emerald-500 to-teal-700">
-                  {event.imageUrl ? (
-                    <img src={event.imageUrl} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="absolute -right-6 -bottom-10 text-[180px] opacity-[0.12] select-none">🏆</span>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/20" />
-
-                  <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-3">
-                    <div className="flex flex-wrap gap-1.5">
-                      {isCrewEvent && (
-                        <span className="inline-flex items-center gap-1 bg-black/45 backdrop-blur-md border border-white/15 text-[11px] font-bold rounded-full px-2.5 py-1">
-                          <Shield size={11} className="text-lime-300" /> {event.squadName || 'Crew event'}
-                        </span>
-                      )}
-                      {hasTeams && (
-                        <span className="inline-flex items-center gap-1 bg-black/45 backdrop-blur-md border border-white/15 text-[11px] font-bold rounded-full px-2.5 py-1">
-                          <Users size={11} className="text-lime-300" /> {teams.length} teams
-                        </span>
-                      )}
-                      {scarcity && (
-                        <span className="inline-flex items-center gap-1 bg-red-500 text-[11px] font-black rounded-full px-2.5 py-1">
-                          <Zap size={11} strokeWidth={3} /> {scarcity}
-                        </span>
-                      )}
-                    </div>
-                    {when && (
-                      <div className="flex-shrink-0 w-16 rounded-2xl bg-white text-center py-1.5 shadow-xl">
-                        <p className="text-[11px] font-black tracking-widest text-red-500">{when.month}</p>
-                        <p className="text-[30px] font-black leading-none text-[#07090A] tracking-tight">{when.dayNum}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="absolute left-5 right-5 bottom-4">
-                    <h1 className="text-[32px] font-black leading-[1.02] tracking-tight drop-shadow-lg text-white">
-                      {event.title || 'Jogo event'}
-                    </h1>
-                    <p className="mt-2 text-lime-300 font-bold text-[15px]">
-                      {when ? [when.weekday, when.time].filter(Boolean).join(' · ') : 'Date to be announced'}
-                    </p>
-                  </div>
-                </div>
-
-                <Perforation />
-
-                {/* Stub */}
-                <div className="px-5 pb-5 grid grid-cols-3 gap-3">
-                  <div>
-                    <p className="text-[10px] font-black tracking-[0.18em] text-[#9CA3AF]">ENTRY</p>
-                    <p className="text-xl font-black mt-0.5">{!needsTicket ? 'Free' : price > 0 ? `$${price}` : 'Ticket'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black tracking-[0.18em] text-[#9CA3AF]">GOING</p>
-                    <p className="text-xl font-black mt-0.5">
-                      {count}{capacity ? <span className="text-[#9CA3AF] text-base">/{capacity}</span> : null}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black tracking-[0.18em] text-[#9CA3AF]">STARTS IN</p>
-                    <p className="text-xl font-black mt-0.5 tabular-nums">
-                      {countdown
-                        ? (countdown.d > 0 ? `${countdown.d}d ${countdown.h}h` : `${countdown.h}h ${String(countdown.m).padStart(2, '0')}m`)
-                        : unavailable ? '—' : 'Now'}
-                    </p>
-                  </div>
-                  {capacity && (
-                    <div className="col-span-3 h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${fillPct}%` }} transition={{ duration: 1, delay: 0.4, ease: EASE }}
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" />
-                    </div>
-                  )}
-                </div>
-
-                {(faces.length > 0 || event.description) && (
-                  <div className="px-5 pb-5 border-t border-[#EEF0F2] pt-4">
-                    {faces.length > 0 && (
-                      <div className="flex items-center gap-3">
-                        <div className="flex -space-x-2.5 flex-shrink-0">
-                          {faces.map((p, i) => (
-                            p.photoURL ? (
-                              <img key={p.userId || i} src={p.photoURL} alt="" className="w-9 h-9 rounded-full border-2 border-white object-cover" />
-                            ) : (
-                              <span key={p.userId || i} className="w-9 h-9 rounded-full border-2 border-white bg-emerald-50 text-emerald-700 text-xs font-black flex items-center justify-center">
-                                {(p.displayName || '?').charAt(0).toUpperCase()}
-                              </span>
-                            )
-                          ))}
-                          {extraFaces > 0 && (
-                            <span className="w-9 h-9 rounded-full border-2 border-white bg-[#F4F5F7] text-[#374151] text-[11px] font-black flex items-center justify-center">+{extraFaces}</span>
-                          )}
-                        </div>
-                        <p className="text-[13px] text-[#6b7280]">
-                          <span className="font-bold text-[#111111]">{(faces[0]?.displayName || 'People').split(' ')[0]}</span>
-                          {count > 1 ? ` and ${count - 1} other${count - 1 === 1 ? '' : 's'} are going` : ' is going'}
-                        </p>
-                      </div>
-                    )}
-                    {event.description && (
-                      <p className={`text-sm text-[#374151] leading-relaxed whitespace-pre-line line-clamp-5 ${faces.length > 0 ? 'mt-4' : ''}`}>{event.description}</p>
-                    )}
-                  </div>
-                )}
-
-                {!result && !unavailable && !needsTicket && event.location && (
-                  <div className="mx-5 mb-5 rounded-2xl border border-dashed border-[#D5DAE0] bg-[#FAFBFB] px-4 py-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white border border-[#E5E7EB] text-[#9CA3AF] flex items-center justify-center"><MapPin size={16} /></div>
-                    <div className="flex-1">
-                      <p className="text-[10px] font-black tracking-[0.18em] text-[#9CA3AF]">LOCATION</p>
-                      <div className="h-3 w-36 rounded bg-[#E5E7EB] mt-1.5 blur-[2px]" />
-                    </div>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700"><Lock size={12} /> Unlocks on join</span>
-                  </div>
-                )}
-
-                {needsTicket && !unavailable && event.location && (
-                  <div className="mx-5 mb-5 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0"><MapPin size={16} /></div>
-                    <p className="font-bold text-[15px] min-w-0">{event.location}</p>
-                  </div>
-                )}
-
-                {unavailable && (
-                  <p className="px-5 pb-5 text-sm text-[#6b7280]">
-                    {event.status === 'cancelled' ? 'This event was cancelled.' : 'This event already happened.'} Find what’s next on Jogo.
-                  </p>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-16 px-7">
-                <div className="text-5xl mb-3">🎟️</div>
-                <h2 className="text-xl font-black mb-2">This event isn't available</h2>
-                <p className="text-[#6b7280] text-sm leading-relaxed">It may have been deleted. Open Jogo to find events near you.</p>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Action */}
-          {!loading && event && !unavailable && (
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.2, ease: EASE }}>
-              {needsTicket ? (
-                <>
-                  <a href={APP_URL} target="_blank" rel="noopener noreferrer"
-                    className="ev-glow flex items-center justify-center gap-2.5 w-full bg-[#111111] hover:bg-[#262626] text-white font-black text-[17px] py-4 rounded-2xl">
-                    <Ticket size={20} strokeWidth={2.6} /> Get tickets in the app
-                  </a>
-                  <p className="text-center text-[12px] text-[#6b7280] mt-3">Tickets are sold securely in the Jogo app.</p>
-                </>
-              ) : result ? (
-                <YourTicket result={result} eventUrl={eventUrl} viewerName={viewer?.displayName} />
-              ) : isFull ? (
-                <div className="text-center bg-white border border-[#DDE1E5] rounded-2xl py-4 font-black text-[#6b7280]">Sold out — every spot is taken</div>
-              ) : (
-                <>
-                  <JoinEvent eventId={eventId} onResult={setResult} />
-                  <div className="flex items-center justify-center gap-4 mt-3.5 text-[12px] text-[#6b7280]">
-                    {['Free', 'No app needed', '30 seconds'].map((t) => (
-                      <span key={t} className="inline-flex items-center gap-1"><Check size={13} strokeWidth={3} className="text-emerald-600" />{t}</span>
-                    ))}
-                  </div>
-                </>
-              )}
-            </motion.div>
-          )}
-
-          {!loading && (!event || unavailable) && (
-            <div className="flex flex-col items-center gap-3">
-              <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-4 rounded-2xl">
-                <AppleLogo />
-                <span className="text-left leading-tight"><span className="block text-[10px] font-normal text-white/60">Find events near you on the</span><span className="block text-lg font-bold">App Store</span></span>
-              </a>
-              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-bold py-4 rounded-2xl">
-                <PlayLogo size={20} />
-                <span className="text-left leading-tight"><span className="block text-[10px] font-normal text-white/60">Or get it on</span><span className="block text-lg font-bold">Google Play</span></span>
-              </a>
-              <a href={WEB_APP_URL} className="text-xs text-[#6b7280] underline underline-offset-4">Continue on the web instead →</a>
-            </div>
-          )}
-
-          {/* Both app stores, always visible on a live event (unavailable
-              events show them above instead). */}
-          {!loading && event && !unavailable && (
-            <StoreButtons className="mt-8" />
-          )}
-
-          <div className="mt-10 flex items-center justify-center gap-2 text-[12px] text-[#6b7280]">
-            <img src={appIcon} alt="" className="w-5 h-5 rounded-md opacity-80" />
-            <span>Events, games & crews — all on Jogo</span>
-          </div>
-        </div>
-      </main>
-
-      <footer className="relative border-t border-[#DDE1E5] bg-white/60 px-4 py-5">
-        <div className="max-w-md mx-auto flex flex-col items-center gap-2 text-xs text-[#6b7280]">
-          <nav className="flex items-center gap-4">
-            <a href="/policy" className="hover:text-[#111111]">Privacy</a>
-            <a href="/terms" className="hover:text-[#111111]">Terms</a>
-            <a href="/support" className="hover:text-[#111111]">Support</a>
-            <a href="mailto:jogo.tech@outlook.com" className="hover:text-[#111111]">Contact</a>
-          </nav>
-          <span>© {new Date().getFullYear()} Jogo · Made in New Jersey</span>
-        </div>
-      </footer>
-    </div>
+    <>
+      <PaidEvent
+        event={event}
+        refName={ref}
+        join={{ result, joining, joinError, onJoin, needsTicket }}
+      />
+      {viewer ? (
+        <p className="fixed z-30 left-0 right-0 text-center text-[11.5px] font-semibold pointer-events-none" style={{ bottom: 92, color: FAINT }}>
+          {!result ? (
+            <span className="pointer-events-auto bg-white/90 rounded-full px-3 py-1">
+              Joining as {viewer.displayName || viewer.email} ·{' '}
+              <button type="button" onClick={() => signOut(auth)} className="underline underline-offset-2">Not you?</button>
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+      <JoinSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        eventTitle={event.title}
+        onSignedIn={(displayName) => { setSheetOpen(false); runJoin(displayName); }}
+      />
+    </>
   );
 }

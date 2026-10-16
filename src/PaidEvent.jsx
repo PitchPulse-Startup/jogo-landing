@@ -1,5 +1,13 @@
-// src/PaidEvent.jsx — shared-link page for a PAID event (events/{id} with
-// `ticketing`, set by the app's "Collect payment in the app" switch).
+// src/PaidEvent.jsx — the shared-link page for EVERY event (jogous.io/event/:id).
+// Paid = events/{id} with `ticketing` (the app's "Collect payment in the
+// app" switch); free = no ticketing. Same split as the app, where both
+// render components/events/PaidEventLayout.js:
+//   • paid — the full campaign drop below; every button goes to the app.
+//   • free — deliberately plainer: a shorter cover (green pitch with no
+//     photo), "<CREW> PRESENTS", FREE, no JOGO lockup, a white bottom bar
+//     with an ink JOIN. Joining happens right here in the browser —
+//     src/Event.jsx owns that flow and passes it in as `join`. The
+//     location stays locked until you've joined.
 //
 // The web twin of the app's components/events/PaidEventLayout.js, so the
 // link and the app feel like one thing — a brand campaign drop:
@@ -17,7 +25,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowUpRight, ChevronDown } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Lock, Check, Loader2 } from 'lucide-react';
 import { APP_URL, StoreButtons } from './appLinks';
 
 const INK = '#0A0A0A';
@@ -84,7 +92,22 @@ function Lockup({ partner, color, size }) {
   );
 }
 
-export default function PaidEvent({ event, refName }) {
+// Google Calendar link for someone who's joined (free events).
+function calendarUrl(event, start, location) {
+  if (!start) return null;
+  const fmt = (dt) => dt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const end = new Date(start.getTime() + 2 * 3600 * 1000);
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title || 'Jogo event',
+    dates: `${fmt(start)}/${fmt(end)}`,
+    location: location || '',
+    details: `On Jogo: ${typeof window !== 'undefined' ? window.location.href.split('?')[0] : ''}`,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+export default function PaidEvent({ event, refName, join = null }) {
   useDropFonts();
   const coverRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: coverRef, offset: ['start start', 'end start'] });
@@ -93,7 +116,8 @@ export default function PaidEvent({ event, refName }) {
   const textY = useTransform(scrollYProgress, [0, 1], ['0%', '-25%']);
   const topOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
 
-  const tk = event.ticketing;
+  const free = !event.ticketing;
+  const tk = event.ticketing || {};
   const photo = event.imageUrl || null;
   const partner = (event.partnerName || '').trim();
   const start = parseStart(event);
@@ -101,13 +125,23 @@ export default function PaidEvent({ event, refName }) {
   const hasTeams = !!event.enableTeams && teams.length > 0;
   const roster = hasTeams ? teams.flatMap((t) => t.players || []) : (Array.isArray(event.participants) ? event.participants : []);
   const taken = roster.length;
-  const cap = tk.capacity || 0;
-  const left = Math.max(0, cap - taken - (tk.heldCount || 0));
-  const selling = tk.status === 'open' || tk.status === 'confirming';
-  const cancelled = tk.status === 'cancelled';
+  // Free: capacity from the event (none = open); open until kickoff.
+  const cap = free
+    ? (event.maxParticipants || (hasTeams && event.teamSize ? teams.length * event.teamSize : 0))
+    : (tk.capacity || 0);
+  const left = cap ? Math.max(0, cap - taken - (free ? 0 : (tk.heldCount || 0))) : null;
+  const cancelled = free ? event.status === 'cancelled' : tk.status === 'cancelled';
   const isPast = !!start && start.getTime() < Date.now() - 12 * 3600 * 1000;
+  const selling = free ? (!cancelled && (!start || Date.now() < start.getTime())) : (tk.status === 'open' || tk.status === 'confirming');
+  // Free-event join state (from Event.jsx)
+  const joined = !!join?.result;
+  const details = join?.result?.details || null;
+  const myTeamName = join?.result?.teamName || null;
+  const unlockedPlace = details?.location || null;
+  const mapsHref = unlockedPlace ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(unlockedPlace)}` : null;
+  const needsTicket = free && !!join?.needsTicket;
   const live = !cancelled && !isPast;
-  const lowStock = selling && left > 0 && left <= 10;
+  const lowStock = selling && left != null && left > 0 && left <= 10;
   const fillPct = cap ? Math.min(100, Math.round((taken / cap) * 100)) : 0;
   const closesAt = tk.deadlineAt?.toDate ? tk.deadlineAt.toDate() : null;
   const closesEarly = closesAt && start && closesAt.getTime() < start.getTime() - 60 * 1000;
@@ -120,33 +154,63 @@ export default function PaidEvent({ event, refName }) {
       ? `Teams lock ${shortDate(tk.confirmingEndsAt.toDate())} · refunds until then`
       : null;
 
-  const pill = cancelled ? { txt: 'Cancelled · everyone refunded', dot: RED }
+  const pill = free ? (
+    joined ? { txt: "You're in", dot: '#4ADE80' }
+      : cancelled ? { txt: 'Cancelled', dot: RED }
+        : isPast ? { txt: 'This one already happened', dot: FAINT }
+          : !selling ? { txt: `${taken} playing`, dot: FAINT }
+            : left == null ? { txt: `Free · ${taken} going`, dot: '#4ADE80' }
+              : left === 0 ? { txt: 'Full', dot: RED }
+                : lowStock ? { txt: `Only ${left} spots left`, dot: '#F87171' }
+                  : { txt: `${left} spots left`, dot: '#4ADE80' }
+  ) : cancelled ? { txt: 'Cancelled · everyone refunded', dot: RED }
     : isPast ? { txt: 'This one already happened', dot: FAINT }
       : !selling ? { txt: `${taken} playing · teams locked`, dot: FAINT }
         : left === 0 ? { txt: 'Sold out · waitlist open', dot: RED }
           : lowStock ? { txt: `Only ${left} spots left`, dot: '#F87171' }
             : { txt: `${left} spots left`, dot: '#4ADE80' };
 
-  const bar = cancelled ? { title: 'Cancelled', sub: 'Everyone was refunded', cta: 'Get Jogo' }
-    : isPast ? { title: 'That’s a wrap', sub: 'Catch the next one on Jogo', cta: 'Get Jogo' }
-      : selling && left > 0 ? { title: dollars(tk.priceCents), sub: 'per player · takes 30 seconds in the app', cta: 'Get in' }
-        : selling ? { title: 'Sold out', sub: 'Join the waitlist in the app', cta: 'Waitlist' }
-          : { title: 'Teams locked', sub: `${taken} playing`, cta: 'Get Jogo' };
+  const bar = free ? (
+    joined ? { title: "You're in", sub: myTeamName ? (/^team/i.test(myTeamName) ? myTeamName : `Team ${myTeamName}`) : 'See you there', cta: mapsHref ? 'Directions' : 'Get Jogo', href: mapsHref || APP_URL, check: true }
+      : cancelled ? { title: 'Cancelled', sub: 'Find another one on Jogo', cta: 'Get Jogo', href: APP_URL }
+        : isPast ? { title: 'That’s a wrap', sub: 'Catch the next one on Jogo', cta: 'Get Jogo', href: APP_URL }
+          : needsTicket ? { title: 'Ticketed', sub: 'Get your ticket in the app', cta: 'Tickets', href: APP_URL }
+            : !selling ? { title: 'Started', sub: `${taken} playing`, cta: 'Get Jogo', href: APP_URL }
+              : left === 0 ? { title: 'Full', sub: 'Every spot is taken', cta: 'Get Jogo', href: APP_URL }
+                : { title: 'Free', sub: left == null ? `${taken} going · no app needed` : `${left} ${left === 1 ? 'spot' : 'spots'} left · no app needed`, cta: hasTeams ? 'Join a team' : 'Join', onClick: join?.onJoin }
+  ) : cancelled ? { title: 'Cancelled', sub: 'Everyone was refunded', cta: 'Get Jogo', href: APP_URL }
+    : isPast ? { title: 'That’s a wrap', sub: 'Catch the next one on Jogo', cta: 'Get Jogo', href: APP_URL }
+      : selling && left > 0 ? { title: dollars(tk.priceCents), sub: 'per player · takes 30 seconds in the app', cta: 'Get in', href: APP_URL }
+        : selling ? { title: 'Sold out', sub: 'Join the waitlist in the app', cta: 'Waitlist', href: APP_URL }
+          : { title: 'Teams locked', sub: `${taken} playing`, cta: 'Get Jogo', href: APP_URL };
 
   const dateLine = start
     ? `${start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · ${start.toLocaleTimeString('en-US', start.getMinutes() ? { hour: 'numeric', minute: '2-digit' } : { hour: 'numeric' })}`.toUpperCase()
     : 'DATE TBA';
-  const place = placeOf(event.location);
+  // Free events keep the place locked until you've joined.
+  const place = free ? placeOf(unlockedPlace) : placeOf(event.location);
 
   const facts = [
-    { label: 'ENTRY', value: dollars(tk.priceCents) },
-    { label: selling ? 'SPOTS LEFT' : 'PLAYING', value: cancelled ? '—' : `${selling ? left : taken}`, color: lowStock ? RED : INK },
+    { label: 'ENTRY', value: free ? (needsTicket ? 'TICKET' : 'FREE') : dollars(tk.priceCents) },
+    free && selling && left == null
+      ? { label: 'GOING', value: `${taken}` }
+      : { label: selling ? 'SPOTS LEFT' : 'PLAYING', value: cancelled ? '—' : `${selling ? left : taken}`, color: lowStock ? RED : INK },
     event.format
       ? { label: 'FORMAT', value: event.format.toUpperCase() }
-      : { label: hasTeams ? 'TEAMS' : 'SPOTS', value: `${hasTeams ? teams.length : cap}` },
+      : { label: hasTeams ? 'TEAMS' : 'SPOTS', value: hasTeams ? `${teams.length}` : cap ? `${cap}` : 'OPEN' },
   ];
-  const table = [
-    { k: 'WHEN', v: start ? `${start.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}, ${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : 'To be announced' },
+  const whenText = start ? `${start.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}, ${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : 'To be announced';
+  const table = free ? [
+    { k: 'WHEN', v: whenText },
+    unlockedPlace
+      ? { k: 'WHERE', v: unlockedPlace, href: mapsHref }
+      : event.location || !joined ? { k: 'WHERE', v: 'Unlocks when you join', locked: true } : null,
+    joined && start ? { k: 'CALENDAR', v: 'Add it to your calendar', href: calendarUrl(event, start, unlockedPlace) } : null,
+    hasTeams ? { k: 'TEAMS', v: `${teams.length} teams of ${event.teamSize}` } : { k: 'SPOTS', v: cap ? `${cap} players` : 'Open — no limit' },
+    event.squadName ? { k: 'CREW', v: `${event.squadName}${event.visibility === 'crew' ? ' · crew only' : ''}` } : null,
+    partner ? { k: 'PARTNER', v: partner } : null,
+  ].filter(Boolean) : [
+    { k: 'WHEN', v: whenText },
     event.location ? { k: 'WHERE', v: event.location, href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}` } : null,
     hasTeams ? { k: 'TEAMS', v: `${teams.length} teams of ${event.teamSize}` } : { k: 'SPOTS', v: `${cap} players` },
     { k: 'REFUNDS', v: 'Full refund until teams lock' },
@@ -163,7 +227,7 @@ export default function PaidEvent({ event, refName }) {
       `}</style>
 
       {/* 1 · Cover — the first screen, less the bottom bar and a peek of the page */}
-      <section ref={coverRef} className="relative overflow-hidden" style={{ height: 'max(560px, calc(100svh - 120px))', background: INK }}>
+      <section ref={coverRef} className="relative overflow-hidden" style={{ height: free ? 'max(440px, 58svh)' : 'max(560px, calc(100svh - 120px))', background: INK }}>
         <motion.div className="absolute inset-0" style={{ y: photoY }}>
           {photo ? (
             <motion.img
@@ -172,16 +236,18 @@ export default function PaidEvent({ event, refName }) {
               initial={{ scale: 1.08, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.2, ease: EASE }}
             />
           ) : (
-            <div className="w-full h-full" style={{ background: 'radial-gradient(85% 60% at 50% 0%, #3A3F47 0%, #0A0A0A 100%)' }} />
+            <div className="w-full h-full" style={{ background: free ? 'linear-gradient(135deg, #2E8B4A 0%, #14532D 100%)' : 'radial-gradient(85% 60% at 50% 0%, #3A3F47 0%, #0A0A0A 100%)' }} />
           )}
         </motion.div>
         <div className="absolute inset-0 pointer-events-none" style={{
           background: 'linear-gradient(180deg, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,.15) 50%, rgba(0,0,0,.88) 100%)',
         }} />
 
-        <motion.header className="absolute top-0 inset-x-0 z-10 pt-5 px-5 flex justify-center" style={{ opacity: topOpacity }}>
-          <a href="/" aria-label="Jogo"><Lockup partner={partner} color="#FFFFFF" size={15} /></a>
-        </motion.header>
+        {!free ? (
+          <motion.header className="absolute top-0 inset-x-0 z-10 pt-5 px-5 flex justify-center" style={{ opacity: topOpacity }}>
+            <a href="/" aria-label="Jogo"><Lockup partner={partner} color="#FFFFFF" size={15} /></a>
+          </motion.header>
+        ) : null}
 
         <motion.div className="absolute inset-x-0 bottom-0 pb-[30px]" style={{ opacity: textOpacity, y: textY }}>
           <motion.div
@@ -197,9 +263,9 @@ export default function PaidEvent({ event, refName }) {
               </span>
             ) : null}
             <p className="text-white/75 font-extrabold text-[11.5px] tracking-[2.4px]">
-              {partner ? `PRESENTED BY ${partner.toUpperCase()}` : 'AN OFFICIAL JOGO EVENT'}
+              {partner ? `PRESENTED BY ${partner.toUpperCase()}` : free ? (event.squadName ? `${event.squadName.toUpperCase()} PRESENTS` : 'PICKUP GAME') : 'AN OFFICIAL JOGO EVENT'}
             </p>
-            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: 'clamp(56px, 17vw, 112px)' }}>
+            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: free ? 'clamp(44px, 13vw, 84px)' : 'clamp(56px, 17vw, 112px)' }}>
               {(event.title || 'Event').toUpperCase()}
             </h1>
             <p className="text-white font-extrabold text-[13px] tracking-[1.6px] truncate">
@@ -210,7 +276,7 @@ export default function PaidEvent({ event, refName }) {
                 <span className={`w-[7px] h-[7px] rounded-full ${live && selling ? 'pe-pulse' : ''}`} style={{ background: pill.dot }} />
                 {pill.txt}
               </span>
-              <ChevronDown className="pe-bob" size={22} color="rgba(255,255,255,.8)" />
+              {!free ? <ChevronDown className="pe-bob" size={22} color="rgba(255,255,255,.8)" /> : null}
             </div>
           </motion.div>
         </motion.div>
@@ -227,14 +293,14 @@ export default function PaidEvent({ event, refName }) {
             </div>
           ))}
         </div>
-        {!cancelled ? (
+        {!cancelled && cap ? (
           <>
             <div className="mt-[22px] h-[3px] overflow-hidden" style={{ background: LINE }}>
               <motion.div className="h-full" style={{ background: INK }}
                 initial={{ width: 0 }} animate={{ width: `${fillPct}%` }} transition={{ delay: 0.5, duration: 1, ease: EASE }} />
             </div>
             <div className="mt-2 flex justify-between gap-2.5 text-[12.5px] font-bold" style={{ color: MUTED }}>
-              <span>{taken} of {cap} claimed</span>
+              <span>{cap ? `${taken} of ${cap} ${free ? 'in' : 'claimed'}` : `${taken} going`}</span>
               {note ? <span style={{ color: INK }}>{note}</span> : null}
             </div>
           </>
@@ -249,8 +315,8 @@ export default function PaidEvent({ event, refName }) {
             const inner = (
               <>
                 <span className="w-[78px] flex-shrink-0 font-extrabold text-[10.5px] tracking-[1.8px]" style={{ color: MUTED }}>{r.k}</span>
-                <span className="flex-1 min-w-0 font-bold text-[15px] line-clamp-2">{r.v}</span>
-                {r.href ? <ArrowUpRight size={16} color={INK} /> : null}
+                <span className="flex-1 min-w-0 font-bold text-[15px] line-clamp-2" style={r.locked ? { color: FAINT } : null}>{r.v}</span>
+                {r.href ? <ArrowUpRight size={16} color={INK} /> : r.locked ? <Lock size={15} color={FAINT} /> : null}
               </>
             );
             const cls = 'flex items-center gap-3 py-3.5 border-b';
@@ -267,19 +333,22 @@ export default function PaidEvent({ event, refName }) {
           <section className="mt-10">
             <div className="flex items-baseline justify-between border-b pb-1.5" style={{ borderColor: INK }}>
               <h2 style={{ ...ANTON, fontSize: 30 }}>{hasTeams ? 'THE TEAMS' : 'WHO’S IN'}</h2>
-              {hasTeams && selling && live ? <span className="text-[13px] font-bold" style={{ color: MUTED }}>Pick one to join</span> : null}
+              {hasTeams && selling && live && !free ? <span className="text-[13px] font-bold" style={{ color: MUTED }}>Pick one to join</span> : null}
             </div>
+            {free && hasTeams && selling && live && !joined ? (
+              <p className="mt-2 text-[13px] font-bold" style={{ color: MUTED }}>Joining puts you on the team with the most room — switch in the app.</p>
+            ) : null}
             {hasTeams ? teams.map((t, idx) => {
               const players = t.players || [];
               const size = event.teamSize || 0;
-              const held = (tk.teamHeld || {})[t.id] || 0;
+              const held = free ? 0 : ((tk.teamHeld || {})[t.id] || 0);
               const open = Math.max(0, size - players.length - held);
               const canJoin = live && selling && open > 0;
               const color = t.color || TEAM_PALETTE[idx % TEAM_PALETTE.length];
               const paidPct = size ? Math.min(1, players.length / size) : 0;
               const heldPct = size ? Math.min(1 - paidPct, held / size) : 0;
               return (
-                <a key={t.id || idx} href={APP_URL} target="_blank" rel="noopener noreferrer"
+                <a key={t.id || idx} href={free ? undefined : APP_URL} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-3.5 py-3.5 border-b" style={{ borderColor: LINE }}>
                   <span className="w-6 flex-shrink-0" style={{ ...ANTON, fontSize: 18, color: '#C4C4C4' }}>{two(idx + 1)}</span>
                   <div className="flex-1 min-w-0">
@@ -299,7 +368,11 @@ export default function PaidEvent({ event, refName }) {
                       {heldPct > 0 ? <div className="h-full" style={{ background: color, opacity: 0.3, width: `${heldPct * 100}%` }} /> : null}
                     </div>
                   </div>
-                  {canJoin ? (
+                  {free ? (
+                    myTeamName && t.name === myTeamName
+                      ? <span className="flex-shrink-0 h-[30px] px-[13px] rounded-full flex items-center font-extrabold text-[11.5px] tracking-[1.2px] text-white" style={{ background: INK }}>YOU</span>
+                      : <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: open > 0 ? MUTED : FAINT }}>{open > 0 ? `${open} OPEN` : 'FULL'}</span>
+                  ) : canJoin ? (
                     <span className="flex-shrink-0 h-[30px] px-[13px] rounded-full border-[1.5px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ borderColor: INK }}>JOIN</span>
                   ) : (
                     <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: FAINT }}>FULL</span>
@@ -319,32 +392,47 @@ export default function PaidEvent({ event, refName }) {
 
         {/* The sign-up nudge: the spot itself lives in the app */}
         <section className="mt-12 rounded-3xl px-5 py-6" style={{ background: '#F5F5F5' }}>
-          <h2 style={{ ...ANTON, fontSize: 26 }}>YOUR SPOT LIVES IN JOGO</h2>
+          <h2 style={{ ...ANTON, fontSize: 26 }}>{free ? 'THE GROUP LIVES IN JOGO' : 'YOUR SPOT LIVES IN JOGO'}</h2>
           <p className="mt-1 text-[15px] leading-[22px] font-medium" style={{ color: '#404040' }}>
-            Pay in seconds, pick your team, chat with your teammates and check in at the field — all in the free Jogo app.
+            {free
+              ? 'Chat with everyone going, get a reminder before kickoff and switch teams — all in the free Jogo app. Log in with the same email.'
+              : 'Pay in seconds, pick your team, chat with your teammates and check in at the field — all in the free Jogo app.'}
           </p>
           <StoreButtons label="" className="mt-4" />
         </section>
 
         {/* 5 · Sign-off */}
         <div className="mt-14 flex flex-col items-center gap-1">
-          <Lockup partner={partner} color={INK} size={22} />
-          <span className="font-bold text-[10.5px] tracking-[2.4px]" style={{ color: FAINT }}>{partner ? 'IN PARTNERSHIP' : 'OFFICIAL EVENT'}</span>
+          {!free ? <Lockup partner={partner} color={INK} size={22} /> : null}
+          <span className="font-bold text-[10.5px] tracking-[2.4px]" style={{ color: FAINT }}>{partner ? 'IN PARTNERSHIP' : free ? 'SEE YOU THERE · BUILT BY SOCCER PLAYERS' : 'OFFICIAL EVENT'}</span>
         </div>
       </main>
 
       {/* One bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-20" style={{ background: INK }}>
+      <div className="fixed inset-x-0 bottom-0 z-20" style={free ? { background: '#FFFFFF', borderTop: `1px solid ${LINE}` } : { background: INK }}>
+        {free && join?.joinError ? <p className="text-center text-[13px] font-bold text-red-600 pt-2 px-4">{join.joinError}</p> : null}
         <div className="max-w-xl mx-auto flex items-center gap-3 px-[22px] pt-3.5 pb-[max(14px,env(safe-area-inset-bottom))]">
           <div className="flex-1 min-w-0">
-            <div className="text-white truncate" style={{ ...ANTON, fontSize: 22, lineHeight: '28px', letterSpacing: 0.4 }}>{bar.title.toUpperCase()}</div>
-            <div className="truncate text-[12.5px] font-semibold" style={{ color: FAINT }}>{bar.sub}</div>
+            <div className="flex items-center gap-1.5">
+              {bar.check ? <Check size={18} strokeWidth={3} color="#16A34A" /> : null}
+              <div className="truncate" style={{ ...ANTON, fontSize: 22, lineHeight: '28px', letterSpacing: 0.4, color: free ? INK : '#FFFFFF' }}>{bar.title.toUpperCase()}</div>
+            </div>
+            <div className="truncate text-[12.5px] font-semibold" style={{ color: free ? MUTED : FAINT }}>{bar.sub}</div>
           </div>
-          <a href={APP_URL} target="_blank" rel="noopener noreferrer"
-            className="flex-shrink-0 h-[52px] min-w-[128px] px-[26px] rounded-full bg-white flex items-center justify-center font-extrabold text-[15px] tracking-[1.4px] hover:bg-white/90 active:scale-[0.97] transition"
-            style={{ color: INK }}>
-            {bar.cta.toUpperCase()}
-          </a>
+          {bar.onClick ? (
+            <button type="button" onClick={bar.onClick} disabled={join?.joining}
+              className="flex-shrink-0 h-[52px] min-w-[128px] px-[26px] rounded-full flex items-center justify-center gap-2 font-extrabold text-[15px] tracking-[1.4px] text-white hover:opacity-90 active:scale-[0.97] transition disabled:opacity-70"
+              style={{ background: INK }}>
+              {join?.joining ? <Loader2 size={17} className="animate-spin" /> : null}
+              {join?.joining ? 'JOINING' : bar.cta.toUpperCase()}
+            </button>
+          ) : (
+            <a href={bar.href || APP_URL} target="_blank" rel="noopener noreferrer"
+              className="flex-shrink-0 h-[52px] min-w-[128px] px-[26px] rounded-full flex items-center justify-center font-extrabold text-[15px] tracking-[1.4px] hover:opacity-90 active:scale-[0.97] transition"
+              style={free ? { background: INK, color: '#FFFFFF' } : { background: '#FFFFFF', color: INK }}>
+              {bar.cta.toUpperCase()}
+            </a>
+          )}
         </div>
       </div>
     </div>
