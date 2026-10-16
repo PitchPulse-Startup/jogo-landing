@@ -223,7 +223,7 @@ export default function PaidEvent({ event, refName, join = null }) {
             : { txt: `${left} spots left`, dot: '#4ADE80' };
 
   const bar = free ? (
-    joined ? { title: "You're in", sub: `${myTeamName ? (/^team\b/i.test(myTeamName) ? myTeamName : `Team ${myTeamName}`) : 'You'} · spot saved`, cta: 'Get the app', href: APP_URL, check: true }
+    joined ? { title: "You're in", sub: `${myTeamName ? (/^team\b/i.test(myTeamName) ? myTeamName : `Team ${myTeamName}`) : ''}${myTeamName ? ' · ' : ''}Spot saved`, cta: 'Get the app', href: APP_URL, check: true }
       : cancelled ? { title: 'Cancelled', sub: 'Find another one on Jogo', cta: 'Get Jogo', href: APP_URL }
         : isPast ? { title: 'That’s a wrap', sub: 'Catch the next one on Jogo', cta: 'Get Jogo', href: APP_URL }
           : needsTicket ? { title: 'Ticketed', sub: 'Get your ticket in the app', cta: 'Tickets', href: APP_URL }
