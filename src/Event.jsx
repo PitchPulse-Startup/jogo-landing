@@ -296,7 +296,7 @@ export default function Event() {
     );
   }
 
-  if (event.ticketing) return <PaidEvent event={event} refName={ref} />;
+  if (event.ticketing) return <PaidEvent event={event} refName={ref} hasTournament={hasTournament} />;
 
   return (
     <>

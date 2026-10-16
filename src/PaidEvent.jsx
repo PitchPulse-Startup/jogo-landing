@@ -27,6 +27,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowUpRight, ChevronDown, Lock, Check, Loader2, Trophy, Users, MessageCircle, Bell, QrCode, Music, Award, MapPin,
+  Ticket, ShieldCheck,
 } from 'lucide-react';
 import { APP_URL, APP_STORE_URL, PLAY_STORE_URL, AppleLogo, PlayLogo, StoreButtons } from './appLinks';
 
@@ -35,6 +36,8 @@ const MUTED = '#6B7280';
 const FAINT = '#A3A3A3';
 const LINE = '#EBEBEB';
 const RED = '#DC2626';
+// Paid events are the premium tier — gold, like the app's paid page.
+const GOLD = '#E3B341';
 const EASE = [0.22, 1, 0.36, 1];
 // Anton: line-height >= 1.25 × font-size or the caps get clipped.
 const ANTON = { fontFamily: "'Anton', Impact, sans-serif", fontWeight: 400, lineHeight: 1.25 };
@@ -144,6 +147,68 @@ function AppPerks({ event, hasTeams, joined, tournament }) {
   );
 }
 
+// Paid events: you can't buy a spot on the web (payment, team pick and
+// refunds all live in the app), so the page says exactly how to get in —
+// three steps — and what the ticket gets you, in the paid tier's black +
+// gold, with one big gold button to the app.
+function PaidGetIn({ price, hasTeams, tournament, soldOut }) {
+  const steps = [
+    ['01', 'Download Jogo', 'Free on iPhone and Android.'],
+    ['02', 'Sign up', 'Takes 30 seconds.'],
+    ['03', soldOut ? 'Join the waitlist' : `Pay ${price} & you’re in`, soldOut ? 'We’ll ping you the second a spot opens.' : hasTeams ? 'Pick your team as you check out.' : 'Your spot is saved the moment you pay.'],
+  ];
+  const perks = [
+    { Icon: ShieldCheck, t: 'Full refund until teams lock' },
+    hasTeams ? { Icon: Users, t: 'Your team’s chat' } : { Icon: MessageCircle, t: 'The group chat' },
+    { Icon: QrCode, t: 'QR check-in at the field' },
+    tournament ? { Icon: Trophy, t: 'Live scores & the bracket' } : { Icon: Bell, t: 'Kickoff reminders' },
+  ];
+  return (
+    <section className="mt-9 rounded-[28px] overflow-hidden relative text-white" style={{ background: INK }}>
+      <div className="absolute pointer-events-none" style={{ top: -90, right: -120, width: 240, height: 440, transform: 'rotate(24deg)', background: 'linear-gradient(180deg, rgba(227,179,65,0.28), rgba(227,179,65,0.05))' }} />
+      <div className="relative px-5 pt-6 pb-5">
+        <div className="flex items-center gap-2">
+          <span className="w-4 h-[1.5px]" style={{ background: GOLD }} />
+          <p className="font-extrabold text-[11px] tracking-[2.2px]" style={{ color: GOLD }}>TICKETS ARE IN THE APP</p>
+        </div>
+        <h2 className="mt-1.5" style={{ ...ANTON, fontSize: 'clamp(32px, 9vw, 40px)' }}>HOW TO GET IN</h2>
+
+        <div className="mt-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          {steps.map(([n, t, d], i) => (
+            <div key={n} className={`flex items-center gap-4 px-4 py-3.5 ${i > 0 ? 'border-t border-white/10' : ''}`}>
+              <span style={{ ...ANTON, fontSize: 24, color: GOLD, width: 30 }}>{n}</span>
+              <div className="min-w-0">
+                <p className="text-[16px] font-extrabold">{t}</p>
+                <p className="text-[13.5px] font-semibold text-white/60">{d}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-5 font-extrabold text-[11px] tracking-[2px] text-white/50">YOUR TICKET GETS YOU</p>
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
+          {perks.map(({ Icon, t }) => (
+            <div key={t} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <Icon size={16} color={GOLD} strokeWidth={2.4} className="flex-shrink-0" />
+              <span className="text-[13px] font-bold leading-[17px]">{t}</span>
+            </div>
+          ))}
+        </div>
+
+        <a href={APP_URL} target="_blank" rel="noopener noreferrer"
+          className="mt-6 h-[58px] rounded-full flex items-center justify-center gap-2 font-extrabold text-[16.5px] tracking-[0.6px] hover:opacity-90 active:scale-[0.98] transition"
+          style={{ background: GOLD, color: INK }}>
+          <Ticket size={19} strokeWidth={2.6} /> {soldOut ? 'GET THE APP & JOIN THE WAITLIST' : 'GET THE APP & YOUR TICKET'}
+        </a>
+        <div className="mt-3 flex items-center justify-center gap-5 text-[12.5px] font-bold text-white/60">
+          <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><AppleLogo size={14} /> App Store</a>
+          <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><PlayLogo size={12} /> Google Play</a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // Google Calendar link for someone who's joined (free events).
 function calendarUrl(event, start, location) {
   if (!start) return null;
@@ -159,7 +224,7 @@ function calendarUrl(event, start, location) {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-export default function PaidEvent({ event, refName, join = null }) {
+export default function PaidEvent({ event, refName, join = null, hasTournament = false }) {
   useDropFonts();
   const coverRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: coverRef, offset: ['start start', 'end start'] });
@@ -232,8 +297,8 @@ export default function PaidEvent({ event, refName, join = null }) {
                 : { title: 'Free', sub: left == null ? `${taken} going · no app needed` : `${left} ${left === 1 ? 'spot' : 'spots'} left · no app needed`, cta: hasTeams ? 'Join a team' : 'Join', onClick: join?.onJoin }
   ) : cancelled ? { title: 'Cancelled', sub: 'Everyone was refunded', cta: 'Get Jogo', href: APP_URL }
     : isPast ? { title: 'That’s a wrap', sub: 'Catch the next one on Jogo', cta: 'Get Jogo', href: APP_URL }
-      : selling && left > 0 ? { title: dollars(tk.priceCents), sub: 'per player · takes 30 seconds in the app', cta: 'Get in', href: APP_URL }
-        : selling ? { title: 'Sold out', sub: 'Join the waitlist in the app', cta: 'Waitlist', href: APP_URL }
+      : selling && left > 0 ? { title: dollars(tk.priceCents), sub: 'per player · tickets in the Jogo app', cta: 'Get the app', href: APP_URL }
+        : selling ? { title: 'Sold out', sub: 'Waitlist in the Jogo app', cta: 'Get the app', href: APP_URL }
           : { title: 'Teams locked', sub: `${taken} playing`, cta: 'Get Jogo', href: APP_URL };
 
   const dateLine = start
@@ -314,9 +379,16 @@ export default function PaidEvent({ event, refName, join = null }) {
                 <span className="text-white text-[13px] font-bold">{refName} invited you</span>
               </span>
             ) : null}
-            <p className="text-white/75 font-extrabold text-[11.5px] tracking-[2.4px]">
-              {partner ? `PRESENTED BY ${partner.toUpperCase()}` : free ? (event.squadName ? `${event.squadName.toUpperCase()} PRESENTS` : 'PICKUP GAME') : 'AN OFFICIAL JOGO EVENT'}
-            </p>
+            {free ? (
+              <p className="text-white/75 font-extrabold text-[11.5px] tracking-[2.4px]">
+                {partner ? `PRESENTED BY ${partner.toUpperCase()}` : event.squadName ? `${event.squadName.toUpperCase()} PRESENTS` : 'PICKUP GAME'}
+              </p>
+            ) : (
+              <p className="flex items-center gap-2 font-extrabold text-[11.5px] tracking-[2.4px]" style={{ color: GOLD }}>
+                <span className="w-[18px] h-[1.5px] flex-shrink-0" style={{ background: GOLD }} />
+                <span className="truncate">{partner ? `OFFICIAL · PRESENTED BY ${partner.toUpperCase()}` : 'OFFICIAL JOGO EVENT'}</span>
+              </p>
+            )}
             <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: free ? 'clamp(44px, 13vw, 84px)' : 'clamp(56px, 17vw, 112px)' }}>
               {(event.title || 'Event').toUpperCase()}
             </h1>
@@ -348,7 +420,7 @@ export default function PaidEvent({ event, refName, join = null }) {
         {!cancelled && cap ? (
           <>
             <div className="mt-[22px] h-[3px] overflow-hidden" style={{ background: LINE }}>
-              <motion.div className="h-full" style={{ background: INK }}
+              <motion.div className="h-full" style={{ background: free ? INK : GOLD }}
                 initial={{ width: 0 }} animate={{ width: `${fillPct}%` }} transition={{ delay: 0.5, duration: 1, ease: EASE }} />
             </div>
             <div className="mt-2 flex justify-between gap-2.5 text-[12.5px] font-bold" style={{ color: MUTED }}>
@@ -357,6 +429,9 @@ export default function PaidEvent({ event, refName, join = null }) {
             </div>
           </>
         ) : null}
+
+        {/* Paid: how to get in (the app), right under the numbers */}
+        {!free && live ? <PaidGetIn price={dollars(tk.priceCents || 0)} hasTeams={hasTeams} tournament={hasTournament} soldOut={selling && left === 0} /> : null}
 
         {/* Just joined: the app pitch comes first */}
         {free && joined ? <AppPerks event={event} hasTeams={hasTeams} joined tournament={!!join?.hasTournament} /> : null}
@@ -388,7 +463,7 @@ export default function PaidEvent({ event, refName, join = null }) {
           <section className="mt-10">
             <div className="flex items-baseline justify-between border-b pb-1.5" style={{ borderColor: INK }}>
               <h2 style={{ ...ANTON, fontSize: 30 }}>{hasTeams ? 'THE TEAMS' : 'WHO’S IN'}</h2>
-              {hasTeams && selling && live && !free ? <span className="text-[13px] font-bold" style={{ color: MUTED }}>Pick one to join</span> : null}
+              {hasTeams && selling && live && !free ? <span className="text-[13px] font-bold" style={{ color: MUTED }}>Pick your team in the app</span> : null}
             </div>
             {free && hasTeams && selling && live && !joined ? (
               <p className="mt-2 text-[13px] font-bold" style={{ color: MUTED }}>Joining puts you on the team with the most room — switch in the app.</p>
@@ -428,7 +503,7 @@ export default function PaidEvent({ event, refName, join = null }) {
                       ? <span className="flex-shrink-0 h-[30px] px-[13px] rounded-full flex items-center font-extrabold text-[11.5px] tracking-[1.2px] text-white" style={{ background: INK }}>YOU</span>
                       : <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: open > 0 ? MUTED : FAINT }}>{open > 0 ? `${open} OPEN` : 'FULL'}</span>
                   ) : canJoin ? (
-                    <span className="flex-shrink-0 h-[30px] px-[13px] rounded-full border-[1.5px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ borderColor: INK }}>JOIN</span>
+                    <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: GOLD }}>{open} OPEN</span>
                   ) : (
                     <span className="flex-shrink-0 h-[30px] px-[13px] flex items-center font-extrabold text-[11.5px] tracking-[1.2px]" style={{ color: FAINT }}>FULL</span>
                   )}
@@ -449,7 +524,7 @@ export default function PaidEvent({ event, refName, join = null }) {
         {free && !joined ? <AppPerks event={event} hasTeams={hasTeams} joined={false} tournament={!!join?.hasTournament} /> : null}
 
         {/* Paid: the spot itself lives in the app */}
-        {!free ? (
+        {!free && !live ? (
         <section className="mt-12 rounded-3xl px-5 py-6" style={{ background: '#F5F5F5' }}>
           <h2 style={{ ...ANTON, fontSize: 26 }}>{free ? 'THE GROUP LIVES IN JOGO' : 'YOUR SPOT LIVES IN JOGO'}</h2>
           <p className="mt-1 text-[15px] leading-[22px] font-medium" style={{ color: '#404040' }}>
@@ -469,7 +544,7 @@ export default function PaidEvent({ event, refName, join = null }) {
       </main>
 
       {/* One bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-20" style={free ? { background: '#FFFFFF', borderTop: `1px solid ${LINE}` } : { background: INK }}>
+      <div className="fixed inset-x-0 bottom-0 z-20" style={free ? { background: '#FFFFFF', borderTop: `1px solid ${LINE}` } : { background: INK, borderTop: '1px solid rgba(227,179,65,0.45)' }}>
         {free && join?.joinError ? <p className="text-center text-[13px] font-bold text-red-600 pt-2 px-4">{join.joinError}</p> : null}
         <div className="max-w-xl mx-auto flex items-center gap-3 px-[22px] pt-3.5 pb-[max(14px,env(safe-area-inset-bottom))]">
           <div className="flex-1 min-w-0">
@@ -489,7 +564,7 @@ export default function PaidEvent({ event, refName, join = null }) {
           ) : (
             <a href={bar.href || APP_URL} target="_blank" rel="noopener noreferrer"
               className="flex-shrink-0 h-[52px] min-w-[128px] px-[26px] rounded-full flex items-center justify-center font-extrabold text-[15px] tracking-[1.4px] hover:opacity-90 active:scale-[0.97] transition"
-              style={free ? { background: INK, color: '#FFFFFF' } : { background: '#FFFFFF', color: INK }}>
+              style={free ? { background: INK, color: '#FFFFFF' } : { background: GOLD, color: INK }}>
               {bar.cta.toUpperCase()}
             </a>
           )}
