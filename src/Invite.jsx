@@ -185,7 +185,8 @@ function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFu
   const eyebrow = [
     game.squadName ? game.squadName.toUpperCase() : 'PICKUP',
     theme.label,
-    game.skillLevel && game.skillLevel !== 'all' ? String(game.skillLevel).toUpperCase() : null,
+    // A mode name is long — skip the level so the crew + mode fit.
+    !mode && game.skillLevel && game.skillLevel !== 'all' ? String(game.skillLevel).toUpperCase() : null,
   ].filter(Boolean).join('  ·  ');
   const tag = game.isLive ? { txt: 'LIVE NOW', bg: '#EF4444', fg: '#FFFFFF', pulse: true }
     : unavailable ? null
