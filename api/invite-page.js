@@ -6,7 +6,7 @@
 // logic (attendee-count-with-guests, field-photo fallback lookup,
 // deliberately hiding field/time so people have to open the app) in plain
 // server-rendered HTML instead of client-side React.
-import { fetchPublicDoc, queryFirstMatch, escapeHtml } from './_firestoreRest.js';
+import { fetchGameWithGroups, queryFirstMatch, escapeHtml } from './_firestoreRest.js';
 import { SHARE_PAGE_STYLES, USERS_ICON_SVG, APPLE_LOGO_SVG, PLAY_LOGO_SVG, APP_STORE_URL, PLAY_STORE_URL, WEB_APP_URL, SITE_URL } from './_shareStyles.js';
 
 export const config = { runtime: 'edge' };
@@ -36,7 +36,7 @@ export default async function handler(request) {
     });
   }
 
-  const result = await fetchPublicDoc('games', gameId);
+  const result = await fetchGameWithGroups(gameId);
   const game = result.status === 'ok' ? result.data : null;
 
   // The game doc only ever stores a copy of the field's own imageUrl
@@ -60,7 +60,7 @@ export default async function handler(request) {
 
   const pageTitle = game ? `${gameTitle} · Jogo` : 'Game Invite · Jogo';
   const ogDescription = game
-    ? `${maxPlayers != null ? `${playerCount ?? 0}/${maxPlayers} joined` : `${playerCount ?? 0} joined`} — grab your spot on Jogo`
+    ? `${maxPlayers != null ? `${playerCount ?? 0}/${maxPlayers} joined` : `${playerCount ?? 0} joined`}${game.groupCount ? ` · ${game.groupCount} groups, same field` : ""} — grab your spot on Jogo`
     : "This game may have already started or wrapped up. Open Jogo to see what's happening near you.";
   const ogImage = `${SITE_URL}/api/og/game?gameId=${encodeURIComponent(gameId)}`;
   const canonicalUrl = `${SITE_URL}/invite/${encodeURIComponent(gameId)}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`;

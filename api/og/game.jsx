@@ -3,7 +3,7 @@
 // by api/invite-page.js. See api/og/crew.jsx's header comment for why this
 // exists — same reasoning, game-flavored.
 import { ImageResponse } from '@vercel/og';
-import { fetchPublicDoc, queryFirstMatch } from '../_firestoreRest.js';
+import { fetchGameWithGroups, queryFirstMatch } from '../_firestoreRest.js';
 
 export const config = { runtime: 'edge' };
 
@@ -11,7 +11,7 @@ export default async function handler(request) {
   const url = new URL(request.url);
   const gameId = url.searchParams.get('gameId') || '';
 
-  const result = await fetchPublicDoc('games', gameId);
+  const result = await fetchGameWithGroups(gameId);
   const game = result.status === 'ok' ? result.data : null;
 
   let fieldPhoto = null;

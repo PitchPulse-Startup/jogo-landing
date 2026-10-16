@@ -95,6 +95,50 @@ export async function queryFirstMatch(collectionPath, whereField, whereValue, or
   }
 }
 
+/**
+ * A game doc for share previews, with a Big Night split folded into one
+ * whole-night total: a split is one doc per group sharing groupSeriesId,
+ * and a link points at just one group — on its own that read "6/7" for a
+ * 28-spot night. Players are deduped by userId (the host is in every
+ * group), capacity summed. Adds `groupCount` when it's a split.
+ * @returns {Promise<{status:string, data?:object}>} same shape as fetchPublicDoc
+ */
+export async function fetchGameWithGroups(gameId) {
+  const result = await fetchPublicDoc('games', gameId);
+  const game = result.status === 'ok' ? result.data : null;
+  if (!game?.groupSeriesId) return result;
+  try {
+    const res = await fetch(`${BASE}:runQuery`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ structuredQuery: {
+        from: [{ collectionId: 'games' }],
+        where: { fieldFilter: { field: { fieldPath: 'groupSeriesId' }, op: 'EQUAL', value: { stringValue: game.groupSeriesId } } },
+        limit: 20,
+      } }),
+    });
+    if (!res.ok) return result;
+    const json = await res.json();
+    const groups = (Array.isArray(json) ? json : [])
+      .filter((r) => r.document)
+      .map((r) => unwrapFields(r.document.fields || {}))
+      .filter((g) => g.status !== 'cancelled');
+    if (groups.length < 2) return result;
+    const seen = new Set();
+    const players = groups.flatMap((g) => (Array.isArray(g.players) ? g.players : [])).filter((p) => {
+      if (!p?.userId) return true;
+      if (seen.has(p.userId)) return false;
+      seen.add(p.userId);
+      return true;
+    });
+    const maxPlayers = groups.reduce((t, g) => t + (Number(g.maxPlayers) || 0), 0) || game.maxPlayers;
+    return { status: 'ok', data: { ...game, players, maxPlayers, groupCount: groups.length } };
+  } catch (e) {
+    console.error('fetchGameWithGroups error:', gameId, e);
+    return result;
+  }
+}
+
 export function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

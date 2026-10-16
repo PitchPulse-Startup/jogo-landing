@@ -173,7 +173,7 @@ function Face({ p, size = 36, ring = '#FFFFFF', dark = false }) {
 }
 
 // ── The poster ─────────────────────────────────────────────────────────
-function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFull, fillPct, host, others, unavailable, result }) {
+function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFull, fillPct, host, others, unavailable, result, groups = null }) {
   const theme = themeOf(game);
   const mode = modeOf(game);
   const spotsK = mode ? 'TEAMS' : 'SPOTS';
@@ -184,6 +184,7 @@ function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFu
   const when = details ? formatWhen(details.startMs) : null;
   const eyebrow = [
     game.squadName ? game.squadName.toUpperCase() : 'PICKUP',
+    groups ? 'BIG NIGHT' : null,
     theme.label,
     // A mode name is long — skip the level so the crew + mode fit.
     !mode && game.skillLevel && game.skillLevel !== 'all' ? String(game.skillLevel).toUpperCase() : null,
@@ -317,6 +318,7 @@ function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFu
             </div>
             <p className="mt-1.5 text-[12px] text-white/60" style={{ fontFamily: BARLOW, fontWeight: 700 }}>
               {isFull ? 'Every spot is taken — the waitlist is open' : `${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} open`}
+              {groups ? ` · ${groups.count} groups of ${groups.size}, same field & time` : ''}
             </p>
           </div>
         )}
@@ -536,10 +538,10 @@ function JoinedActions({ result, gameUrl, myTeam = null }) {
           </span>
           <div className="min-w-0">
             <p className="uppercase flex items-center gap-2" style={{ ...ANTON, fontSize: 24, color: INK }}>
-              {queued ? `#${result.position || 1} on the waitlist` : myTeam ? <>You're on <span style={{ color: myTeam.color === '#0F1115' ? INK : myTeam.color }}>{myTeam.name}</span></> : 'See you on the field'}
+              {queued ? `#${result.position || 1} on the waitlist` : myTeam ? <>You're on <span style={{ color: myTeam.color === '#0F1115' ? INK : myTeam.color }}>{myTeam.name}</span></> : result.group ? `You're in group ${result.group.index}` : 'See you on the field'}
             </p>
             <p className="text-[13.5px] -mt-0.5" style={{ color: SUB, fontWeight: 600 }}>
-              {queued ? "We'll notify you in the app the moment a spot opens." : myTeam ? 'Your spot is saved. Want to play with friends? Switch teams in the app.' : 'Your spot is saved.'}
+              {queued ? "We'll notify you in the app the moment a spot opens." : myTeam ? 'Your spot is saved. Want to play with friends? Switch teams in the app.' : result.group ? `Of ${result.group.total || 'the'} groups — same field, same time. Your spot is saved.` : 'Your spot is saved.'}
             </p>
           </div>
         </div>
@@ -712,6 +714,17 @@ export default function Invite() {
     });
   }, [gameId]);
 
+  // A Big Night split is one game doc per group (shared groupSeriesId) —
+  // the link points at one group, but the page shows the whole night:
+  // every group's players and spots, live.
+  const [siblings, setSiblings] = useState([]);
+  useEffect(() => {
+    if (!game?.groupSeriesId) { setSiblings([]); return undefined; }
+    return onSnapshot(query(collection(db, 'games'), where('groupSeriesId', '==', game.groupSeriesId)), (snap) => {
+      setSiblings(snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((g) => g.status !== 'cancelled'));
+    }, () => setSiblings([]));
+  }, [game?.groupSeriesId]);
+
   // Real field photos live in `field-photos`, keyed by fieldId.
   useEffect(() => {
     let cancelled = false;
@@ -737,10 +750,11 @@ export default function Invite() {
   // A signed-in visitor who's already on the roster/waitlist (e.g. came
   // back to the link) gets their unlocked details without tapping anything
   // — joinGameViaLink is idempotent for someone already in.
-  const viewerOnRoster = !!viewerUid && !!game && (
-    (game.players || []).some((p) => p.userId === viewerUid) ||
-    (game.queue || []).some((q) => q.userId === viewerUid)
-  );
+  const groupDocs = siblings.length > 1 ? siblings : (game ? [game] : []);
+  const viewerOnRoster = !!viewerUid && groupDocs.some((g) => (
+    (g.players || []).some((p) => p.userId === viewerUid) ||
+    (g.queue || []).some((q) => q.userId === viewerUid)
+  ));
   useEffect(() => {
     if (!viewerOnRoster || result || autoCheckedRef.current === viewerUid) return;
     autoCheckedRef.current = viewerUid;
@@ -755,9 +769,22 @@ export default function Invite() {
     if (game?.title) document.title = `${game.title} · Join on Jogo`;
   }, [game?.title]);
 
-  const players = game?.players || [];
+  // Whole night for a split (players deduped — the host is in every group).
+  const groups = siblings.length > 1 ? { count: siblings.length, size: game?.maxPlayers ?? null } : null;
+  const players = (() => {
+    if (!groups) return game?.players || [];
+    const seen = new Set();
+    return siblings.flatMap((g) => g.players || []).filter((p) => {
+      if (!p.userId) return true;
+      if (seen.has(p.userId)) return false;
+      seen.add(p.userId);
+      return true;
+    });
+  })();
   const playerCount = players.reduce((t, p) => t + 1 + (p.guests || 0), 0);
-  const maxPlayers = game?.maxPlayers ?? null;
+  const maxPlayers = groups
+    ? siblings.reduce((t, g) => t + (g.maxPlayers || 0), 0) || null
+    : (game?.maxPlayers ?? null);
   const spotsLeft = maxPlayers != null ? Math.max(0, maxPlayers - playerCount) : null;
   const isFull = spotsLeft === 0;
   const fillPct = maxPlayers ? Math.min(100, Math.round((playerCount / maxPlayers) * 100)) : 0;
@@ -816,7 +843,7 @@ export default function Invite() {
           ) : game ? (
             <GamePoster game={game} coverImage={coverImage} playerCount={playerCount} maxPlayers={maxPlayers}
               spotsLeft={spotsLeft} isFull={isFull} fillPct={fillPct} host={host} others={others}
-              unavailable={unavailable} result={result} />
+              unavailable={unavailable} result={result} groups={groups} />
           ) : (
             <div className="rounded-[28px] bg-white p-8 text-center shadow-[0_10px_30px_-14px_rgba(11,18,32,0.25)]">
               <p className="uppercase" style={{ ...ANTON, fontSize: 30 }}>Game not found</p>
