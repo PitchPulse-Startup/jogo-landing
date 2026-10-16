@@ -773,14 +773,24 @@ export default function Invite() {
             </section>
           )}
 
-          {/* Trust — same figures the homepage publishes */}
-          <div className="mt-10 grid grid-cols-3 rounded-[22px] py-4 text-white" style={{ background: INK }}>
-            {[['4,000+', 'PLAYERS'], ['2,000+', 'GAMES'], ['NJ', 'BUILT IN']].map(([v, l], i) => (
-              <div key={l} className={`text-center ${i > 0 ? 'border-l border-white/10' : ''}`}>
-                <p style={{ ...ANTON, fontSize: 24 }}>{v}</p>
-                <p className="text-[10.5px] tracking-[0.14em] text-white/60" style={{ fontWeight: 800 }}>{l}</p>
-              </div>
-            ))}
+          {/* Who we are + the same figures the homepage publishes */}
+          <div className="mt-10 rounded-[24px] text-white relative overflow-hidden" style={{ background: INK }}>
+            <div className="absolute pointer-events-none" style={{ top: -70, right: -100, width: 210, height: 380, transform: 'rotate(24deg)', background: '#0E7A43' }} />
+            <div className="relative px-5 pt-5 pb-4">
+              <p className="text-[11px] tracking-[0.18em]" style={{ fontWeight: 800, color: '#8B93A1' }}>WHO MAKES JOGO</p>
+              <p className="uppercase mt-1" style={{ ...ANTON, fontSize: 32 }}>Built by soccer players</p>
+              <p className="text-[14px] text-white/75 -mt-0.5 pr-16" style={{ fontWeight: 600 }}>
+                We got tired of group chats that never turn into games. So we built the app we wanted.
+              </p>
+            </div>
+            <div className="relative grid grid-cols-2 border-t border-white/10">
+              {[['4,000+', 'PLAYERS'], ['2,000+', 'GAMES PLAYED']].map(([v, l], i) => (
+                <div key={l} className={`text-center py-3.5 ${i > 0 ? 'border-l border-white/10' : ''}`}>
+                  <p style={{ ...ANTON, fontSize: 24 }}>{v}</p>
+                  <p className="text-[10.5px] tracking-[0.14em] text-white/60" style={{ fontWeight: 800 }}>{l}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </main>
@@ -793,7 +803,7 @@ export default function Invite() {
             <a href="/support" className="hover:text-[#0B0D10]">Support</a>
             <a href="mailto:jogo.tech@outlook.com" className="hover:text-[#0B0D10]">Contact</a>
           </nav>
-          <span>© {new Date().getFullYear()} Jogo · Made in New Jersey</span>
+          <span>© {new Date().getFullYear()} Jogo · Built by soccer players in New Jersey</span>
         </div>
       </footer>
     </div>
