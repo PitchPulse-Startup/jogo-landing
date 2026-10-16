@@ -23,8 +23,8 @@
 // Paying, picking a team, chat and check-in all happen in the app, so every
 // button sends people to the app store. Live via the parent's onSnapshot.
 
-import React, { useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import {
   ArrowUpRight, ChevronDown, Lock, Check, Loader2, Trophy, Users, MessageCircle, Bell, QrCode, Music, Award, MapPin,
   Ticket, ShieldCheck,
@@ -144,6 +144,157 @@ function AppPerks({ event, hasTeams, joined, tournament }) {
         </div>
       </div>
     </section>
+  );
+}
+
+// ── Paid "drop" pieces ─────────────────────────────────────────────
+
+// Gold ticker band under the cover — the event's headline facts on a loop.
+function Marquee({ items }) {
+  const row = items.join('  ✦  ') + '  ✦  ';
+  return (
+    <div className="overflow-hidden py-2.5" style={{ background: GOLD }}>
+      <div className="pe-marquee flex whitespace-nowrap w-max" style={{ ...ANTON, fontSize: 19, lineHeight: '24px', color: INK, letterSpacing: 1 }}>
+        <span className="pr-2">{row}</span><span className="pr-2">{row}</span><span className="pr-2">{row}</span><span className="pr-2">{row}</span>
+      </div>
+    </div>
+  );
+}
+
+// The hero: a black ticket with a moving gold foil, perforation and a stub.
+// Tilts toward the pointer on desktop; floats gently on phones.
+function HoloTicket({ title, price, dateLine, place, facts, fillPct, soldOut }) {
+  const rx = useMotionValue(0); const ry = useMotionValue(0);
+  const srx = useSpring(rx, { stiffness: 140, damping: 14 }); const sry = useSpring(ry, { stiffness: 140, damping: 14 });
+  const onMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    ry.set(((e.clientX - r.left) / r.width - 0.5) * 14);
+    rx.set(-((e.clientY - r.top) / r.height - 0.5) * 10);
+  };
+  const bars = Array.from({ length: 46 }, (_, i) => (((i * 7) % 5) + 1));
+  return (
+    <div style={{ perspective: 1100 }} className="mt-7 relative z-10">
+      <motion.div
+        onPointerMove={onMove} onPointerLeave={() => { rx.set(0); ry.set(0); }}
+        initial={{ opacity: 0, y: 40, rotateX: 12 }} animate={{ opacity: 1, y: 0, rotateX: 0 }}
+        transition={{ duration: 0.9, ease: EASE, delay: 0.15 }}
+        style={{ rotateX: srx, rotateY: sry, transformStyle: 'preserve-3d', background: '#0B0B0C' }}
+        className="pe-float relative rounded-[26px] overflow-hidden text-white shadow-[0_40px_80px_-30px_rgba(0,0,0,0.65),0_0_0_1px_rgba(227,179,65,0.35)]"
+      >
+        {/* foil */}
+        <div className="pe-foil absolute inset-0 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none opacity-[0.08]" style={{ backgroundImage: 'repeating-linear-gradient(135deg, #fff 0 1px, transparent 1px 9px)' }} />
+
+        <div className="relative px-5 pt-5 pb-4">
+          <div className="flex items-center justify-between">
+            <span className="font-extrabold text-[11px] tracking-[2.6px]" style={{ color: GOLD }}>ADMIT ONE ✦ OFFICIAL</span>
+            <span className="h-7 px-3 rounded-full flex items-center font-extrabold text-[13px]" style={{ background: GOLD, color: INK }}>{price}</span>
+          </div>
+          <p className="mt-2 break-words" style={{ ...ANTON, fontSize: 'clamp(30px, 9vw, 42px)' }}>{title}</p>
+          <p className="font-extrabold text-[12.5px] tracking-[1.4px] text-white/80 truncate">{dateLine}{place ? `  ·  ${place}` : ''}</p>
+
+          <div className="mt-4 grid grid-cols-3 rounded-2xl py-3 px-3.5" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            {facts.map((x, i) => (
+              <div key={x.k} className={`min-w-0 ${i > 0 ? 'border-l border-white/10 pl-3 ml-1' : ''}`}>
+                <p className="font-extrabold text-[9.5px] tracking-[1.6px] text-white/45">{x.k}</p>
+                <p className="truncate" style={{ ...ANTON, fontSize: 22, color: x.hot ? '#F87171' : '#FFFFFF' }}>{x.v}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 h-[3px] rounded-full overflow-hidden bg-white/10">
+            <motion.div className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${GOLD}, #FFE7A3)` }}
+              initial={{ width: 0 }} animate={{ width: `${fillPct}%` }} transition={{ delay: 0.8, duration: 1.2, ease: EASE }} />
+          </div>
+        </div>
+
+        {/* perforation */}
+        <div className="relative h-6 flex items-center">
+          <span className="absolute -left-3 w-6 h-6 rounded-full bg-white" />
+          <span className="absolute -right-3 w-6 h-6 rounded-full bg-white" />
+          <div className="mx-5 w-full border-t-2 border-dashed" style={{ borderColor: 'rgba(227,179,65,0.35)' }} />
+        </div>
+
+        {/* stub */}
+        <div className="relative px-5 pb-5 pt-1 flex items-end justify-between gap-4">
+          <div className="min-w-0">
+            <p className="font-extrabold text-[10px] tracking-[2px] text-white/45">{soldOut ? 'SOLD OUT' : 'YOUR TICKET'}</p>
+            <p className="text-[14px] font-extrabold">{soldOut ? 'Waitlist in the Jogo app' : 'Held in the Jogo app'}</p>
+          </div>
+          <div className="flex items-end gap-[2px] h-9 flex-shrink-0 opacity-90">
+            {bars.map((h, i) => <span key={i} className="block bg-white" style={{ width: i % 3 === 0 ? 2 : 1, height: `${40 + h * 12}%` }} />)}
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// KICKOFF IN — live, ticking.
+function Countdown({ start }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  const ms = start ? start.getTime() - now : 0;
+  if (!start || ms <= 0) return null;
+  const parts = [
+    ['DAYS', Math.floor(ms / 86400000)],
+    ['HRS', Math.floor((ms % 86400000) / 3600000)],
+    ['MIN', Math.floor((ms % 3600000) / 60000)],
+    ['SEC', Math.floor((ms % 60000) / 1000)],
+  ];
+  return (
+    <motion.section initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, ease: EASE }} className="mt-9">
+      <p className="font-extrabold text-[11px] tracking-[2.4px]" style={{ color: MUTED }}>KICKOFF IN</p>
+      <div className="mt-1 grid grid-cols-4 gap-2">
+        {parts.map(([k, v]) => (
+          <div key={k} className="rounded-2xl text-center py-2.5" style={{ background: '#F5F5F5' }}>
+            <p className="tabular-nums" style={{ ...ANTON, fontSize: 'clamp(30px, 10vw, 44px)', color: INK }}>{String(v).padStart(2, '0')}</p>
+            <p className="font-extrabold text-[10px] tracking-[1.8px] -mt-1" style={{ color: MUTED }}>{k}</p>
+          </div>
+        ))}
+      </div>
+    </motion.section>
+  );
+}
+
+// Teams as kit tiles — colour, a fill ring, who's on it, what's open.
+function TeamTiles({ teams, size, heldFor }) {
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-3">
+      {teams.map((t, idx) => {
+        const players = t.players || [];
+        const held = heldFor(t);
+        const open = Math.max(0, size - players.length - held);
+        const color = t.color || TEAM_PALETTE[idx % TEAM_PALETTE.length];
+        const pct = size ? Math.min(1, players.length / size) : 0;
+        const R = 17; const C = 2 * Math.PI * R;
+        return (
+          <motion.div key={t.id || idx}
+            initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, ease: EASE, delay: (idx % 2) * 0.06 }}
+            className="relative rounded-[22px] overflow-hidden p-4 text-white" style={{ background: color }}>
+            <div className="absolute pointer-events-none" style={{ top: -40, right: -50, width: 110, height: 200, transform: 'rotate(24deg)', background: 'rgba(255,255,255,0.12)' }} />
+            <div className="relative flex items-start justify-between">
+              <span style={{ ...ANTON, fontSize: 15, opacity: 0.7 }}>{two(idx + 1)}</span>
+              <svg width="42" height="42" viewBox="0 0 42 42" className="-mr-1 -mt-1">
+                <circle cx="21" cy="21" r={R} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="4" />
+                <motion.circle cx="21" cy="21" r={R} fill="none" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round"
+                  transform="rotate(-90 21 21)" strokeDasharray={C}
+                  initial={{ strokeDashoffset: C }} whileInView={{ strokeDashoffset: C * (1 - pct) }} viewport={{ once: true }} transition={{ duration: 1, ease: EASE }} />
+                <text x="21" y="25" textAnchor="middle" fontSize="11" fontWeight="800" fill="#FFFFFF">{players.length}</text>
+              </svg>
+            </div>
+            <p className="relative mt-3 truncate" style={{ ...ANTON, fontSize: 22 }}>{(t.name || '').toUpperCase()}</p>
+            <div className="relative mt-2 flex items-center justify-between">
+              <span className="flex">
+                {players.slice(0, 3).map((p, i) => <span key={p.userId || i} style={i ? { marginLeft: -7 } : null}><Face player={p} size={22} /></span>)}
+              </span>
+              <span className="font-extrabold text-[11px] tracking-[1.2px] px-2 h-6 rounded-full flex items-center" style={{ background: open ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.25)', color: open ? INK : '#FFFFFF' }}>
+                {open ? `${open} OPEN` : 'FULL'}
+              </span>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -297,7 +448,7 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
                 : { title: 'Free', sub: left == null ? `${taken} going · no app needed` : `${left} ${left === 1 ? 'spot' : 'spots'} left · no app needed`, cta: hasTeams ? 'Join a team' : 'Join', onClick: join?.onJoin }
   ) : cancelled ? { title: 'Cancelled', sub: 'Everyone was refunded', cta: 'Get Jogo', href: APP_URL }
     : isPast ? { title: 'That’s a wrap', sub: 'Catch the next one on Jogo', cta: 'Get Jogo', href: APP_URL }
-      : selling && left > 0 ? { title: dollars(tk.priceCents), sub: 'per player · tickets in the Jogo app', cta: 'Get the app', href: APP_URL }
+      : selling && left > 0 ? { title: dollars(tk.priceCents), sub: 'per player · in the app', cta: 'Get the app', href: APP_URL }
         : selling ? { title: 'Sold out', sub: 'Waitlist in the Jogo app', cta: 'Get the app', href: APP_URL }
           : { title: 'Teams locked', sub: `${taken} playing`, cta: 'Get Jogo', href: APP_URL };
 
@@ -341,6 +492,13 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
         .pe-bob { animation: pe-bob 1.8s ease-in-out infinite; }
         @keyframes pe-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
         .pe-pulse { animation: pe-pulse 1.4s ease-in-out infinite; }
+        @keyframes pe-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .pe-marquee { animation: pe-marquee 26s linear infinite; }
+        @keyframes pe-foil { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        .pe-foil { background: linear-gradient(115deg, transparent 20%, rgba(227,179,65,0.0) 30%, rgba(255,231,163,0.28) 42%, rgba(227,179,65,0.12) 50%, transparent 62%); background-size: 200% 100%; animation: pe-foil 4.5s linear infinite; mix-blend-mode: screen; }
+        @keyframes pe-float { 0%,100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+        @media (hover: none) { .pe-float { animation: pe-float 5s ease-in-out infinite; } }
+        @media (prefers-reduced-motion: reduce) { .pe-marquee, .pe-foil, .pe-float { animation: none; } }
       `}</style>
 
       {/* 1 · Cover — the first screen, less the bottom bar and a peek of the page */}
@@ -384,12 +542,12 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
                 {partner ? `PRESENTED BY ${partner.toUpperCase()}` : event.squadName ? `${event.squadName.toUpperCase()} PRESENTS` : 'PICKUP GAME'}
               </p>
             ) : (
-              <p className="flex items-center gap-2 font-extrabold text-[11.5px] tracking-[2.4px]" style={{ color: GOLD }}>
+              <p className="inline-flex max-w-full items-center gap-2 font-extrabold text-[11.5px] tracking-[2.4px] rounded-full pl-3 pr-3.5 h-7" style={{ color: GOLD, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
                 <span className="w-[18px] h-[1.5px] flex-shrink-0" style={{ background: GOLD }} />
                 <span className="truncate">{partner ? `OFFICIAL · PRESENTED BY ${partner.toUpperCase()}` : 'OFFICIAL JOGO EVENT'}</span>
               </p>
             )}
-            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: free ? 'clamp(44px, 13vw, 84px)' : 'clamp(56px, 17vw, 112px)' }}>
+            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: free ? 'clamp(44px, 13vw, 84px)' : 'clamp(56px, 17vw, 112px)', textShadow: '0 4px 24px rgba(0,0,0,.55)' }}>
               {(event.title || 'Event').toUpperCase()}
             </h1>
             <p className="text-white font-extrabold text-[13px] tracking-[1.6px] truncate">
@@ -406,9 +564,38 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
         </motion.div>
       </section>
 
+      {!free ? (
+        <Marquee items={[
+          partner ? `JOGO × ${partner.toUpperCase()}` : 'OFFICIAL JOGO EVENT',
+          dateLine,
+          dollars(tk.priceCents || 0),
+          hasTeams ? `${teams.length} TEAMS OF ${event.teamSize}` : `${cap} PLAYERS`,
+          cancelled ? 'CANCELLED' : left === 0 ? 'SOLD OUT · WAITLIST OPEN' : lowStock ? `ONLY ${left} SPOTS LEFT` : `${left} SPOTS LEFT`,
+        ]} />
+      ) : null}
+
       {/* White page */}
-      <main className="max-w-xl mx-auto px-[22px] pt-7 pb-44">
-        {/* 2 · Facts */}
+      <main className={`max-w-xl mx-auto px-[22px] ${free ? 'pt-7' : 'pt-0'} pb-44`}>
+        {/* Paid: the ticket is the hero */}
+        {!free ? (
+          <HoloTicket
+            title={(event.title || 'Event').toUpperCase()}
+            price={dollars(tk.priceCents || 0)}
+            dateLine={dateLine}
+            place={placeOf(event.location)?.toUpperCase()}
+            facts={[
+              { k: selling ? 'SPOTS LEFT' : 'PLAYING', v: cancelled ? '—' : `${selling ? left : taken}`, hot: lowStock },
+              { k: hasTeams ? 'TEAMS' : 'SPOTS', v: `${hasTeams ? teams.length : cap}` },
+              { k: 'FORMAT', v: event.format ? event.format.toUpperCase() : hasTeams ? `${event.teamSize}V${event.teamSize}` : 'PICKUP' },
+            ]}
+            fillPct={fillPct}
+            soldOut={selling && left === 0}
+          />
+        ) : null}
+        {!free && live ? <Countdown start={start} /> : null}
+
+        {/* 2 · Facts (free) */}
+        {free ? (
         <div className="flex">
           {facts.map((x, i) => (
             <div key={x.label} className={`flex-1 min-w-0 ${i > 0 ? 'pl-4 border-l' : ''}`} style={{ borderColor: LINE }}>
@@ -417,7 +604,8 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
             </div>
           ))}
         </div>
-        {!cancelled && cap ? (
+        ) : null}
+        {free && !cancelled && cap ? (
           <>
             <div className="mt-[22px] h-[3px] overflow-hidden" style={{ background: LINE }}>
               <motion.div className="h-full" style={{ background: free ? INK : GOLD }}
@@ -468,7 +656,9 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
             {free && hasTeams && selling && live && !joined ? (
               <p className="mt-2 text-[13px] font-bold" style={{ color: MUTED }}>Joining puts you on the team with the most room — switch in the app.</p>
             ) : null}
-            {hasTeams ? teams.map((t, idx) => {
+            {hasTeams && !free ? (
+              <TeamTiles teams={teams} size={event.teamSize || 0} heldFor={(t) => (tk.teamHeld || {})[t.id] || 0} />
+            ) : hasTeams ? teams.map((t, idx) => {
               const players = t.players || [];
               const size = event.teamSize || 0;
               const held = free ? 0 : ((tk.teamHeld || {})[t.id] || 0);
