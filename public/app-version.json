@@ -1,5 +1,5 @@
 {
-  "minVersion": { "ios": "2.1.0", "android": "2.1.0" },
+  "minVersion": { "ios": "2.2.0", "android": "2.2.0" },
   "iosUrl": "https://apps.apple.com/us/app/jogo-pickup-soccer-near-you/id6760919244",
   "androidUrl": "https://play.google.com/store/apps/details?id=com.chrisvarg2.newpitch",
   "message": "This version of Jogo is no longer supported. Update to the latest version to keep playing."
