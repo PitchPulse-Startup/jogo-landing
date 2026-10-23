@@ -439,7 +439,7 @@ export default function App() {
                 n="02"
                 kicker="Crews"
                 title="Run your crew"
-                accent="like a club."
+                accent="like a pro."
                 body="Your regular group gets its own home: a badge, team colors, a feed, games and chat. Set it up in three steps and everyone knows where the next game is."
                 points={[
                   'Crew page with Feed, Games, Chat and About',
