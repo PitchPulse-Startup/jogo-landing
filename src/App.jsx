@@ -157,7 +157,8 @@ function Points({ items, dark = false }) {
 function Ticker() {
   const loop = [...TICKER, ...TICKER];
   return (
-    <div className="relative overflow-hidden bg-[#0B0D10] border-t border-white/10 py-5 sm:py-6 hp-fade-x">
+    <div className="bg-[#0B0D10] border-t border-white/10">
+    <div className="relative overflow-hidden py-5 sm:py-6 hp-fade-x">
       <div className="hp-marquee flex items-center gap-10 sm:gap-14 w-max">
         {loop.map((t, i) => (
           <span key={i} className="flex items-center gap-10 sm:gap-14 whitespace-nowrap text-white/35 text-lg sm:text-2xl uppercase" style={DISPLAY}>
@@ -166,6 +167,7 @@ function Ticker() {
           </span>
         ))}
       </div>
+    </div>
     </div>
   );
 }
