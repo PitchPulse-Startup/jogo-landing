@@ -1,134 +1,62 @@
-// src/App.jsx — Redesigned to maximize App Store downloads
+// src/App.jsx — jogous.io homepage.
+//
+// Drawn in the app's own Matchday language (ink posters, a diagonal green
+// band, Anton for the big moments, Barlow for the rest) and built around real
+// current screenshots — same rule as WhatsNew.jsx: copy only describes what
+// those screens actually show, never a feature the app doesn't have.
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  motion, AnimatePresence, animate,
-  useMotionValue, useTransform, useSpring, useInView,
-} from 'framer-motion';
-import {
-  MapPin, Users, Zap, Check, ChevronLeft, ChevronRight,
-  Shield, Coffee, Heart, Instagram
-} from 'lucide-react';
+import { motion, MotionConfig, AnimatePresence, animate, useInView } from 'framer-motion';
+import { Check, Coffee, ArrowRight } from 'lucide-react';
 
+import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import jogoLogo from './assets/jogo-logo-2026.png';
-import screenOne from './assets/jogopic1.png';
-import screenTwo from './assets/jogopic2.png';
-import screenThree from './assets/jogopic3.png';
-import screenFour from './assets/jogopic4.png';
-import soccerBg from './assets/soccer.jpeg';
 import founderPhoto from './assets/Team.jpeg';
-import { APP_STORE_URL, PLAY_STORE_URL, PlayLogo, isAndroid } from './appLinks';
+import matchday from './assets/2.1.0/Screenshot_20261009-121904.png';
+import kingMatchday from './assets/2.1.0/Screenshot_20261009-123555.png';
+import crewPage from './assets/2.1.0/Screenshot_20261009-123633.png';
+import pickKing from './assets/2.1.0/Screenshot_20261009-123657.png';
+import newCrew from './assets/2.1.0/newcrew.png';
+import gameScreen from './assets/2.0.1Finalized/Screenshot_20260930-114838.png';
+import statsScreen from './assets/2.0.1Finalized/Screenshot_20260930-114850.png';
+import leaderboard from './assets/2.0.1Finalized/Screenshot_20260930-114855.png';
+import { APP_STORE_URL, PLAY_STORE_URL, PlayLogo, AppleLogo, isAndroid } from './appLinks';
 
-// ── Icons ──────────────────────────────────────────────────────────────────
-function AppleLogo({ size = 24 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-    </svg>
-  );
+const EASE = [0.22, 1, 0.36, 1];
+const INK = '#0B0D10';
+// Anton at display sizes, uppercase. Web doesn't clip Anton the way iOS does,
+// so it can sit tighter than the app's 1.25 line height.
+const DISPLAY = { fontFamily: "'Anton', Impact, sans-serif", fontWeight: 400, letterSpacing: '0.005em' };
+const BODY = { fontFamily: "'Barlow', system-ui, sans-serif" };
+
+const NAV = [
+  { href: '#find', label: 'Find a game' },
+  { href: '#crews', label: 'Crews' },
+  { href: '#compete', label: 'Compete' },
+  { href: '#stats', label: 'Stats' },
+];
+
+const TICKER = ['Pickup', 'Crews', 'Mini tournaments', 'King of the field', 'Leaderboards', 'Stats', 'Crew chat', 'Matchday'];
+
+function useMatchdayFonts() {
+  useEffect(() => {
+    if (document.getElementById('jogo-programme-fonts')) return;
+    const link = document.createElement('link');
+    link.id = 'jogo-programme-fonts';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@500;600;700;800&display=swap';
+    document.head.appendChild(link);
+  }, []);
 }
 
-// ── Buttons ────────────────────────────────────────────────────────────────
-// `invert` = true is for placing the button over a dark section (e.g. the
-// season CTA band) — everywhere else the page is light, so the default
-// styling is a dark pill that pops against the white/gray background.
-function AppStoreBtn({ large = false, invert = false }) {
-  return (
-    <motion.a
-      href={APP_STORE_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      whileHover={{ scale: 1.035, y: -2 }}
-      whileTap={{ scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-      className={`inline-flex items-center gap-2.5 font-semibold rounded-2xl ${
-        invert
-          ? 'bg-white text-black hover:bg-gray-100 shadow-xl shadow-black/30'
-          : 'bg-[#111111] text-white hover:bg-[#2a2a2a] shadow-lg shadow-black/15'
-      } ${large ? 'px-5 py-3 sm:px-8 sm:py-4' : 'px-5 py-2.5'}`}
-    >
-      <AppleLogo size={large ? 22 : 18} />
-      <div className="text-left leading-tight">
-        <div className={`text-[10px] font-normal leading-none mb-0.5 ${invert ? 'text-black/60' : 'text-white/60'}`}>
-          Download on the
-        </div>
-        <div className={`font-bold leading-none ${large ? 'text-base sm:text-xl' : 'text-sm'}`}>
-          App Store
-        </div>
-      </div>
-    </motion.a>
-  );
-}
-
-function GooglePlayBtn({ large = false, invert = false }) {
-  return (
-    <motion.a
-      href={PLAY_STORE_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      whileHover={{ scale: 1.035, y: -2 }}
-      whileTap={{ scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-      className={`inline-flex items-center gap-2.5 font-semibold rounded-2xl ${
-        invert
-          ? 'bg-white text-black hover:bg-gray-100 shadow-xl shadow-black/30'
-          : 'bg-[#111111] text-white hover:bg-[#2a2a2a] shadow-lg shadow-black/15'
-      } ${large ? 'px-5 py-3 sm:px-8 sm:py-4' : 'px-5 py-2.5'}`}
-    >
-      <PlayLogo size={large ? 20 : 16} />
-      <div className="text-left leading-tight">
-        <div className={`text-[10px] font-normal leading-none mb-0.5 ${invert ? 'text-black/60' : 'text-white/60'}`}>
-          Get it on
-        </div>
-        <div className={`font-bold leading-none ${large ? 'text-base sm:text-xl' : 'text-sm'}`}>
-          Google Play
-        </div>
-      </div>
-    </motion.a>
-  );
-}
-
-// ── Phone Mockup ───────────────────────────────────────────────────────────
-function PhoneMockup({ src, alt = '', style = {} }) {
-  return (
-    <div className="relative" style={style}>
-      <div
-        className="relative rounded-[44px] p-[10px]"
-        style={{
-          background: 'linear-gradient(145deg, #1f1f1f 0%, #0a0a0a 100%)',
-          border: '1.5px solid rgba(255,255,255,0.13)',
-          boxShadow:
-            '0 40px 80px rgba(17,17,17,0.18), 0 0 60px rgba(22,163,74,0.15), inset 0 1px 0 rgba(255,255,255,0.07)',
-        }}
-      >
-        {/* Dynamic Island */}
-        <div
-          className="absolute z-20 rounded-full bg-black"
-          style={{ top: 14, left: '50%', transform: 'translateX(-50%)', width: 82, height: 26 }}
-        />
-        {/* Screen */}
-        <div className="rounded-[36px] overflow-hidden bg-black" style={{ aspectRatio: '9/19.5' }}>
-          <img src={src} alt={alt} className="w-full h-full object-cover" loading="lazy" />
-        </div>
-        {/* Home bar */}
-        <div
-          className="mx-auto mt-2 rounded-full"
-          style={{ width: 80, height: 4, background: 'rgba(255,255,255,0.22)' }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ── Scroll-reveal wrapper ──────────────────────────────────────────────────
 function Reveal({ children, delay = 0, className = '' }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 36 }}
+      initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay }}
+      transition={{ duration: 0.7, delay, ease: EASE }}
       className={className}
     >
       {children}
@@ -136,61 +64,122 @@ function Reveal({ children, delay = 0, className = '' }) {
   );
 }
 
-// ── Eyebrow pill (small uppercase label above a section heading) ───────────
-function Eyebrow({ children }) {
+// The screenshots are 864×1939 Android captures, so the frame keeps that ratio.
+function Phone({ src, alt, className = '', eager = false }) {
   return (
-    <div className="inline-flex items-center gap-2 bg-[#F1F8F3] border border-emerald-400/25 rounded-full px-3 py-1 text-xs font-bold text-emerald-700 mb-4 uppercase tracking-wider">
-      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+    <div className={`rounded-[13%/6%] p-[2.6%] bg-[#111111] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.6)] ring-1 ring-white/10 ${className}`}>
+      <div className="rounded-[11%/5%] overflow-hidden bg-[#EDEEF1]" style={{ aspectRatio: '864 / 1939' }}>
+        <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} className="w-full h-full object-cover object-top block" />
+      </div>
+    </div>
+  );
+}
+
+// Two overlapping phones, the front one dropped lower.
+function PhonePair({ back, front }) {
+  return (
+    <div className="flex justify-center items-start">
+      <Phone {...back} className="w-[46%] max-w-[240px] -rotate-3" />
+      <Phone {...front} className="w-[46%] max-w-[240px] mt-12 sm:mt-16 -ml-[7%] rotate-3 relative z-10" />
+    </div>
+  );
+}
+
+// The app's diagonal poster band.
+function Band({ className = '', color = '#16A34A', opacity = 1 }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`absolute pointer-events-none ${className}`}
+      style={{ background: color, opacity, transform: 'rotate(24deg)' }}
+    />
+  );
+}
+
+function StoreButton({ store, invert = false }) {
+  const apple = store === 'apple';
+  return (
+    <motion.a
+      href={apple ? APP_STORE_URL : PLAY_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      whileHover={{ scale: 1.035, y: -2 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      className={`inline-flex items-center gap-2.5 rounded-2xl px-5 py-3 sm:px-6 sm:py-3.5 ${
+        invert ? 'bg-white text-[#0B0D10] shadow-xl shadow-black/30' : 'bg-[#0B0D10] text-white shadow-lg shadow-black/15'
+      }`}
+    >
+      {apple ? <AppleLogo size={22} /> : <PlayLogo size={20} />}
+      <span className="text-left leading-tight">
+        <span className={`block text-[10px] font-medium leading-none mb-0.5 ${invert ? 'text-black/55' : 'text-white/60'}`}>
+          {apple ? 'Download on the' : 'Get it on'}
+        </span>
+        <span className="block text-base sm:text-lg font-extrabold leading-none">{apple ? 'App Store' : 'Google Play'}</span>
+      </span>
+    </motion.a>
+  );
+}
+
+// Both stores, the visitor's own one first.
+function StoreRow({ invert = false, className = '' }) {
+  const order = isAndroid ? ['play', 'apple'] : ['apple', 'play'];
+  return (
+    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
+      {order.map((s) => <StoreButton key={s} store={s} invert={invert} />)}
+    </div>
+  );
+}
+
+function Kicker({ n, children, dark = false }) {
+  return (
+    <div className={`flex items-center gap-3 mb-4 text-xs sm:text-sm font-extrabold tracking-[0.2em] uppercase ${dark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+      <span style={DISPLAY} className="text-lg sm:text-xl tracking-normal">{n}</span>
+      <span className={`h-px w-8 ${dark ? 'bg-emerald-400/50' : 'bg-emerald-700/40'}`} />
       {children}
     </div>
   );
 }
 
-// ── Animated count-up (e.g. "2,000+", "100%") — counts up once when scrolled
-// into view instead of just appearing, parsed from the display string so the
-// data stays plain text.
-function AnimatedCounter({ value, className = '' }) {
-  const match = value.match(/^([\d,]+)(.*)$/);
-  const numeric = match ? parseInt(match[1].replace(/,/g, ''), 10) : null;
-  const suffix = match ? match[2] : '';
-  const useCommas = match ? match[1].includes(',') : false;
-
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-80px' });
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    if (!isInView || numeric === null) return;
-    const controls = animate(0, numeric, {
-      duration: 1.5,
-      ease: [0.22, 1, 0.36, 1],
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    });
-    return () => controls.stop();
-  }, [isInView, numeric]);
-
-  if (numeric === null) {
-    return <span ref={ref} className={className}>{value}</span>;
-  }
-
+function Points({ items, dark = false }) {
   return (
-    <span ref={ref} className={className}>
-      {useCommas ? display.toLocaleString('en-US') : display}
-      {suffix}
-    </span>
+    <ul className="space-y-3 mt-7">
+      {items.map((t) => (
+        <li key={t} className={`flex items-start gap-3 text-[15px] sm:text-base font-semibold ${dark ? 'text-white/80' : 'text-[#374151]'}`}>
+          <span className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${dark ? 'bg-emerald-400/15 text-emerald-300' : 'bg-emerald-100 text-emerald-700'}`}>
+            <Check size={12} strokeWidth={3.5} />
+          </span>
+          {t}
+        </li>
+      ))}
+    </ul>
   );
 }
 
-// ── Infinite scrolling ticker ───────────────────────────────────────────────
-function Marquee({ items }) {
-  const loop = [...items, ...items];
+// Counts up once when scrolled into view ("4,000+").
+function Counter({ value, className = '' }) {
+  const m = value.match(/^([\d,]+)(.*)$/);
+  const target = m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-60px' });
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!inView || target === null) return undefined;
+    const c = animate(0, target, { duration: 1.4, ease: EASE, onUpdate: (v) => setN(Math.round(v)) });
+    return () => c.stop();
+  }, [inView, target]);
+  return <span ref={ref} className={className}>{target === null ? value : `${n.toLocaleString('en-US')}${m[2]}`}</span>;
+}
+
+function Ticker() {
+  const loop = [...TICKER, ...TICKER];
   return (
-    <div className="relative overflow-hidden border-y border-[#DDE1E5] bg-white/70 py-4 marquee-mask">
-      <div className="marquee-track flex items-center gap-10 w-max">
-        {loop.map((label, i) => (
-          <span key={i} className="inline-flex items-center gap-2.5 text-sm font-semibold text-[#6b7280] whitespace-nowrap">
-            <span className="text-emerald-500">⚽</span>
-            {label}
+    <div className="relative overflow-hidden bg-[#16A34A] py-3.5 sm:py-4 -rotate-1 scale-[1.02] border-y-2 border-[#0B0D10]">
+      <div className="hp-marquee flex items-center gap-8 sm:gap-10 w-max">
+        {loop.map((t, i) => (
+          <span key={i} className="flex items-center gap-8 sm:gap-10 whitespace-nowrap text-[#0B0D10] text-xl sm:text-3xl uppercase" style={DISPLAY}>
+            {t}
+            <span className="text-base sm:text-xl">⚽</span>
           </span>
         ))}
       </div>
@@ -198,781 +187,415 @@ function Marquee({ items }) {
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────
+// One feature: copy on one side, a phone pair on the other.
+function Feature({ id, n, kicker, title, accent, body, points, phones, dark = false, flip = false, children }) {
+  return (
+    <div id={id} className="hp-anchor relative max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <Reveal className={flip ? 'lg:order-2' : ''}>
+        <Kicker n={n} dark={dark}>{kicker}</Kicker>
+        <h2 style={DISPLAY} className={`uppercase text-[2.9rem] leading-[1.02] sm:text-6xl lg:text-7xl ${dark ? 'text-white' : 'text-[#0B0D10]'}`}>
+          {title}<br />
+          <span className={dark ? 'text-emerald-400' : 'text-[#16A34A]'}>{accent}</span>
+        </h2>
+        <p className={`mt-5 text-base sm:text-lg leading-relaxed max-w-xl ${dark ? 'text-white/65' : 'text-[#4B5563]'}`}>{body}</p>
+        <Points items={points} dark={dark} />
+        {children}
+      </Reveal>
+      <Reveal delay={0.12} className={flip ? 'lg:order-1' : ''}>
+        <PhonePair {...phones} />
+      </Reveal>
+    </div>
+  );
+}
+
 export default function App() {
-  const [showSticky, setShowSticky] = useState(false);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [windowWidth, setWindowWidth] = useState(768);
+  useMatchdayFonts();
   const [scrolled, setScrolled] = useState(false);
-  const touchStartX = useRef(null);
-  const heroRef = useRef(null);
-
-  // Hero phone tilt — follows the cursor for a subtle 3D parallax feel.
-  const tiltX = useMotionValue(0.5);
-  const tiltY = useMotionValue(0.5);
-  const rawRotateY = useTransform(tiltX, [0, 1], [-10, 10]);
-  const rawRotateX = useTransform(tiltY, [0, 1], [10, -10]);
-  const phoneRotateY = useSpring(rawRotateY, { stiffness: 150, damping: 18 });
-  const phoneRotateX = useSpring(rawRotateX, { stiffness: 150, damping: 18 });
-  const onHeroMouseMove = (e) => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
-    tiltX.set((e.clientX - rect.left) / rect.width);
-    tiltY.set((e.clientY - rect.top) / rect.height);
-  };
-  const onHeroMouseLeave = () => { tiltX.set(0.5); tiltY.set(0.5); };
-
-  // Cursor-follow glow on "spotlight" cards (How It Works / Why Jogo).
-  const onCardMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty('--x', `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty('--y', `${e.clientY - rect.top}px`);
-  };
-
-  const screenshots = [
-    { src: screenOne,   label: 'Home Screen', desc: 'Find games happening near you' },
-    { src: screenTwo,   label: 'Social',      desc: 'Connect with the local soccer community' },
-    { src: screenThree, label: 'Stats',        desc: 'Track your games and progress' },
-    { src: screenFour,  label: 'Profile',      desc: 'Build your soccer identity' },
-  ];
-  const n = screenshots.length;
+  const [showSticky, setShowSticky] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
-      setShowSticky(window.scrollY > 420);
       setScrolled(window.scrollY > 10);
+      setShowSticky(window.scrollY > 520);
     };
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    const onResize = () => setWindowWidth(window.innerWidth);
-    onResize();
-    window.addEventListener('resize', onResize, { passive: true });
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  const isMobileView = windowWidth < 640;
-
-  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
-  const onTouchEnd = (e) => {
-    if (touchStartX.current === null) return;
-    const delta = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(delta) > 40) { delta < 0 ? nextSlide() : prevSlide(); }
-    touchStartX.current = null;
-  };
-
-  const prevSlide = () => setCarouselIndex((i) => (i - 1 + n) % n);
-  const nextSlide = () => setCarouselIndex((i) => (i + 1) % n);
-
   return (
-    <div className="bg-[#EDEEF1] text-[#111111] font-sans antialiased overflow-x-hidden" style={{ WebkitFontSmoothing: 'antialiased' }}>
-      <style>{`
-        @keyframes float {
-          0%,100% { transform:translateY(0); }
-          50% { transform:translateY(-18px); }
-        }
-        .float { animation: float 6s ease-in-out infinite; }
+    <MotionConfig reducedMotion="user">
+      <div className="bg-[#EDEEF1] text-[#0B0D10] antialiased overflow-x-hidden" style={BODY}>
+        <style>{`
+          html { scroll-behavior: smooth; }
+          ::selection { background: rgba(22,163,74,0.3); }
+          .hp-anchor { scroll-margin-top: 96px; }
+          @keyframes hp-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+          .hp-marquee { animation: hp-marquee 28s linear infinite; }
+          @keyframes hp-live { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+          .hp-live { animation: hp-live 1.6s ease-in-out infinite; }
+          @keyframes hp-grid { from { background-position: 0 0; } to { background-position: 48px 48px; } }
+          .hp-grid { animation: hp-grid 16s linear infinite; }
+          @media (prefers-reduced-motion: reduce) { .hp-marquee, .hp-live, .hp-grid { animation: none; } }
+        `}</style>
 
-        .g-text {
-          background: linear-gradient(130deg,#059669,#16A34A,#15803d);
-          -webkit-background-clip:text;
-          -webkit-text-fill-color:transparent;
-          background-clip:text;
-        }
-        ::selection { background:rgba(22,163,74,0.25); }
-
-        @keyframes drift {
-          0%   { transform: translate(0,0) scale(1); }
-          33%  { transform: translate(40px,-30px) scale(1.15); }
-          66%  { transform: translate(-30px,25px) scale(0.92); }
-          100% { transform: translate(0,0) scale(1); }
-        }
-        .blob { animation: drift 13s ease-in-out infinite; }
-        .blob-2 { animation-delay: -4.5s; }
-        .blob-3 { animation-delay: -9s; }
-
-        @keyframes soft-pulse {
-          0%,100% { opacity: 0.5; transform: scale(1); }
-          50%     { opacity: 0.85; transform: scale(1.08); }
-        }
-        .pulse-glow { animation: soft-pulse 4.5s ease-in-out infinite; }
-
-        @keyframes grid-pan {
-          0%   { background-position: 0 0; }
-          100% { background-position: 64px 64px; }
-        }
-        .grid-pan { animation: grid-pan 18s linear infinite; }
-
-        @keyframes marquee-scroll {
-          from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
-        }
-        .marquee-track { animation: marquee-scroll 32s linear infinite; }
-        .marquee-mask {
-          -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-          mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-        }
-
-        .spotlight { position: relative; }
-        .spotlight::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          background: radial-gradient(420px circle at var(--x, 50%) var(--y, 50%), rgba(22,163,74,0.14), transparent 62%);
-          opacity: 0;
-          transition: opacity .35s ease;
-          pointer-events: none;
-        }
-        .spotlight:hover::before { opacity: 1; }
-
-        .grain {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-          mix-blend-mode: overlay;
-        }
-      `}</style>
-
-      {/* Subtle film-grain texture over the whole page — cheap, but it's the
-          difference between "flat webpage" and something that feels considered. */}
-      <div className="grain fixed inset-0 z-[1] pointer-events-none opacity-[0.035]" />
-
-      {/* ── STICKY MOBILE CTA ─────────────────────────────────────── */}
-      <AnimatePresence>
-        {showSticky && (
-          <motion.div
-            initial={{ y: 120 }}
-            animate={{ y: 0 }}
-            exit={{ y: 120 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-            className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-4 pb-safe-bottom"
-            style={{
-              paddingBottom: 'max(env(safe-area-inset-bottom), 16px)',
-              paddingTop: 12,
-              background:
-                'linear-gradient(to top, rgba(237,238,241,1) 65%, rgba(237,238,241,0))',
-            }}
+        {/* ── HEADER — floating pill ─────────────────────────────────── */}
+        <header className="fixed top-0 inset-x-0 z-40 px-3 sm:px-6 pt-3">
+          <div
+            className={`max-w-6xl mx-auto flex items-center justify-between rounded-2xl pl-4 pr-2 py-2 border transition-all duration-300 ${
+              scrolled ? 'bg-[#0B0D10]/85 border-white/10 shadow-xl shadow-black/20 backdrop-blur-xl' : 'bg-white/5 border-white/10 backdrop-blur-md'
+            }`}
           >
-            {/* Both stores always shown; the visitor's own store goes first */}
-            <div className={`flex gap-2.5 ${isAndroid ? 'flex-row-reverse' : ''}`}>
-              {[
-                { href: APP_STORE_URL, icon: <AppleLogo size={18} />, label: 'App Store' },
-                { href: PLAY_STORE_URL, icon: <PlayLogo size={16} />, label: 'Google Play' },
-              ].map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-4 rounded-2xl text-[15px] transition-all shadow-2xl shadow-emerald-600/30"
-                >
-                  {s.icon}
-                  {s.label}
-                </a>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── HEADER — desktop only ─────────────────────────────────── */}
-      <header
-        className={`hidden md:block fixed top-0 left-0 right-0 z-40 backdrop-blur-xl bg-[#EDEEF1]/80 border-b transition-shadow duration-300 ${
-          scrolled ? 'border-[#DDE1E5] shadow-sm shadow-black/5' : 'border-transparent'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-8 py-2 flex items-center justify-between gap-4">
-          <a href="/" className="flex items-center flex-shrink-0">
-            <img src={jogoLogo} alt="Jogo" className="h-7 w-auto" />
-          </a>
-
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-[#6b7280]">
-            {[
-              { href: '#how-it-works', label: 'How It Works' },
-              { href: '#screenshots', label: 'Screenshots' },
-              { href: '#why-jogo', label: 'Why Jogo' },
-            ].map((l) => (
-              <a key={l.href} href={l.href} className="relative group py-1 hover:text-[#111111] transition-colors">
-                {l.label}
-                <span className="absolute left-0 -bottom-0.5 h-[1.5px] w-0 bg-emerald-500 group-hover:w-full transition-all duration-300" />
-              </a>
-            ))}
-            <Link to="/whats-new" className="relative group py-1 hover:text-[#111111] transition-colors">
-              What's New
-              <span className="absolute left-0 -bottom-0.5 h-[1.5px] w-0 bg-emerald-500 group-hover:w-full transition-all duration-300" />
-            </Link>
-            <a href="https://www.jogous.io/app" target="_blank" rel="noopener noreferrer" className="relative group py-1 hover:text-[#111111] transition-colors">
-              Sign Up
-              <span className="absolute left-0 -bottom-0.5 h-[1.5px] w-0 bg-emerald-500 group-hover:w-full transition-all duration-300" />
+            <a href="/" aria-label="Jogo" className="flex items-center">
+              <img src={jogoLogoWhite} alt="Jogo" className="h-[20px] sm:h-[22px] w-auto" />
             </a>
-          </nav>
-
-          {/* Both on desktop; on phones only the visitor's own store fits */}
-          <div className="flex items-center gap-2">
-            <div className={isAndroid ? 'hidden sm:block' : ''}><AppStoreBtn /></div>
-            <div className={isAndroid ? '' : 'hidden sm:block'}><GooglePlayBtn /></div>
+            <nav className="hidden md:flex items-center gap-1 text-sm font-bold text-white/70">
+              {NAV.map((l) => (
+                <a key={l.href} href={l.href} className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/10 transition-colors">{l.label}</a>
+              ))}
+              <Link to="/whats-new" className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/10 transition-colors inline-flex items-center gap-1.5">
+                What's new
+                <span className="text-[10px] font-extrabold bg-[#16A34A] text-white rounded-full px-1.5 py-0.5 leading-none">2.1</span>
+              </Link>
+            </nav>
+            <div className="inline-flex items-center bg-white text-[#0B0D10] rounded-xl pl-3 pr-1 py-1 gap-1">
+              <span className="text-xs font-extrabold pr-1">Get the app</span>
+              <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Download on the App Store"
+                className="w-7 h-7 rounded-lg bg-black/5 hover:bg-black/10 flex items-center justify-center transition-colors">
+                <AppleLogo size={14} />
+              </a>
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Get it on Google Play"
+                className="w-7 h-7 rounded-lg bg-black/5 hover:bg-black/10 flex items-center justify-center transition-colors">
+                <PlayLogo size={12} />
+              </a>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main>
-        {/* ── HERO ──────────────────────────────────────────────────── */}
-        <section
-          ref={heroRef}
-          onMouseMove={onHeroMouseMove}
-          onMouseLeave={onHeroMouseLeave}
-          className="relative min-h-screen flex items-center pt-14 sm:pt-20 pb-16 sm:pb-20 px-4 sm:px-8 overflow-hidden"
-        >
-          {/* BG */}
-          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${soccerBg})`, opacity: 0.08 }}
-            />
-            <div
-              className="absolute inset-0"
+        {/* ── STICKY MOBILE CTA ──────────────────────────────────────── */}
+        <AnimatePresence>
+          {showSticky && (
+            <motion.div
+              initial={{ y: 120 }}
+              animate={{ y: 0 }}
+              exit={{ y: 120 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+              className="fixed bottom-0 inset-x-0 z-50 md:hidden px-4"
               style={{
-                background:
-                  'radial-gradient(ellipse 90% 55% at 50% -10%, rgba(22,163,74,0.14) 0%, transparent 70%)',
+                paddingBottom: 'max(env(safe-area-inset-bottom), 14px)',
+                paddingTop: 14,
+                background: 'linear-gradient(to top, rgba(11,13,16,0.95) 60%, rgba(11,13,16,0))',
+              }}
+            >
+              <div className={`flex gap-2.5 ${isAndroid ? 'flex-row-reverse' : ''}`}>
+                {[
+                  { href: APP_STORE_URL, icon: <AppleLogo size={18} />, label: 'App Store' },
+                  { href: PLAY_STORE_URL, icon: <PlayLogo size={16} />, label: 'Google Play' },
+                ].map((s) => (
+                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#16A34A] active:scale-95 text-white font-extrabold py-3.5 rounded-2xl text-[15px] transition-transform">
+                    {s.icon}{s.label}
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <main>
+          {/* ── HERO — an ink matchday poster ──────────────────────────── */}
+          <section className="relative bg-[#0B0D10] text-white overflow-hidden pt-28 sm:pt-36 pb-0">
+            <div
+              aria-hidden="true"
+              className="hp-grid absolute inset-0 opacity-[0.06]"
+              style={{
+                backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
+                backgroundSize: '48px 48px',
+                maskImage: 'radial-gradient(ellipse at 30% 30%, black 30%, transparent 75%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at 30% 30%, black 30%, transparent 75%)',
               }}
             />
-            {/* drifting color light for depth — the "cool startup" mesh-gradient look */}
-            <div className="blob absolute top-[8%] left-[-6%] w-[380px] h-[380px] bg-emerald-400/20 rounded-full filter blur-[100px]" />
-            <div className="blob blob-2 absolute bottom-[5%] right-[-8%] w-[420px] h-[420px] bg-teal-300/20 rounded-full filter blur-[110px]" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#EDEEF1]/60 via-transparent to-[#EDEEF1]" />
-          </div>
+            <Band className="max-lg:hidden w-[46vw] max-w-[620px] h-[180%] -top-[40%] right-[-6vw]" opacity={0.95} />
+            <Band className="max-lg:hidden w-4 h-[180%] -top-[40%] right-[44vw]" opacity={0.35} />
 
-          <div className="relative z-10 max-w-7xl mx-auto w-full">
-            <div className="grid lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-6 items-center">
-              {/* — Phone — first on mobile, right on desktop — */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-                className="flex justify-center order-1 lg:order-2"
-                style={{ perspective: 1200 }}
-              >
-                <div className="float">
-                  <motion.div style={{ rotateX: phoneRotateX, rotateY: phoneRotateY }}>
-                    <PhoneMockup
-                      src={screenOne}
-                      alt="Jogo App — pickup soccer near you"
-                      style={{ width: 'min(200px, 52vw)' }}
-                    />
-                  </motion.div>
-                </div>
-              </motion.div>
-
-              {/* — Text — */}
-              <div className="text-center lg:text-left order-2 lg:order-1">
+            <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-6 items-center">
+              <div>
                 <motion.div
-                  initial={{ opacity: 0, y: 14 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="inline-flex items-center gap-2 bg-[#F1F8F3] border border-emerald-400/25 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-emerald-700 mb-5 sm:mb-7"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 pl-2.5 pr-3.5 py-1.5 text-xs sm:text-sm font-bold text-white/80 mb-6"
                 >
-                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-500 rounded-full animate-pulse" />
-                  Now Available on iOS &amp; Android
+                  <span className="hp-live w-2 h-2 rounded-full bg-emerald-400" />
+                  Games are getting made right now
                 </motion.div>
 
                 <motion.h1
-                  initial={{ opacity: 0, y: 28 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  className="text-[2.4rem] leading-[1.08] sm:text-6xl lg:text-7xl font-black tracking-tight mb-4 sm:mb-6 text-[#111111]"
+                  transition={{ duration: 0.8, delay: 0.06, ease: EASE }}
+                  style={DISPLAY}
+                  className="uppercase text-[3.6rem] leading-[0.98] sm:text-[6.5rem] lg:text-[6.1rem] xl:text-[6.6rem]"
                 >
-                  Pickup Soccer.<br />
-                  <span className="g-text">Anytime.</span>{' '}
-                  <span className="g-text">Anywhere.</span>
+                  Find a game.<br />
+                  <span className="text-[#22C55E]">Just play.</span>
                 </motion.h1>
 
                 <motion.p
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.18 }}
-                  className="text-base sm:text-xl text-[#6b7280] mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed"
+                  className="mt-6 text-lg sm:text-xl text-white/70 max-w-lg leading-relaxed font-medium"
                 >
-                  Join local pickup games, meet players, and play for free.
+                  Every pickup game near you, your crew in one place, and real stats every time you play.
                 </motion.p>
 
                 <motion.div
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.28 }}
-                  className="flex flex-row items-center justify-center lg:justify-start gap-3 mb-6 sm:mb-8"
                 >
-                  <AppStoreBtn large />
-                  <GooglePlayBtn large />
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.45, duration: 0.5 }}
-                  className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-5 text-xs sm:text-sm text-[#6b7280]"
-                >
-                  {['100% Free', 'No credit card', 'Join in 60 seconds'].map((t, i) => (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <Check size={12} className="text-emerald-600 flex-shrink-0" />
-                      {t}
+                  <StoreRow invert className="mt-8" />
+                  <div className="mt-8 flex items-center gap-6 sm:gap-8">
+                    {[
+                      { v: '4,000+', l: 'Players' },
+                      { v: '2,000+', l: 'Games created' },
+                    ].map((s) => (
+                      <div key={s.l}>
+                        <span style={DISPLAY} className="block text-3xl sm:text-4xl text-white"><Counter value={s.v} /></span>
+                        <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.14em] text-white/50">{s.l}</span>
+                      </div>
+                    ))}
+                    <div className="hidden sm:block h-10 w-px bg-white/15" />
+                    <div className="hidden sm:block">
+                      <span style={DISPLAY} className="block text-3xl sm:text-4xl text-white">FREE</span>
+                      <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.14em] text-white/50">To download</span>
                     </div>
-                  ))}
+                  </div>
                 </motion.div>
+              </div>
 
+              {/* Phone fan — rises up out of the bottom edge */}
+              <div className="relative flex justify-center items-end mt-4 lg:mt-0 translate-y-[6%]">
+                {/* Phones: the band sits behind the fan only, never behind the copy */}
+                <Band className="lg:hidden w-[48%] h-[190%] -top-[25%] left-[30%]" opacity={0.95} />
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6, duration: 0.5 }}
-                  className="mt-4 text-center lg:text-left"
+                  initial={{ opacity: 0, y: 80, rotate: 0 }}
+                  animate={{ opacity: 1, y: 0, rotate: -9 }}
+                  transition={{ duration: 0.9, delay: 0.35, ease: EASE }}
+                  className="w-[32%] max-w-[190px] -mr-[8%] mb-[-2%] origin-bottom-right"
                 >
-                  <a
-                    href="https://www.jogous.io/app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs sm:text-sm text-[#9CA3AF] hover:text-emerald-600 transition-colors underline underline-offset-4"
-                  >
-                    Or sign up on the web app →
-                  </a>
+                  <Phone src={kingMatchday} alt="King of the field matchday poster" eager />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 80 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.9, delay: 0.22, ease: EASE }}
+                  className="w-[42%] max-w-[250px] relative z-10"
+                >
+                  <Phone src={matchday} alt="Your next game as a matchday poster: Mahala STL, tonight" eager />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 80, rotate: 0 }}
+                  animate={{ opacity: 1, y: 0, rotate: 9 }}
+                  transition={{ duration: 0.9, delay: 0.45, ease: EASE }}
+                  className="w-[32%] max-w-[190px] -ml-[8%] mb-[-2%] origin-bottom-left"
+                >
+                  <Phone src={leaderboard} alt="Weekly leaderboard" eager />
                 </motion.div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* ── TICKER ────────────────────────────────────────────────── */}
-        <Marquee
-          items={[
-            'New Jersey', 'New York', 'California', 'Texas', 'Florida',
-            'Illinois', 'Pennsylvania', 'Missouri', 'and more every week',
-          ]}
-        />
+          <Ticker />
 
-        {/* ── SOCIAL PROOF ──────────────────────────────────────────── */}
-        <section className="py-10 sm:py-14 px-4 sm:px-8 border-b border-[#DDE1E5]">
-          <div className="max-w-3xl mx-auto">
-            <Reveal>
-              <div className="grid grid-cols-3 gap-3 sm:gap-12 text-center">
-                {[
-                  { value: '4,000+', label: 'Players' },
-                  { value: '2,000+', label: 'Games Created' },
-                  { value: '100%', label: 'Free' },
-                ].map((s, i) => (
-                  <div key={i} className="min-w-0">
-                    <AnimatedCounter
-                      value={s.value}
-                      className="block text-xl xs:text-2xl sm:text-5xl font-black g-text mb-1 whitespace-nowrap overflow-hidden text-ellipsis"
-                    />
-                    <div className="text-[#6b7280] text-[11px] sm:text-base leading-tight">{s.label}</div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </section>
+          {/* ── 01 FIND A GAME ─────────────────────────────────────────── */}
+          <section className="px-5 sm:px-8 py-20 sm:py-32">
+            <Feature
+              id="find"
+              n="01"
+              kicker="Find a game"
+              title="Your next game,"
+              accent="one tap away."
+              body="Open Jogo and your next game takes over the screen: when, where, who's in, and how many spots are left. Tap it and you're on the lineup."
+              points={[
+                'Pickup games near you, with the spots left on every card',
+                'The field, the time and directions in one tap',
+                'A meetup point so nobody wanders the parking lot',
+              ]}
+              phones={{
+                back: { src: matchday, alt: 'Matchday card for a game tonight' },
+                front: { src: gameScreen, alt: 'Game screen with field photos, time and directions' },
+              }}
+            />
+          </section>
 
-        {/* ── HOW IT WORKS ──────────────────────────────────────────── */}
-        <section id="how-it-works" className="py-16 sm:py-24 px-4 sm:px-8">
-          <div className="max-w-6xl mx-auto">
-            <Reveal className="text-center mb-16">
-              <Eyebrow>Get Started</Eyebrow>
-              <h2 className="text-3xl sm:text-5xl font-black mb-4 text-[#111111]">How It Works</h2>
-              <p className="text-[#6b7280] text-lg">From download to kickoff in under a minute</p>
-            </Reveal>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  step: '01',
-                  icon: MapPin,
-                  title: 'Find Games',
-                  desc: 'Open the app and see every pickup game near you on a live map. Know exactly where the action is before you leave.',
-                },
-                {
-                  step: '02',
-                  icon: Users,
-                  title: 'Join Instantly',
-                  desc: 'Tap to join, see who\'s playing, and coordinate with players in one tap. No emails, no forms.',
-                },
-                {
-                  step: '03',
-                  icon: Zap,
-                  title: 'Play',
-                  desc: 'Show up and play. No fees, no subscriptions, no pay walls. Just pure pickup soccer.',
-                },
-              ].map((step, i) => (
-                <Reveal key={i} delay={i * 0.12}>
-                  <div
-                    onMouseMove={onCardMouseMove}
-                    className="spotlight bg-white border border-[#DDE1E5] hover:border-emerald-400/50 shadow-sm hover:shadow-lg rounded-3xl p-8 text-center h-full transition-all group overflow-hidden"
-                  >
-                    <div className="text-6xl font-black g-text mb-4 leading-none opacity-30">{step.step}</div>
-                    <div className="w-12 h-12 rounded-2xl bg-[#F1F8F3] border border-emerald-400/25 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
-                      <step.icon size={22} className="text-emerald-600" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-[#111111]">{step.title}</h3>
-                    <p className="text-[#6b7280] text-sm leading-relaxed">{step.desc}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── SCREENSHOTS ───────────────────────────────────────────── */}
-        <section id="screenshots" className="py-16 sm:py-24 px-4 sm:px-8 overflow-hidden">
-          <div className="max-w-6xl mx-auto">
-            <Reveal className="text-center mb-16">
-              <Eyebrow>Inside the App</Eyebrow>
-              <h2 className="text-3xl sm:text-5xl font-black mb-4 text-[#111111]">Built for the Beautiful Game</h2>
-              <p className="text-[#6b7280] text-lg">Clean, fast, and designed for players</p>
-            </Reveal>
-
-            {/* Carousel */}
-            <div className="flex items-center gap-3 sm:gap-6 justify-center">
-              {/* Arrows hidden on mobile — swipe instead */}
-              <button
-                onClick={prevSlide}
-                aria-label="Previous"
-                className="hidden sm:flex flex-shrink-0 w-11 h-11 bg-white border border-[#DDE1E5] shadow-sm rounded-full items-center justify-center hover:border-emerald-400/50 hover:text-emerald-600 text-[#111111] transition-all"
-              >
-                <ChevronLeft size={18} />
-              </button>
-
-              {/* Cards container */}
-              <div
-                className="relative flex-1 flex items-start justify-center overflow-hidden"
-                style={{
-                  height: isMobileView ? 'calc(55vw * 2.17 + 70px)' : 'min(580px, 100vw)',
-                  maxWidth: 700,
+          {/* ── 02 CREWS — ink with the band ───────────────────────────── */}
+          <section className="relative bg-[#0B0D10] text-white overflow-hidden px-5 sm:px-8 py-20 sm:py-32">
+            <Band className="w-[38vw] max-w-[520px] h-[170%] -top-[35%] left-[-18vw] sm:left-[-10vw]" opacity={0.9} />
+            <div className="relative">
+              <Feature
+                id="crews"
+                n="02"
+                kicker="Crews"
+                title="Run your crew"
+                accent="like a club."
+                body="Your regular group gets its own home: a badge, team colors, a feed, games and chat. Set it up in three steps and everyone knows where the next game is."
+                points={[
+                  'Crew page with Feed, Games, Chat and About',
+                  'Pick a badge, a color and a cover photo',
+                  'Owners, admins and organizers keep it running',
+                ]}
+                phones={{
+                  back: { src: newCrew, alt: 'New crew setup with name, color and home area' },
+                  front: { src: crewPage, alt: 'Union County Pickup crew page' },
                 }}
-                onTouchStart={onTouchStart}
-                onTouchEnd={onTouchEnd}
-              >
-                {screenshots.map((s, i) => {
-                  const pos = (i - carouselIndex + n) % n;
-                  const isActive = pos === 0;
-                  const isNext  = pos === 1;
-                  const isPrev  = pos === n - 1;
-
-                  // On mobile show only the active card; on desktop show side cards
-                  const showSide = !isMobileView && (isNext || isPrev);
-                  const opacity  = isActive ? 1 : showSide ? 0.42 : 0;
-                  const scale    = isActive ? 1 : 0.8;
-
-                  let tx = '-50%';
-                  if (!isMobileView) {
-                    if (isNext) tx = 'calc(-50% + min(230px, 38vw))';
-                    if (isPrev) tx = 'calc(-50% - min(230px, 38vw))';
-                  }
-
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => setCarouselIndex(i)}
-                      className="absolute top-0 left-1/2 cursor-pointer"
-                      style={{
-                        transform: `translateX(${tx}) scale(${scale})`,
-                        opacity,
-                        zIndex: isActive ? 30 : showSide ? 20 : 5,
-                        transition: 'transform 0.52s cubic-bezier(0.4,0,0.2,1), opacity 0.52s cubic-bezier(0.4,0,0.2,1)',
-                        width: isMobileView ? 'min(190px, 55vw)' : 'min(200px, 28vw)',
-                        pointerEvents: isActive || showSide ? 'auto' : 'none',
-                      }}
-                    >
-                      <PhoneMockup src={s.src} alt={s.label} />
-                      {isActive && (
-                        <motion.div
-                          key={carouselIndex}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.35 }}
-                          className="text-center mt-4 sm:mt-5 px-2"
-                        >
-                          <div className="text-sm sm:text-base font-bold text-[#111111]">{s.label}</div>
-                          <div className="text-[#6b7280] text-xs sm:text-sm mt-1">{s.desc}</div>
-                        </motion.div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={nextSlide}
-                aria-label="Next"
-                className="hidden sm:flex flex-shrink-0 w-11 h-11 bg-white border border-[#DDE1E5] shadow-sm rounded-full items-center justify-center hover:border-emerald-400/50 hover:text-emerald-600 text-[#111111] transition-all"
-              >
-                <ChevronRight size={18} />
-              </button>
+                dark
+                flip
+              />
             </div>
+          </section>
 
-            {/* Swipe hint — mobile only */}
-            <p className="text-center text-[#9CA3AF] text-xs mt-3 sm:hidden">Swipe to explore</p>
-
-            {/* Dots */}
-            <div className="flex justify-center gap-2 mt-8">
-              {screenshots.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCarouselIndex(i)}
-                  className="rounded-full transition-all duration-300"
-                  style={{
-                    width: i === carouselIndex ? 28 : 8,
-                    height: 8,
-                    background: i === carouselIndex ? '#16A34A' : 'rgba(17,17,17,0.14)',
-                  }}
-                />
-              ))}
+          {/* ── 03 COMPETE ─────────────────────────────────────────────── */}
+          <section className="relative overflow-hidden px-5 sm:px-8 py-20 sm:py-32 bg-[#140A28] text-white">
+            <div aria-hidden="true" className="absolute -top-40 right-[-10%] w-[520px] h-[520px] rounded-full bg-violet-600/30 blur-[120px]" />
+            <div aria-hidden="true" className="absolute bottom-[-30%] left-[-10%] w-[460px] h-[460px] rounded-full bg-amber-500/15 blur-[120px]" />
+            <div className="relative">
+              <Feature
+                id="compete"
+                n="03"
+                kicker="Compete"
+                title="Not just pickup."
+                accent="Competition."
+                body="Pick a style when you start a game and Jogo handles the teams. Every match has something on the line."
+                points={[
+                  'Mini tournament: lose and you’re out, last team standing wins',
+                  'King of the field: winner stays on, most wins takes the crown',
+                  'Color-coded teams with live spots per team',
+                ]}
+                phones={{
+                  back: { src: pickKing, alt: 'Choosing King of the field as the game type' },
+                  front: { src: kingMatchday, alt: 'King of the field matchday poster' },
+                }}
+                dark
+              />
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* ── WHY JOGO ──────────────────────────────────────────────── */}
-        <section id="why-jogo" className="py-16 sm:py-24 px-4 sm:px-8">
-          <div className="max-w-6xl mx-auto">
-            <Reveal className="text-center mb-16">
-              <Eyebrow>The Difference</Eyebrow>
-              <h2 className="text-3xl sm:text-5xl font-black mb-4 text-[#111111]">Why Jogo</h2>
-              <p className="text-[#6b7280] text-lg">Built because we needed it too</p>
-            </Reveal>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  icon: MapPin,
-                  grad: 'from-emerald-500 to-teal-500',
-                  title: 'Never wonder where the game is',
-                  desc: 'See every pickup game on a live map. No more group texts trying to figure out if there\'s a game tonight.',
-                },
-                {
-                  icon: Users,
-                  grad: 'from-blue-500 to-cyan-500',
-                  title: 'Meet players, not strangers',
-                  desc: 'View player profiles and skill levels before you show up. Know your team before kickoff.',
-                },
-                {
-                  icon: Shield,
-                  grad: 'from-purple-500 to-pink-500',
-                  title: 'No pay-to-play',
-                  desc: 'Jogo is 100% free. No subscriptions, no premium tiers. Soccer belongs to everyone.',
-                },
-              ].map((item, i) => (
-                <Reveal key={i} delay={i * 0.12}>
-                  <div
-                    onMouseMove={onCardMouseMove}
-                    className="spotlight bg-white border border-[#DDE1E5] hover:border-emerald-400/50 shadow-sm hover:shadow-lg rounded-3xl p-8 h-full transition-all group overflow-hidden"
-                  >
-                    <div
-                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.grad} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
-                    >
-                      <item.icon size={26} className="text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 leading-snug text-[#111111]">{item.title}</h3>
-                    <p className="text-[#6b7280] text-sm leading-relaxed">{item.desc}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── SEASON CTA ────────────────────────────────────────────── */}
-        {/* A dark, cinematic band for contrast against the light page — built from
-            animated gradient light instead of a flat static photo, which read as
-            muddy once darkened enough for the text to stay legible. */}
-        <section className="relative py-20 sm:py-36 px-4 sm:px-8 overflow-hidden bg-[#05130b]">
-          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            {/* faint pitch-line grid, slowly panning */}
-            <div
-              className="grid-pan absolute inset-0 opacity-[0.07]"
-              style={{
-                backgroundImage:
-                  'linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px)',
-                backgroundSize: '64px 64px',
+          {/* ── 04 STATS ───────────────────────────────────────────────── */}
+          <section className="px-5 sm:px-8 py-20 sm:py-32">
+            <Feature
+              id="stats"
+              n="04"
+              kicker="Stats"
+              title="Every goal"
+              accent="counts."
+              body="Log your goals and assists after the game and your teammates confirm them. Climb the weekly leaderboard and watch your form."
+              points={[
+                'Games, goals and assists on your profile',
+                'A weekly leaderboard race with your crew',
+                'Stats confirmed by teammates, so the board stays honest',
+              ]}
+              phones={{
+                back: { src: statsScreen, alt: 'Player stats with games, goals and assists' },
+                front: { src: leaderboard, alt: 'Weekly leaderboard' },
               }}
-            />
+              flip
+            >
+              <Link to="/whats-new" className="mt-8 inline-flex items-center gap-2 font-extrabold text-[#0B0D10] hover:text-[#16A34A] transition-colors">
+                See what's new in 2.1 <ArrowRight size={18} />
+              </Link>
+            </Feature>
+          </section>
 
-            {/* drifting emerald light */}
-            <div className="blob absolute top-[-15%] left-[8%] w-[420px] h-[420px] bg-emerald-500/25 rounded-full filter blur-[110px]" />
-            <div className="blob blob-2 absolute bottom-[-20%] right-[5%] w-[460px] h-[460px] bg-emerald-400/20 rounded-full filter blur-[120px]" />
-            <div className="blob blob-3 absolute top-[25%] right-[22%] w-[280px] h-[280px] bg-teal-400/15 rounded-full filter blur-[100px]" />
-
-            {/* pulsing center spotlight behind the headline */}
-            <div
-              className="pulse-glow absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] max-w-[700px] h-[70vw] max-h-[700px] rounded-full"
-              style={{
-                background:
-                  'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(22,163,74,0.22) 0%, transparent 70%)',
-              }}
-            />
-          </div>
-
-          <div className="relative z-10 max-w-3xl mx-auto text-center">
-            <Reveal>
-              <motion.div
-                className="text-6xl mb-7 inline-block"
-                animate={{ y: [0, -14, 0], rotate: [0, 10, -8, 0] }}
-                transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                ⚽
-              </motion.div>
-              <h2 className="text-3xl sm:text-5xl md:text-6xl font-black leading-tight mb-6 text-white">
-                Don't Just Watch<br />
-                From the Sideline.<br />
-                <span className="g-text">Play.</span>
-              </h2>
-              <p className="text-white/60 text-xl mb-10 max-w-lg mx-auto">
-                Somewhere near you, a pickup game is starting soon. Find it and get on the field.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <AppStoreBtn large invert />
-                <GooglePlayBtn large invert />
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ── FOUNDER STORY ─────────────────────────────────────────── */}
-        <section className="py-16 sm:py-24 px-4 sm:px-8">
-          <div className="max-w-4xl mx-auto">
-            <Reveal>
-              <div className="bg-white border border-[#DDE1E5] shadow-sm rounded-3xl overflow-hidden">
-                {/* Photo */}
-                <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
+          {/* ── FOUNDERS ───────────────────────────────────────────────── */}
+          <section className="px-5 sm:px-8 pb-20 sm:pb-32">
+            <Reveal className="max-w-6xl mx-auto">
+              <div className="grid md:grid-cols-2 bg-white rounded-[28px] overflow-hidden border border-[#DDE1E5]">
+                <div className="relative min-h-[280px]">
                   <img
                     src={founderPhoto}
                     alt="Christopher and a friend after a Jogo game with the NYC skyline"
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover"
                     style={{ objectPosition: 'center 35%' }}
+                    loading="lazy"
                   />
-                  {/* Gradient fade for badge legibility over the photo */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-                  {/* City badge */}
-                  <div className="absolute bottom-4 left-4 sm:bottom-5 sm:left-5 flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5">
-                    <span className="text-xs text-white font-medium">📍 Jersey City, NJ</span>
+                  <div className="absolute bottom-4 left-4 bg-black/45 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 text-xs font-bold text-white">
+                    📍 Jersey City, NJ
                   </div>
                 </div>
-
-                {/* Text body */}
                 <div className="p-7 sm:p-12">
-                  <div className="flex flex-wrap items-center gap-2 mb-5">
-                    <span className="text-xs font-bold text-[#9CA3AF] tracking-widest uppercase">Built by Players</span>
-                  </div>
-
-                  <h2 className="text-2xl sm:text-4xl font-black leading-tight mb-6 text-[#111111]">
-                    Pickup soccer should be free and easy.<br />
-                    <span className="g-text">So we built Jogo.</span>
+                  <div className="text-xs font-extrabold tracking-[0.2em] uppercase text-emerald-700 mb-4">Built by players</div>
+                  <h2 style={DISPLAY} className="uppercase text-4xl sm:text-5xl leading-[1.05]">
+                    We were tired of<br /><span className="text-[#16A34A]">the group chat.</span>
                   </h2>
-
-                  <div className="text-[#374151] text-sm sm:text-base leading-relaxed max-w-2xl space-y-3">
-                    <p>
-                      Growing up in Jersey, we knew there were games happening everywhere — parks,
-                      turf fields, school yards — but finding them was always random.
-                    </p>
-                    <p>
-                      You had to know someone, be in the right group chat, or hope a friend texted you.
-                    </p>
-                    <p>
-                      Jogo fixes that. Now you can open the app, see games near you, join in seconds,
-                      and play with people who love the game too.
-                    </p>
-                    <p className="text-[#111111] font-semibold">
-                      Built in Jersey. Made for every player.
-                    </p>
+                  <div className="mt-5 space-y-3 text-[#4B5563] text-base leading-relaxed">
+                    <p>Growing up in Jersey, there were games everywhere — parks, turf, school yards — but finding one meant knowing someone or being in the right group chat.</p>
+                    <p>So we built Jogo: open the app, see the games near you, and get on the field.</p>
                   </div>
-
-                  <div className="mt-8 pt-6 border-t border-[#DDE1E5]">
-                    <p className="text-[#9CA3AF] text-xs mb-4 uppercase tracking-widest font-semibold">Built by Players</p>
-                    <div className="flex flex-wrap gap-4">
-                      {[
-                        { initials: 'CV', name: 'Christopher', note: null, grad: 'from-emerald-500 to-teal-500' },
-                        { initials: 'IS', name: 'Israel',      note: null,           grad: 'from-blue-500 to-cyan-500' },
-                        { initials: 'AD', name: 'Adriana',     note: null,           grad: 'from-purple-500 to-pink-500' },
-                        { initials: 'JM', name: 'Jimmy',       note: null,           grad: 'from-orange-500 to-red-500' },
-                      ].map((p) => (
-                        <div key={p.name} className="flex items-center gap-2.5">
-                          <div
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black text-white flex-shrink-0 bg-gradient-to-br ${p.grad}`}
-                          >
-                            {p.initials}
-                          </div>
-                          <div>
-                            <div className="text-[#111111] font-semibold text-sm">{p.name}</div>
-                            {p.note && <div className="text-[#9CA3AF] text-xs">{p.note}</div>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="mt-7 pt-6 border-t border-[#E5E7EB] flex flex-wrap gap-x-5 gap-y-3">
+                    {[
+                      { i: 'CV', n: 'Christopher', g: 'from-emerald-500 to-teal-500' },
+                      { i: 'IS', n: 'Israel', g: 'from-blue-500 to-cyan-500' },
+                      { i: 'AD', n: 'Adriana', g: 'from-purple-500 to-pink-500' },
+                      { i: 'JM', n: 'Jimmy', g: 'from-orange-500 to-red-500' },
+                    ].map((p) => (
+                      <div key={p.n} className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${p.g} text-white text-[11px] font-extrabold flex items-center justify-center`}>{p.i}</div>
+                        <span className="text-sm font-bold">{p.n}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </Reveal>
-          </div>
-        </section>
+          </section>
 
-        {/* ── FINAL CTA ─────────────────────────────────────────────── */}
-        <section className="py-16 sm:py-28 px-4 sm:px-8">
-          <div className="max-w-2xl mx-auto text-center">
-            <Reveal>
-              <div className="text-6xl mb-8">⚽</div>
-              <h2 className="text-4xl sm:text-6xl font-black leading-tight mb-5 text-[#111111]">
-                Your next game<br />
-                <span className="g-text">is waiting.</span>
+          {/* ── FINAL CTA — the poster again ───────────────────────────── */}
+          <section className="relative bg-[#0B0D10] text-white overflow-hidden px-5 sm:px-8 py-24 sm:py-36">
+            <Band className="w-[40vw] max-w-[560px] h-[200%] -top-[50%] right-[-14vw] sm:right-[-4vw]" opacity={0.95} />
+            <Reveal className="relative max-w-6xl mx-auto">
+              <div className="text-xs sm:text-sm font-extrabold tracking-[0.2em] uppercase text-white/50 mb-4">Free on iPhone &amp; Android</div>
+              <h2 style={DISPLAY} className="uppercase text-[3.2rem] leading-[1] sm:text-8xl lg:text-9xl max-w-4xl">
+                Your next game<br /><span className="text-[#22C55E]">is waiting.</span>
               </h2>
-              <p className="text-[#6b7280] text-xl mb-10">
-                Download Jogo. Find a game. Play tonight.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <AppStoreBtn large />
-                <GooglePlayBtn large />
-              </div>
+              <StoreRow invert className="mt-10" />
             </Reveal>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
 
-      {/* ── FOOTER ────────────────────────────────────────────────── */}
-      <footer className="border-t border-[#DDE1E5] pt-10 pb-6 px-4 sm:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 mb-10">
-            <div>
-              <img src={jogoLogo} alt="Jogo" className="h-7 w-auto mb-4" />
-              <p className="text-[#9CA3AF] text-sm max-w-xs">
-                Free pickup soccer finder. Built in New Jersey.
-              </p>
-            </div>
-            <div className="flex flex-col sm:items-end gap-4">
-              <div className="flex flex-wrap gap-3">
-                <AppStoreBtn />
-                <GooglePlayBtn />
+        {/* ── FOOTER ───────────────────────────────────────────────────── */}
+        <footer className="bg-[#EDEEF1] pt-12 pb-8 px-5 sm:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row justify-between gap-8 mb-10">
+              <div>
+                <img src={jogoLogo} alt="Jogo" className="h-7 w-auto mb-3" />
+                <p className="text-[#6b7280] text-sm max-w-xs font-medium">Pickup soccer, crews and stats. Built in New Jersey.</p>
               </div>
+              <nav className="grid grid-cols-2 sm:grid-cols-3 gap-x-10 gap-y-2.5 text-sm font-semibold text-[#4B5563]">
+                <Link to="/whats-new" className="hover:text-[#0B0D10]">What's New</Link>
+                <Link to="/blog" className="hover:text-[#0B0D10]">Blog</Link>
+                <Link to="/media" className="hover:text-[#0B0D10]">Media</Link>
+                <Link to="/feedback" className="hover:text-[#0B0D10]">Feedback</Link>
+                <Link to="/support" className="hover:text-[#0B0D10]">Support</Link>
+                <Link to="/policy" className="hover:text-[#0B0D10]">Privacy</Link>
+                <Link to="/terms" className="hover:text-[#0B0D10]">Terms</Link>
+                <Link to="/delete-account" className="hover:text-[#0B0D10]">Delete Account</Link>
+                <a href="https://buymeacoffee.com/jogoapp" target="_blank" rel="noopener noreferrer" className="hover:text-[#0B0D10] inline-flex items-center gap-1">
+                  <Coffee size={13} /> Support Us
+                </a>
+              </nav>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between gap-2 pt-6 border-t border-[#DDE1E5] text-xs text-[#9CA3AF] font-medium">
+              <p>© {new Date().getFullYear()} Jogo. All rights reserved.</p>
+              <p>Pioneered in New Jersey by players, for players.</p>
             </div>
           </div>
+        </footer>
 
-          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#6b7280] mb-10">
-            <Link to="/whats-new" className="hover:text-[#111111] transition-colors">What's New</Link>
-            <Link to="/blog" className="hover:text-[#111111] transition-colors">Blog</Link>
-            <Link to="/media" className="hover:text-[#111111] transition-colors">Media</Link>
-            <Link to="/feedback" className="hover:text-[#111111] transition-colors">Feedback</Link>
-            <Link to="/support" className="hover:text-[#111111] transition-colors">Support</Link>
-            <Link to="/policy" className="hover:text-[#111111] transition-colors">Privacy</Link>
-            <Link to="/terms" className="hover:text-[#111111] transition-colors">Terms</Link>
-            <Link to="/delete-account" className="hover:text-[#111111] transition-colors">Delete Account</Link>
-            <a href="https://buymeacoffee.com/jogoapp" target="_blank" rel="noopener noreferrer" className="hover:text-[#111111] transition-colors flex items-center gap-1">
-              <Coffee size={13} /> Support Us
-            </a>
-          </nav>
-
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-[#DDE1E5] text-xs text-[#9CA3AF]">
-            <p>© {new Date().getFullYear()} Jogo. All rights reserved.</p>
-            <p>Pioneered in New Jersey by players, for players.</p>
-          </div>
-        </div>
-      </footer>
-
-      {/* Bottom padding so sticky CTA doesn't overlap content on mobile */}
-      <div className="h-24 md:hidden" />
-    </div>
+        {/* Room for the sticky store bar on phones */}
+        <div className="h-20 md:hidden bg-[#EDEEF1]" />
+      </div>
+    </MotionConfig>
   );
 }
