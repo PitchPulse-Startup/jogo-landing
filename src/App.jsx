@@ -86,7 +86,7 @@ function PhonePair({ back, front }) {
 }
 
 // The app's diagonal poster band.
-function Band({ className = '', color = '#16A34A', opacity = 1 }) {
+function Band({ className = '', color = '#0E7A43', opacity = 1 }) {
   return (
     <div
       aria-hidden="true"
@@ -103,11 +103,10 @@ function StoreButton({ store, invert = false }) {
       href={apple ? APP_STORE_URL : PLAY_STORE_URL}
       target="_blank"
       rel="noopener noreferrer"
-      whileHover={{ scale: 1.035, y: -2 }}
-      whileTap={{ scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-      className={`inline-flex items-center gap-2.5 rounded-2xl px-5 py-3 sm:px-6 sm:py-3.5 ${
-        invert ? 'bg-white text-[#0B0D10] shadow-xl shadow-black/30' : 'bg-[#0B0D10] text-white shadow-lg shadow-black/15'
+      whileHover={{ y: -1 }}
+      transition={{ duration: 0.2 }}
+      className={`inline-flex items-center gap-2.5 rounded-xl px-5 py-3 sm:px-6 sm:py-3.5 transition-colors ${
+        invert ? 'bg-white text-[#0B0D10] hover:bg-white/90' : 'bg-[#0B0D10] text-white hover:bg-[#1F2937]'
       }`}
     >
       {apple ? <AppleLogo size={22} /> : <PlayLogo size={20} />}
@@ -133,7 +132,7 @@ function StoreRow({ invert = false, className = '' }) {
 
 function Kicker({ n, children, dark = false }) {
   return (
-    <div className={`flex items-center gap-3 mb-4 text-xs sm:text-sm font-extrabold tracking-[0.2em] uppercase ${dark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+    <div className={`flex items-center gap-3 mb-4 text-xs sm:text-sm font-extrabold tracking-[0.2em] uppercase ${dark ? 'text-emerald-300/90' : 'text-emerald-700'}`}>
       <span style={DISPLAY} className="text-lg sm:text-xl tracking-normal">{n}</span>
       <span className={`h-px w-8 ${dark ? 'bg-emerald-400/50' : 'bg-emerald-700/40'}`} />
       {children}
@@ -174,12 +173,12 @@ function Counter({ value, className = '' }) {
 function Ticker() {
   const loop = [...TICKER, ...TICKER];
   return (
-    <div className="relative overflow-hidden bg-[#16A34A] py-3.5 sm:py-4 -rotate-1 scale-[1.02] border-y-2 border-[#0B0D10]">
-      <div className="hp-marquee flex items-center gap-8 sm:gap-10 w-max">
+    <div className="relative overflow-hidden bg-[#0B0D10] border-t border-white/10 py-5 sm:py-6 hp-fade-x">
+      <div className="hp-marquee flex items-center gap-10 sm:gap-14 w-max">
         {loop.map((t, i) => (
-          <span key={i} className="flex items-center gap-8 sm:gap-10 whitespace-nowrap text-[#0B0D10] text-xl sm:text-3xl uppercase" style={DISPLAY}>
+          <span key={i} className="flex items-center gap-10 sm:gap-14 whitespace-nowrap text-white/35 text-lg sm:text-2xl uppercase" style={DISPLAY}>
             {t}
-            <span className="text-base sm:text-xl">⚽</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
           </span>
         ))}
       </div>
@@ -195,7 +194,7 @@ function Feature({ id, n, kicker, title, accent, body, points, phones, dark = fa
         <Kicker n={n} dark={dark}>{kicker}</Kicker>
         <h2 style={DISPLAY} className={`uppercase text-[2.9rem] leading-[1.02] sm:text-6xl lg:text-7xl ${dark ? 'text-white' : 'text-[#0B0D10]'}`}>
           {title}<br />
-          <span className={dark ? 'text-emerald-400' : 'text-[#16A34A]'}>{accent}</span>
+          <span className={dark ? 'text-[#4ADE80]' : 'text-[#15803D]'}>{accent}</span>
         </h2>
         <p className={`mt-5 text-base sm:text-lg leading-relaxed max-w-xl ${dark ? 'text-white/65' : 'text-[#4B5563]'}`}>{body}</p>
         <Points items={points} dark={dark} />
@@ -231,12 +230,9 @@ export default function App() {
           ::selection { background: rgba(22,163,74,0.3); }
           .hp-anchor { scroll-margin-top: 96px; }
           @keyframes hp-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-          .hp-marquee { animation: hp-marquee 28s linear infinite; }
-          @keyframes hp-live { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-          .hp-live { animation: hp-live 1.6s ease-in-out infinite; }
-          @keyframes hp-grid { from { background-position: 0 0; } to { background-position: 48px 48px; } }
-          .hp-grid { animation: hp-grid 16s linear infinite; }
-          @media (prefers-reduced-motion: reduce) { .hp-marquee, .hp-live, .hp-grid { animation: none; } }
+          .hp-marquee { animation: hp-marquee 48s linear infinite; }
+          .hp-fade-x { -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); }
+          @media (prefers-reduced-motion: reduce) { .hp-marquee { animation: none; } }
         `}</style>
 
         {/* ── HEADER — floating pill ─────────────────────────────────── */}
@@ -293,7 +289,7 @@ export default function App() {
                   { href: PLAY_STORE_URL, icon: <PlayLogo size={16} />, label: 'Google Play' },
                 ].map((s) => (
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 bg-[#16A34A] active:scale-95 text-white font-extrabold py-3.5 rounded-2xl text-[15px] transition-transform">
+                    className="flex-1 flex items-center justify-center gap-2 bg-white text-[#0B0D10] font-extrabold py-3.5 rounded-xl text-[15px] active:opacity-80">
                     {s.icon}{s.label}
                   </a>
                 ))}
@@ -307,7 +303,7 @@ export default function App() {
           <section className="relative bg-[#0B0D10] text-white overflow-hidden pt-28 sm:pt-36 pb-0">
             <div
               aria-hidden="true"
-              className="hp-grid absolute inset-0 opacity-[0.06]"
+              className="absolute inset-0 opacity-[0.035]"
               style={{
                 backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
                 backgroundSize: '48px 48px',
@@ -315,8 +311,8 @@ export default function App() {
                 WebkitMaskImage: 'radial-gradient(ellipse at 30% 30%, black 30%, transparent 75%)',
               }}
             />
-            <Band className="max-lg:hidden w-[46vw] max-w-[620px] h-[180%] -top-[40%] right-[-6vw]" opacity={0.95} />
-            <Band className="max-lg:hidden w-4 h-[180%] -top-[40%] right-[44vw]" opacity={0.35} />
+            <Band className="max-lg:hidden w-[40vw] max-w-[560px] h-[180%] -top-[40%] right-[-8vw]" opacity={0.9} />
+            <Band className="max-lg:hidden w-px h-[180%] -top-[40%] right-[40vw]" color="#FFFFFF" opacity={0.12} />
 
             <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-6 items-center">
               <div>
@@ -324,10 +320,10 @@ export default function App() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 pl-2.5 pr-3.5 py-1.5 text-xs sm:text-sm font-bold text-white/80 mb-6"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 pl-3 pr-3.5 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] text-white/60 mb-7"
                 >
-                  <span className="hp-live w-2 h-2 rounded-full bg-emerald-400" />
-                  Games are getting made right now
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  Now on iPhone &amp; Android
                 </motion.div>
 
                 <motion.h1
@@ -338,7 +334,7 @@ export default function App() {
                   className="uppercase text-[3.6rem] leading-[0.98] sm:text-[6.5rem] lg:text-[6.1rem] xl:text-[6.6rem]"
                 >
                   Find a game.<br />
-                  <span className="text-[#22C55E]">Just play.</span>
+                  <span className="text-[#16A34A]">Just play.</span>
                 </motion.h1>
 
                 <motion.p
@@ -378,7 +374,7 @@ export default function App() {
               {/* Phone fan — rises up out of the bottom edge */}
               <div className="relative flex justify-center items-end mt-4 lg:mt-0 translate-y-[6%]">
                 {/* Phones: the band sits behind the fan only, never behind the copy */}
-                <Band className="lg:hidden w-[48%] h-[190%] -top-[25%] left-[30%]" opacity={0.95} />
+                <Band className="lg:hidden w-[48%] h-[190%] -top-[25%] left-[30%]" opacity={0.9} />
                 <motion.div
                   initial={{ opacity: 0, y: 80, rotate: 0 }}
                   animate={{ opacity: 1, y: 0, rotate: -9 }}
@@ -432,7 +428,7 @@ export default function App() {
 
           {/* ── 02 CREWS — ink with the band ───────────────────────────── */}
           <section className="relative bg-[#0B0D10] text-white overflow-hidden px-5 sm:px-8 py-20 sm:py-32">
-            <Band className="w-[38vw] max-w-[520px] h-[170%] -top-[35%] left-[-18vw] sm:left-[-10vw]" opacity={0.9} />
+            <Band className="w-[30vw] max-w-[420px] h-[170%] -top-[35%] left-[-16vw] sm:left-[-12vw]" opacity={0.75} />
             <div className="relative">
               <Feature
                 id="crews"
@@ -457,9 +453,8 @@ export default function App() {
           </section>
 
           {/* ── 03 COMPETE ─────────────────────────────────────────────── */}
-          <section className="relative overflow-hidden px-5 sm:px-8 py-20 sm:py-32 bg-[#140A28] text-white">
-            <div aria-hidden="true" className="absolute -top-40 right-[-10%] w-[520px] h-[520px] rounded-full bg-violet-600/30 blur-[120px]" />
-            <div aria-hidden="true" className="absolute bottom-[-30%] left-[-10%] w-[460px] h-[460px] rounded-full bg-amber-500/15 blur-[120px]" />
+          <section className="relative overflow-hidden px-5 sm:px-8 py-20 sm:py-32 bg-[#120B22] text-white">
+            <div aria-hidden="true" className="absolute -top-40 right-[-10%] w-[520px] h-[520px] rounded-full bg-violet-500/15 blur-[140px]" />
             <div className="relative">
               <Feature
                 id="compete"
@@ -521,7 +516,7 @@ export default function App() {
                     loading="lazy"
                   />
                   <div className="absolute bottom-4 left-4 bg-black/45 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 text-xs font-bold text-white">
-                    📍 Jersey City, NJ
+                    Jersey City, NJ
                   </div>
                 </div>
                 <div className="p-7 sm:p-12">
@@ -535,13 +530,13 @@ export default function App() {
                   </div>
                   <div className="mt-7 pt-6 border-t border-[#E5E7EB] flex flex-wrap gap-x-5 gap-y-3">
                     {[
-                      { i: 'CV', n: 'Christopher', g: 'from-emerald-500 to-teal-500' },
-                      { i: 'IS', n: 'Israel', g: 'from-blue-500 to-cyan-500' },
-                      { i: 'AD', n: 'Adriana', g: 'from-purple-500 to-pink-500' },
-                      { i: 'JM', n: 'Jimmy', g: 'from-orange-500 to-red-500' },
+                      { i: 'CV', n: 'Christopher', },
+                      { i: 'IS', n: 'Israel', },
+                      { i: 'AD', n: 'Adriana', },
+                      { i: 'JM', n: 'Jimmy', },
                     ].map((p) => (
                       <div key={p.n} className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${p.g} text-white text-[11px] font-extrabold flex items-center justify-center`}>{p.i}</div>
+                        <div className="w-8 h-8 rounded-full bg-[#0B0D10] text-white text-[11px] font-extrabold flex items-center justify-center">{p.i}</div>
                         <span className="text-sm font-bold">{p.n}</span>
                       </div>
                     ))}
@@ -553,11 +548,11 @@ export default function App() {
 
           {/* ── FINAL CTA — the poster again ───────────────────────────── */}
           <section className="relative bg-[#0B0D10] text-white overflow-hidden px-5 sm:px-8 py-24 sm:py-36">
-            <Band className="w-[40vw] max-w-[560px] h-[200%] -top-[50%] right-[-14vw] sm:right-[-4vw]" opacity={0.95} />
+            <Band className="w-[34vw] max-w-[480px] h-[200%] -top-[50%] right-[-16vw] sm:right-[-6vw]" opacity={0.85} />
             <Reveal className="relative max-w-6xl mx-auto">
               <div className="text-xs sm:text-sm font-extrabold tracking-[0.2em] uppercase text-white/50 mb-4">Free on iPhone &amp; Android</div>
               <h2 style={DISPLAY} className="uppercase text-[3.2rem] leading-[1] sm:text-8xl lg:text-9xl max-w-4xl">
-                Your next game<br /><span className="text-[#22C55E]">is waiting.</span>
+                Your next game<br /><span className="text-[#16A34A]">is waiting.</span>
               </h2>
               <StoreRow invert className="mt-10" />
             </Reveal>
