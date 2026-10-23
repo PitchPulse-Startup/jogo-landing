@@ -5,14 +5,13 @@
 // current screenshots — same rule as WhatsNew.jsx: copy only describes what
 // those screens actually show, never a feature the app doesn't have.
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, MotionConfig, AnimatePresence, animate, useInView } from 'framer-motion';
+import { motion, MotionConfig, AnimatePresence } from 'framer-motion';
 import { Check, Coffee, ArrowRight } from 'lucide-react';
 
 import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import jogoLogo from './assets/jogo-logo-2026.png';
-import founderPhoto from './assets/Team.jpeg';
 import matchday from './assets/2.1.0/Screenshot_20261009-121904.png';
 import kingMatchday from './assets/2.1.0/Screenshot_20261009-123555.png';
 import crewPage from './assets/2.1.0/Screenshot_20261009-123633.png';
@@ -153,21 +152,6 @@ function Points({ items, dark = false }) {
       ))}
     </ul>
   );
-}
-
-// Counts up once when scrolled into view ("4,000+").
-function Counter({ value, className = '' }) {
-  const m = value.match(/^([\d,]+)(.*)$/);
-  const target = m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (!inView || target === null) return undefined;
-    const c = animate(0, target, { duration: 1.4, ease: EASE, onUpdate: (v) => setN(Math.round(v)) });
-    return () => c.stop();
-  }, [inView, target]);
-  return <span ref={ref} className={className}>{target === null ? value : `${n.toLocaleString('en-US')}${m[2]}`}</span>;
 }
 
 function Ticker() {
@@ -354,11 +338,11 @@ export default function App() {
                   <StoreRow invert className="mt-8" />
                   <div className="mt-8 flex items-center gap-6 sm:gap-8">
                     {[
-                      { v: '4,000+', l: 'Players' },
+                      { v: '5,000+', l: 'Players' },
                       { v: '2,000+', l: 'Games created' },
                     ].map((s) => (
                       <div key={s.l}>
-                        <span style={DISPLAY} className="block text-3xl sm:text-4xl text-white"><Counter value={s.v} /></span>
+                        <span style={DISPLAY} className="block text-3xl sm:text-4xl text-white">{s.v}</span>
                         <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.14em] text-white/50">{s.l}</span>
                       </div>
                     ))}
@@ -501,49 +485,6 @@ export default function App() {
                 See what's new in 2.1 <ArrowRight size={18} />
               </Link>
             </Feature>
-          </section>
-
-          {/* ── FOUNDERS ───────────────────────────────────────────────── */}
-          <section className="px-5 sm:px-8 pb-20 sm:pb-32">
-            <Reveal className="max-w-6xl mx-auto">
-              <div className="grid md:grid-cols-2 bg-white rounded-[28px] overflow-hidden border border-[#DDE1E5]">
-                <div className="relative min-h-[280px]">
-                  <img
-                    src={founderPhoto}
-                    alt="Christopher and a friend after a Jogo game with the NYC skyline"
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{ objectPosition: 'center 35%' }}
-                    loading="lazy"
-                  />
-                  <div className="absolute bottom-4 left-4 bg-black/45 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 text-xs font-bold text-white">
-                    Jersey City, NJ
-                  </div>
-                </div>
-                <div className="p-7 sm:p-12">
-                  <div className="text-xs font-extrabold tracking-[0.2em] uppercase text-emerald-700 mb-4">Built by players</div>
-                  <h2 style={DISPLAY} className="uppercase text-4xl sm:text-5xl leading-[1.05]">
-                    We were tired of<br /><span className="text-[#16A34A]">the group chat.</span>
-                  </h2>
-                  <div className="mt-5 space-y-3 text-[#4B5563] text-base leading-relaxed">
-                    <p>Growing up in Jersey, there were games everywhere — parks, turf, school yards — but finding one meant knowing someone or being in the right group chat.</p>
-                    <p>So we built Jogo: open the app, see the games near you, and get on the field.</p>
-                  </div>
-                  <div className="mt-7 pt-6 border-t border-[#E5E7EB] flex flex-wrap gap-x-5 gap-y-3">
-                    {[
-                      { i: 'CV', n: 'Christopher', },
-                      { i: 'IS', n: 'Israel', },
-                      { i: 'AD', n: 'Adriana', },
-                      { i: 'JM', n: 'Jimmy', },
-                    ].map((p) => (
-                      <div key={p.n} className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#0B0D10] text-white text-[11px] font-extrabold flex items-center justify-center">{p.i}</div>
-                        <span className="text-sm font-bold">{p.n}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Reveal>
           </section>
 
           {/* ── FINAL CTA — the poster again ───────────────────────────── */}
