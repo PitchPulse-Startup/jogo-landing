@@ -39,6 +39,7 @@ const EASE = [0.22, 1, 0.36, 1];
 const INK = '#0A0A0A';
 const MUTED = '#6B7280';
 const FAINT = '#A3A3A3';
+const CHAMP = '#CBB283';
 const ANTON = { fontFamily: "'Anton', Impact, sans-serif", fontWeight: 400, lineHeight: 1.25 };
 
 const joinEventViaLink = httpsCallable(functions, 'joinEventViaLink');
@@ -122,42 +123,42 @@ function JoinSheet({ open, onClose, onSignedIn, eventTitle }) {
     }
   };
 
-  const inputClass = 'w-full bg-[#F5F5F5] rounded-2xl px-4 py-3.5 text-[15.5px] font-semibold outline-none ring-2 ring-transparent focus:ring-[#0A0A0A] focus:bg-white transition-all placeholder:text-[#A3A3A3]';
+  const inputClass = 'w-full bg-white/[0.06] text-white rounded-2xl px-4 py-3.5 text-[15.5px] font-semibold outline-none ring-1 ring-white/10 focus:ring-[#CBB283] transition-all placeholder:text-white/30';
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div className="fixed inset-0 z-40 flex items-end justify-center"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <button type="button" aria-label="Close" className="absolute inset-0 bg-black/50" onClick={onClose} />
+          <button type="button" aria-label="Close" className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
           <motion.form
             onSubmit={handleSubmit}
             initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="relative w-full max-w-xl bg-white rounded-t-[28px] px-[22px] pt-5 pb-[max(22px,env(safe-area-inset-bottom))]"
-            style={{ fontFamily: "'Barlow', system-ui, sans-serif", color: INK }}
+            className="relative w-full max-w-xl rounded-t-[28px] px-[22px] pt-5 pb-[max(22px,env(safe-area-inset-bottom))] border-t border-white/10"
+            style={{ fontFamily: "'Barlow', system-ui, sans-serif", color: '#FFFFFF', background: '#121212' }}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-extrabold text-[11px] tracking-[2px]" style={{ color: MUTED }}>{mode === 'reset' ? 'RESET PASSWORD' : 'GRAB YOUR SPOT'}</p>
-                <p className="truncate" style={{ ...ANTON, fontSize: 28, color: INK }}>{(eventTitle || 'This event').toUpperCase()}</p>
+                <p className="font-bold text-[10.5px] tracking-[3px]" style={{ color: CHAMP }}>{mode === 'reset' ? 'RESET PASSWORD' : 'GRAB YOUR SPOT'}</p>
+                <p className="truncate" style={{ ...ANTON, fontSize: 28, color: '#FFFFFF' }}>{(eventTitle || 'This event').toUpperCase()}</p>
               </div>
-              <button type="button" onClick={onClose} className="w-9 h-9 rounded-full bg-[#F5F5F5] flex items-center justify-center flex-shrink-0" aria-label="Close">
-                <X size={17} color={INK} />
+              <button type="button" onClick={onClose} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0" aria-label="Close">
+                <X size={17} color="#FFFFFF" />
               </button>
             </div>
 
             {mode !== 'reset' && (
-              <div className="flex bg-[#F5F5F5] rounded-full p-1 mt-3 mb-3">
+              <div className="flex bg-white/[0.06] rounded-full p-1 mt-3 mb-3">
                 {[['signup', "I'm new"], ['login', 'I have an account']].map(([m, label]) => (
                   <button key={m} type="button" onClick={() => switchMode(m)}
-                    className={`flex-1 text-[14px] font-extrabold py-2 rounded-full transition-all ${mode === m ? 'bg-[#0A0A0A] text-white' : 'text-[#6B7280]'}`}>
+                    className={`flex-1 text-[14px] font-extrabold py-2 rounded-full transition-all ${mode === m ? 'bg-white text-[#0A0A0A]' : 'text-white/50'}`}>
                     {label}
                   </button>
                 ))}
               </div>
             )}
-            {mode === 'reset' && <p className="text-[14px] font-semibold mt-2 mb-3" style={{ color: MUTED }}>Enter your email and we’ll send you a reset link.</p>}
+            {mode === 'reset' && <p className="text-[14px] font-semibold mt-2 mb-3 text-white/55">Enter your email and we’ll send you a reset link.</p>}
 
             <div className="flex flex-col gap-2">
               {mode === 'signup' && (
@@ -172,18 +173,18 @@ function JoinSheet({ open, onClose, onSignedIn, eventTitle }) {
                   onChange={(e) => setPassword(e.target.value)} className={inputClass} />
               )}
             </div>
-            {mode === 'signup' && <p className="text-[12px] font-semibold mt-2 ml-1" style={{ color: FAINT }}>8+ characters, with an uppercase letter and a number.</p>}
-            {authError && <p className="text-[13px] font-bold text-red-600 mt-2 ml-1">{authError}</p>}
-            {resetSent && <p className="text-[13px] font-bold text-emerald-700 mt-2 ml-1">Check your inbox for a reset link.</p>}
+            {mode === 'signup' && <p className="text-[12px] font-semibold mt-2 ml-1 text-white/35">8+ characters, with an uppercase letter and a number.</p>}
+            {authError && <p className="text-[13px] font-bold text-red-400 mt-2 ml-1">{authError}</p>}
+            {resetSent && <p className="text-[13px] font-bold text-emerald-400 mt-2 ml-1">Check your inbox for a reset link.</p>}
 
             <button type="submit" disabled={submitting}
-              className="w-full h-[54px] rounded-full text-white mt-4 font-extrabold text-[16px] flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-70 transition-opacity"
-              style={{ background: INK }}>
+              className="w-full h-[54px] rounded-full mt-4 font-extrabold text-[16px] flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-70 transition-opacity"
+              style={{ background: CHAMP, color: INK }}>
               {submitting && <Loader2 size={17} className="animate-spin" />}
               {mode === 'signup' ? 'Create account & join' : mode === 'login' ? 'Log in & join' : 'Send reset link'}
             </button>
 
-            <div className="flex justify-between text-[12px] font-semibold mt-3 px-1" style={{ color: FAINT }}>
+            <div className="flex justify-between text-[12px] font-semibold mt-3 px-1 text-white/35">
               <span>Free · same account as the Jogo app</span>
               {mode === 'login' && <button type="button" onClick={() => switchMode('reset')} className="underline underline-offset-2">Forgot password?</button>}
               {mode === 'reset' && <button type="button" onClick={() => switchMode('login')} className="underline underline-offset-2">Back to log in</button>}
@@ -306,9 +307,9 @@ export default function Event() {
         join={{ result, joining, joinError, onJoin, needsTicket, hasTournament }}
       />
       {viewer ? (
-        <p className="fixed z-30 left-0 right-0 text-center text-[11.5px] font-semibold pointer-events-none" style={{ bottom: 92, color: FAINT }}>
+        <p className="fixed z-30 left-0 right-0 text-center text-[11.5px] font-semibold pointer-events-none" style={{ bottom: 122, color: 'rgba(255,255,255,0.45)' }}>
           {!result ? (
-            <span className="pointer-events-auto bg-white/90 rounded-full px-3 py-1">
+            <span className="pointer-events-auto bg-black/70 backdrop-blur rounded-full px-3 py-1">
               Joining as {viewer.displayName || viewer.email} ·{' '}
               <button type="button" onClick={() => signOut(auth)} className="underline underline-offset-2">Not you?</button>
             </span>
