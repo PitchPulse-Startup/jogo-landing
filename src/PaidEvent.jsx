@@ -12,8 +12,8 @@
 //   • free — the app comes first too ("GET THE APP" everywhere), but a
 //     small, faint "sign up online instead" under the bottom bar lets
 //     people join right here in the browser. src/Event.jsx owns that flow
-//     and passes it in as `join`. The location stays locked until you've
-//     joined.
+//     and passes it in as `join`. The address shows to everyone — players
+//     check in at the field anyway.
 //
 // The page, top to bottom:
 //   1. Cover — the whole first screen is the photo (or a black stadium
@@ -411,8 +411,8 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
   const joined = !!join?.result;
   const details = join?.result?.details || null;
   const myTeamName = join?.result?.teamName || null;
-  const unlockedPlace = details?.location || null;
-  const mapsHref = unlockedPlace ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(unlockedPlace)}` : null;
+  const address = event.location || details?.location || null;
+  const mapsHref = address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : null;
   const needsTicket = free && !!join?.needsTicket;
   const live = !cancelled && !isPast;
   const lowStock = selling && left != null && left > 0 && left <= 10;
@@ -463,16 +463,13 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
   const dateLine = start
     ? `${start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · ${start.toLocaleTimeString('en-US', start.getMinutes() ? { hour: 'numeric', minute: '2-digit' } : { hour: 'numeric' })}`.toUpperCase()
     : 'DATE TBA';
-  // Free events keep the place locked until you've joined.
-  const place = free ? placeOf(unlockedPlace) : placeOf(event.location);
+  const place = placeOf(address);
 
   const whenText = start ? `${start.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}, ${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : 'To be announced';
   const table = free ? [
     { k: 'WHEN', v: whenText },
-    unlockedPlace
-      ? { k: 'WHERE', v: unlockedPlace, href: mapsHref }
-      : event.location || !joined ? { k: 'WHERE', v: 'Unlocks when you join', locked: true } : null,
-    joined && start ? { k: 'CALENDAR', v: 'Add it to your calendar', href: calendarUrl(event, start, unlockedPlace) } : null,
+    address ? { k: 'WHERE', v: address, href: mapsHref } : null,
+    joined && start ? { k: 'CALENDAR', v: 'Add it to your calendar', href: calendarUrl(event, start, address) } : null,
     hasTeams ? { k: 'TEAMS', v: `${teams.length} teams of ${event.teamSize}` } : { k: 'SPOTS', v: cap ? `${cap} players` : 'Open — no limit' },
     event.squadName ? { k: 'CREW', v: `${event.squadName}${event.visibility === 'crew' ? ' · crew only' : ''}` } : null,
     partner ? { k: 'PARTNER', v: `${partner} × Jogo` } : null,
@@ -522,7 +519,8 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
           )}
         </motion.div>
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'linear-gradient(180deg, rgba(10,10,10,.55) 0%, rgba(10,10,10,0) 22%, rgba(10,10,10,.5) 48%, rgba(10,10,10,.9) 70%, rgba(10,10,10,1) 100%)',
+          // Light touch so the photo reads; dark only behind the text at the bottom.
+          background: 'linear-gradient(180deg, rgba(10,10,10,.4) 0%, rgba(10,10,10,0) 18%, rgba(10,10,10,0) 58%, rgba(10,10,10,.7) 84%, rgba(10,10,10,1) 100%)',
         }} />
 
         <motion.header className="absolute top-0 inset-x-0 z-10 pt-5 px-5 flex justify-center" style={{ opacity: topOpacity }}>
@@ -546,7 +544,7 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
               <span className="w-6 h-px flex-shrink-0" style={{ background: CHAMP }} />
               <span className="truncate">{eyebrow}</span>
             </p>
-            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: 'clamp(48px, 14vw, 96px)', letterSpacing: '0.01em', textShadow: '0 4px 24px rgba(0,0,0,.55)' }}>
+            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: 'clamp(34px, 9.5vw, 60px)', letterSpacing: '0.01em', textShadow: '0 4px 24px rgba(0,0,0,.55)' }}>
               {(event.title || 'Event').toUpperCase()}
             </h1>
             <p className="text-white font-extrabold text-[13px] tracking-[1.6px] truncate">

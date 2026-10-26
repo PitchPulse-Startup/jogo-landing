@@ -11,10 +11,10 @@
 // you're signed in, or opens the sign-up sheet below when you're not.
 //
 // The link IS the invitation: a crew-only event (visibility 'crew') is
-// joinable here exactly like a public one. The location stays locked until
-// you've joined, same reasoning as the game page — people shouldn't just
-// show up off a forwarded link. Legacy priced events (?type=paid → the
-// separate paidEvents collection, or a `price`) point to the app instead.
+// joinable here exactly like a public one. The address shows to everyone
+// on the page — players check in at the field anyway. Legacy priced events
+// (?type=paid → the separate paidEvents collection, or a `price`) point to
+// the app instead.
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
