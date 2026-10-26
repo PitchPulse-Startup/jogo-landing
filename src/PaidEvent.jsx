@@ -27,7 +27,7 @@
 //   5. The teams (or who's in), a sign-off lockup, and one black bottom
 //      bar. Live via the parent's onSnapshot.
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowUpRight, ChevronDown, Lock, Check, Loader2 } from 'lucide-react';
 import jogoLogoInk from './assets/jogo-logo-2026.png';
@@ -41,6 +41,8 @@ const RED = '#DC2626';
 const CHAMP = '#CBB283';
 const PAGE_DARK = '#0A0A0A';
 const HAIR = 'rgba(255,255,255,0.1)';
+// How much of the black panel (under the bottom bar) shows on first load.
+const PEEK = 128;
 const EASE = [0.22, 1, 0.36, 1];
 // Anton: line-height >= 1.25 × font-size or the caps get clipped.
 const ANTON = { fontFamily: "'Anton', Impact, sans-serif", fontWeight: 400, lineHeight: 1.25 };
@@ -189,7 +191,7 @@ function PremiumBody({
     ? 'Get the Jogo app first — your spot, the group chat and kickoff reminders all live there.'
     : 'Tickets are reserved in the Jogo app — payment, your team and refunds all live there.';
   return (
-    <main className="max-w-xl mx-auto px-[22px] pt-12 pb-48 text-white">
+    <main className="max-w-xl mx-auto px-[22px] pt-10 pb-48 text-white">
       {/* The numbers */}
       <Reveal>
         <div className="grid grid-cols-3 border-y" style={{ borderColor: HAIR }}>
@@ -383,12 +385,12 @@ function calendarUrl(event, start, location) {
 
 export default function PaidEvent({ event, refName, join = null, hasTournament = false }) {
   useDropFonts();
-  const coverRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: coverRef, offset: ['start start', 'end start'] });
-  const photoY = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
-  const textOpacity = useTransform(scrollYProgress, [0, 0.45], [1, 0]);
-  const textY = useTransform(scrollYProgress, [0, 1], ['0%', '-25%']);
-  const topOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
+  // As the black panel rides up, the pinned photo dims and pushes in.
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+  const { scrollY } = useScroll();
+  const photoDim = useTransform(scrollY, [0, vh * 0.9], [0, 0.75]);
+  const photoScale = useTransform(scrollY, [0, vh], [1, 1.08]);
+  const coverUi = useTransform(scrollY, [0, vh * 0.25], [1, 0]);
 
   const free = !event.ticketing;
   const tk = event.ticketing || {};
@@ -505,69 +507,101 @@ export default function PaidEvent({ event, refName, join = null, hasTournament =
         .pe-pulse { animation: pe-pulse 1.4s ease-in-out infinite; }
       `}</style>
 
-      {/* 1 · Cover — the first screen, less the bottom bar and a peek of the page */}
-      <section ref={coverRef} className="relative overflow-hidden" style={{ height: 'max(560px, calc(100svh - 120px))', background: INK }}>
-        <motion.div className="absolute inset-0" style={{ y: photoY }}>
+      {/* 1 · Cover — the photo alone, full screen and pinned. Nothing on it
+          but the lockup and a scroll cue; the title rides up on the black
+          panel below as you scroll, and the photo dims and pushes in. */}
+      <div className="sticky top-0 h-[100svh] overflow-hidden" style={{ background: INK }}>
+        <motion.div className="absolute inset-0" style={{ scale: photoScale }}>
           {photo ? (
-            <motion.img
-              src={photo} alt=""
-              className="w-full h-full object-cover"
-              initial={{ scale: 1.08, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.2, ease: EASE }}
-            />
+            <>
+              {/* The same image, blurred, fills the screen behind it… */}
+              <img src={photo} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover"
+                style={{ filter: 'blur(36px) saturate(1.3) brightness(.55)', transform: 'scale(1.25)' }} />
+              {/* …so the poster itself shows whole — never cropped, never under the bar. */}
+              <div className="absolute inset-x-0 top-0 flex items-center justify-center px-4" style={{ bottom: PEEK, paddingTop: 58, paddingBottom: 64 }}>
+                <motion.img
+                  src={photo} alt=""
+                  className="max-w-full max-h-full object-contain rounded-[14px]"
+                  style={{ boxShadow: '0 30px 80px rgba(0,0,0,.55)' }}
+                  initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ duration: 1.4, ease: EASE }}
+                />
+              </div>
+            </>
           ) : (
-            <div className="w-full h-full" style={{ background: 'radial-gradient(85% 60% at 50% 0%, #3A3F47 0%, #0A0A0A 100%)' }} />
+            <div className="w-full h-full flex items-center justify-center" style={{ background: 'radial-gradient(85% 60% at 50% 0%, #3A3F47 0%, #0A0A0A 100%)' }}>
+              <Lockup partner={partner} color="#FFFFFF" size={34} />
+            </div>
           )}
         </motion.div>
-        <div className="absolute inset-0 pointer-events-none" style={{
-          // Light touch so the photo reads; dark only behind the text at the bottom.
-          background: 'linear-gradient(180deg, rgba(10,10,10,.4) 0%, rgba(10,10,10,0) 18%, rgba(10,10,10,0) 58%, rgba(10,10,10,.7) 84%, rgba(10,10,10,1) 100%)',
-        }} />
+        {/* Only the edges get shade — the middle of the photo stays clean. */}
+        <div className="absolute inset-x-0 top-0 h-28 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0))' }} />
+        <motion.div className="absolute inset-0 pointer-events-none" style={{ background: PAGE_DARK, opacity: photoDim }} />
 
-        <motion.header className="absolute top-0 inset-x-0 z-10 pt-5 px-5 flex justify-center" style={{ opacity: topOpacity }}>
+        <motion.header className="absolute top-0 inset-x-0 z-10 pt-5 px-5 flex justify-center" style={{ opacity: coverUi }}>
           <a href="/" aria-label="Jogo"><Lockup partner={partner} color="#FFFFFF" size={15} /></a>
         </motion.header>
 
-        <motion.div className="absolute inset-x-0 bottom-0 pb-[30px]" style={{ opacity: textOpacity, y: textY }}>
+        <motion.div className="absolute inset-x-0" style={{ bottom: PEEK + 18, opacity: coverUi }}>
           <motion.div
-            className="max-w-xl mx-auto px-[22px]"
-            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.7, ease: EASE }}
+            className="max-w-xl mx-auto px-[22px] flex items-end justify-between gap-3"
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.8, ease: EASE }}
           >
-            {refName ? (
-              <span className="inline-flex items-center gap-2 mb-3 rounded-full pl-1 pr-3 h-8" style={{ background: 'rgba(255,255,255,.16)', backdropFilter: 'blur(10px)' }}>
-                <span className="w-6 h-6 rounded-full bg-white text-[12px] font-extrabold flex items-center justify-center" style={{ color: INK }}>
-                  {refName.trim().charAt(0).toUpperCase()}
+            <div className="flex flex-col items-start gap-2 min-w-0">
+              {refName ? (
+                <span className="inline-flex items-center gap-2 rounded-full pl-1 pr-3 h-8 max-w-full" style={{ background: 'rgba(255,255,255,.16)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+                  <span className="w-6 h-6 rounded-full bg-white text-[12px] font-extrabold flex items-center justify-center flex-shrink-0" style={{ color: INK }}>
+                    {refName.trim().charAt(0).toUpperCase()}
+                  </span>
+                  <span className="truncate text-white text-[13px] font-bold">{refName} invited you</span>
                 </span>
-                <span className="text-white text-[13px] font-bold">{refName} invited you</span>
-              </span>
-            ) : null}
-            <p className="flex max-w-full items-center gap-3 font-bold text-[11px] tracking-[3.2px]" style={{ color: CHAMP, textShadow: '0 1px 12px rgba(0,0,0,.8)' }}>
-              <span className="w-6 h-px flex-shrink-0" style={{ background: CHAMP }} />
-              <span className="truncate">{eyebrow}</span>
-            </p>
-            <h1 className="text-white mt-1 break-words" style={{ ...ANTON, fontSize: 'clamp(34px, 9.5vw, 60px)', letterSpacing: '0.01em', textShadow: '0 4px 24px rgba(0,0,0,.55)' }}>
-              {(event.title || 'Event').toUpperCase()}
-            </h1>
-            <p className="text-white font-extrabold text-[13px] tracking-[1.6px] truncate">
-              {dateLine}{place ? `  ·  ${place.toUpperCase()}` : ''}
-            </p>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="inline-flex items-center gap-[7px] h-8 px-3 rounded-full text-white text-[13.5px] font-bold" style={{ background: 'rgba(255,255,255,.16)', backdropFilter: 'blur(10px)' }}>
+              ) : null}
+              <span className="inline-flex items-center gap-[7px] h-8 px-3 rounded-full text-white text-[13.5px] font-bold" style={{ background: 'rgba(255,255,255,.16)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
                 <span className={`w-[7px] h-[7px] rounded-full ${live && selling ? 'pe-pulse' : ''}`} style={{ background: pill.dot }} />
                 {pill.txt}
               </span>
-              <ChevronDown className="pe-bob" size={22} color="rgba(255,255,255,.8)" />
             </div>
+            <span className="flex flex-col items-center gap-0.5 flex-shrink-0 text-white/80">
+              <span className="font-bold text-[9.5px] tracking-[3px]">SCROLL</span>
+              <ChevronDown className="pe-bob" size={20} />
+            </span>
           </motion.div>
         </motion.div>
-      </section>
+      </div>
 
-      <PremiumBody
-        free={free} joined={joined} myTeamName={myTeamName} perks={perks} roster={roster}
-        event={event} entry={free ? (needsTicket ? 'TICKET' : 'FREE') : dollars(tk.priceCents || 0)}
-        left={left} taken={taken} cap={cap} fillPct={fillPct}
-        selling={selling} live={live} cancelled={cancelled} hasTeams={hasTeams} teams={teams} tk={tk} start={start}
-        table={table} partner={partner} refund={refund} note={note}
-      />
+      {/* 2 · The black panel rises over the photo: title first, then the page */}
+      <div className="relative z-10 rounded-t-[28px]" style={{ marginTop: -PEEK, background: PAGE_DARK, boxShadow: '0 -24px 60px rgba(0,0,0,.45)' }}>
+        <div className="flex justify-center pt-3">
+          <span className="w-10 h-1 rounded-full" style={{ background: 'rgba(203,178,131,0.45)' }} />
+        </div>
+        <div className="max-w-xl mx-auto px-[22px] pt-9">
+          <Reveal>
+            <p className="flex max-w-full items-center gap-3 font-bold text-[11px] tracking-[3.2px]" style={{ color: CHAMP }}>
+              <span className="w-6 h-px flex-shrink-0" style={{ background: CHAMP }} />
+              <span className="truncate">{eyebrow}</span>
+            </p>
+          </Reveal>
+          {/* The wrapper is what's watched — the title starts clipped out of it. */}
+          <motion.div className="overflow-hidden mt-2" initial="hidden" whileInView="shown" viewport={{ once: true, margin: '-20px' }}>
+            <motion.h1 className="text-white break-words" style={{ ...ANTON, fontSize: 'clamp(40px, 11vw, 72px)', letterSpacing: '0.01em' }}
+              variants={{ hidden: { y: '105%' }, shown: { y: '0%' } }} transition={{ duration: 1, ease: EASE, delay: 0.1 }}>
+              {(event.title || 'Event').toUpperCase()}
+            </motion.h1>
+          </motion.div>
+          <Reveal delay={0.25}>
+            <p className="mt-1 text-white/70 font-bold text-[13px] tracking-[1.8px]">
+              {dateLine}{place ? `  ·  ${place.toUpperCase()}` : ''}
+            </p>
+          </Reveal>
+        </div>
+
+        <PremiumBody
+          free={free} joined={joined} myTeamName={myTeamName} perks={perks} roster={roster}
+          event={event} entry={free ? (needsTicket ? 'TICKET' : 'FREE') : dollars(tk.priceCents || 0)}
+          left={left} taken={taken} cap={cap} fillPct={fillPct}
+          selling={selling} live={live} cancelled={cancelled} hasTeams={hasTeams} teams={teams} tk={tk} start={start}
+          table={table} partner={partner} refund={refund} note={note}
+        />
+      </div>
 
       {/* One bottom bar */}
       <div className="fixed inset-x-0 bottom-0 z-20" style={{ background: 'rgba(10,10,10,0.82)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderTop: '1px solid rgba(203,178,131,0.25)' }}>
