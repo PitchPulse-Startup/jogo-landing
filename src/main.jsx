@@ -17,6 +17,7 @@ import Invite from './Invite.jsx'
 import Crew from './Crew.jsx'
 import Event from './Event.jsx'
 import WhatsNew from './WhatsNew.jsx'
+import Indoors from './Indoors.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -42,6 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/crew/:squadId" element={<Crew />} />
         <Route path="/event/:eventId" element={<Event />} />
         <Route path="/whats-new" element={<WhatsNew />} />
+        <Route path="/indoors" element={<Indoors />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

@@ -22,12 +22,12 @@ import statsScreen from './assets/2.0.1Finalized/Screenshot_20260930-114850.png'
 import leaderboard from './assets/2.0.1Finalized/Screenshot_20260930-114855.png';
 import { APP_STORE_URL, PLAY_STORE_URL, PlayLogo, AppleLogo, isAndroid } from './appLinks';
 
-const EASE = [0.22, 1, 0.36, 1];
+export const EASE = [0.22, 1, 0.36, 1];
 const INK = '#0B0D10';
 // Anton at display sizes, uppercase. Web doesn't clip Anton the way iOS does,
 // so it can sit tighter than the app's 1.25 line height.
-const DISPLAY = { fontFamily: "'Anton', Impact, sans-serif", fontWeight: 400, letterSpacing: '0.005em' };
-const BODY = { fontFamily: "'Barlow', system-ui, sans-serif" };
+export const DISPLAY = { fontFamily: "'Anton', Impact, sans-serif", fontWeight: 400, letterSpacing: '0.005em' };
+export const BODY = { fontFamily: "'Barlow', system-ui, sans-serif" };
 
 const NAV = [
   { href: '#find', label: 'Find a game' },
@@ -38,7 +38,7 @@ const NAV = [
 
 const TICKER = ['Pickup', 'Crews', 'Mini tournaments', 'King of the field', 'Leaderboards', 'Stats', 'Crew chat', 'Matchday'];
 
-function useMatchdayFonts() {
+export function useMatchdayFonts() {
   useEffect(() => {
     if (document.getElementById('jogo-programme-fonts')) return;
     const link = document.createElement('link');
@@ -49,7 +49,7 @@ function useMatchdayFonts() {
   }, []);
 }
 
-function Reveal({ children, delay = 0, className = '' }) {
+export function Reveal({ children, delay = 0, className = '' }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 32 }}
@@ -85,7 +85,7 @@ function PhonePair({ back, front }) {
 }
 
 // The app's diagonal poster band.
-function Band({ className = '', color = '#0E7A43', opacity = 1 }) {
+export function Band({ className = '', color = '#0E7A43', opacity = 1 }) {
   return (
     <div
       aria-hidden="true"
@@ -120,7 +120,7 @@ function StoreButton({ store, invert = false }) {
 }
 
 // Both stores, the visitor's own one first.
-function StoreRow({ invert = false, className = '' }) {
+export function StoreRow({ invert = false, className = '' }) {
   const order = isAndroid ? ['play', 'apple'] : ['apple', 'play'];
   return (
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>
@@ -512,6 +512,7 @@ export default function App() {
               </div>
               <nav className="grid grid-cols-2 sm:grid-cols-3 gap-x-10 gap-y-2.5 text-sm font-semibold text-[#4B5563]">
                 <Link to="/whats-new" className="hover:text-[#0B0D10]">What's New</Link>
+                <Link to="/indoors" className="hover:text-[#0B0D10]">For indoors</Link>
                 <Link to="/blog" className="hover:text-[#0B0D10]">Blog</Link>
                 <Link to="/media" className="hover:text-[#0B0D10]">Media</Link>
                 <Link to="/feedback" className="hover:text-[#0B0D10]">Feedback</Link>
