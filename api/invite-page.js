@@ -58,8 +58,28 @@ export default async function handler(request) {
   const extraCount = Math.max(0, (playerCount || 0) - avatars.length);
   const gameTitle = game?.title || 'Pickup Soccer Game';
 
-  const pageTitle = game ? `${gameTitle} · Jogo` : 'Game Invite · Jogo';
-  const ogDescription = game
+  // A paid indoor facility game reads like a booking: where, when, price,
+  // and how few spots are left. Times in New York time (this runs in UTC).
+  const paidIndoor = !!game?.venueId && Number(game?.priceCents) > 0;
+  const indoorLine = (() => {
+    if (!paidIndoor) return '';
+    const cents = Math.round(Number(game.priceCents) * 1.05);
+    const price = `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
+    const start = game.startDateTime ? new Date(game.startDateTime) : null;
+    const when = start && !Number.isNaN(start.getTime())
+      ? start.toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).replace(':00', '')
+      : null;
+    const left = maxPlayers != null ? Math.max(0, maxPlayers - (playerCount || 0)) : null;
+    const spots = left == null ? null : left === 0 ? 'Full' : left <= 5 ? `Only ${left} spot${left === 1 ? '' : 's'} left` : `${left} spots open`;
+    return [when, `${price} per player`, spots].filter(Boolean).join(' · ');
+  })();
+
+  const pageTitle = game
+    ? (paidIndoor ? `Indoor · ${game.venueName || game.field?.name || gameTitle} · Jogo` : `${gameTitle} · Jogo`)
+    : 'Game Invite · Jogo';
+  const ogDescription = paidIndoor
+    ? `${indoorLine} — book your spot on Jogo`
+    : game
     ? `${maxPlayers != null ? `${playerCount ?? 0}/${maxPlayers} joined` : `${playerCount ?? 0} joined`}${game.groupCount ? ` · ${game.groupCount} groups, same field` : ""} — grab your spot on Jogo`
     : "This game may have already started or wrapped up. Open Jogo to see what's happening near you.";
   const ogImage = `${SITE_URL}/api/og/game?gameId=${encodeURIComponent(gameId)}`;

@@ -35,7 +35,7 @@ import {
   MapPin, Check, Loader2, Lock, CalendarPlus, Navigation, Clock, ChevronDown, ArrowRight, Trophy, Crown, Shirt,
 } from 'lucide-react';
 import jogoLogo from './assets/jogo-logo-2026.png';
-import { APP_STORE_URL, PLAY_STORE_URL, PlayLogo, AppleLogo, StoreButtons, HeaderStoreLinks } from './appLinks';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_URL, PlayLogo, AppleLogo, StoreButtons, HeaderStoreLinks } from './appLinks';
 
 const WEB_APP_URL = 'https://www.jogous.io/app';
 const EASE = [0.22, 1, 0.36, 1];
@@ -169,6 +169,130 @@ function Face({ p, size = 36, ring = '#FFFFFF', dark = false }) {
       style={{ ...style, background: dark ? '#2A2F38' : '#EEF0F3', color: dark ? '#E5E7EB' : INK, fontSize: size * 0.38, fontWeight: 800 }}>
       {(p?.displayName || '?').charAt(0).toUpperCase()}
     </span>
+  );
+}
+
+// ── Paid indoor games (a facility's slot, game.venueId + priceCents) ───────
+// Booking means paying, which happens in the app, and the place is a public
+// facility, so nothing is locked: the pull is the price, the countdown and
+// how few spots are left.
+const playerPrice = (game) => Math.round((game?.priceCents || 0) * 1.05);
+const dollars = (cents) => `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
+
+function useNow(ms = 30000) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), ms); return () => clearInterval(t); }, [ms]);
+  return now;
+}
+const countdown = (startMs, now) => {
+  if (!startMs) return null;
+  const diff = startMs - now;
+  if (diff <= 0) return 'Happening now';
+  const m = Math.floor(diff / 60000);
+  const d = Math.floor(m / 1440);
+  const h = Math.floor((m % 1440) / 60);
+  if (d >= 2) return `Kicks off in ${d} days`;
+  if (d === 1) return `Kicks off in 1 day ${h}h`;
+  return `Kicks off in ${h ? `${h}h ` : ''}${m % 60}m`;
+};
+const dayLabel = (ms) => {
+  const d = new Date(ms);
+  const day0 = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day0(d) - day0(new Date())) / 86400000);
+  if (diff === 0) return d.getHours() >= 17 ? 'TONIGHT' : 'TODAY';
+  if (diff === 1) return 'TOMORROW';
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+};
+
+function IndoorPoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFull }) {
+  const now = useNow();
+  const startMs = game.startDateTime?.toMillis ? game.startDateTime.toMillis() : null;
+  const time = startMs ? new Date(startMs).toLocaleTimeString('en-US', new Date(startMs).getMinutes() ? { hour: 'numeric', minute: '2-digit' } : { hour: 'numeric' }) : '';
+  const pct = maxPlayers ? Math.min(100, Math.round((playerCount / maxPlayers) * 100)) : 0;
+  const low = !isFull && spotsLeft != null && spotsLeft <= 5;
+  const venue = game.venueName || game.field?.name || 'Indoor';
+  return (
+    <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}
+      className="rounded-[28px] overflow-hidden text-white relative shadow-[0_24px_50px_-20px_rgba(11,13,16,0.55)]" style={{ background: INK }}>
+      <div className="relative h-[210px]">
+        {coverImage ? <img src={coverImage} alt="" className="absolute inset-0 w-full h-full object-cover" /> : <div className="absolute inset-0" style={{ background: '#0E7A43' }} />}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(11,13,16,0.15) 0%, rgba(11,13,16,0) 35%, rgba(11,13,16,0.75) 80%, #0B0D10 100%)' }} />
+        <span className="absolute top-4 right-4 rounded-full px-3 py-1 text-[12px] tracking-[0.12em]" style={{ background: '#FFFFFF', color: '#0E7A43', fontWeight: 800 }}>
+          {dollars(playerPrice(game))} / PLAYER
+        </span>
+      </div>
+      <div className="relative px-5 pb-5 -mt-12">
+        <div className="w-[60px] h-[60px] rounded-[16px] overflow-hidden border-[3px] border-white flex items-center justify-center" style={{ background: '#0E7A43' }}>
+          {game.venueLogoUrl ? <img src={game.venueLogoUrl} alt="" className="w-full h-full object-cover" /> : null}
+        </div>
+        <p className="mt-3 text-[12px] tracking-[0.18em]" style={{ fontWeight: 800, color: '#4ADE80' }}>INDOOR · {venue.toUpperCase()}</p>
+        <p className="uppercase" style={{ ...ANTON, fontSize: 44 }}>{startMs ? `${dayLabel(startMs)} · ${time}` : 'Coming up'}</p>
+        <p className="flex items-center gap-2 text-[14.5px] text-white/75 -mt-1" style={{ fontWeight: 700 }}>
+          <span className="relative flex w-2 h-2"><span className="invite-ping absolute inline-flex w-full h-full rounded-full" style={{ background: '#4ADE80' }} /><span className="relative inline-flex w-2 h-2 rounded-full" style={{ background: '#4ADE80' }} /></span>
+          {countdown(startMs, now)}
+        </p>
+
+        {maxPlayers ? (
+          <div className="mt-5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[14px]" style={{ fontWeight: 800, color: low ? '#FBBF24' : '#FFFFFF' }}>
+                {isFull ? 'Full · waitlist in the app' : low ? `Only ${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left` : `${spotsLeft} spots open`}
+              </span>
+              <span className="text-[13px] text-white/60" style={{ fontWeight: 700 }}>{playerCount} of {maxPlayers} taken</span>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
+              <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1, delay: 0.3, ease: EASE }}
+                className="h-full rounded-full" style={{ background: low || isFull ? '#FBBF24' : '#4ADE80' }} />
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </motion.div>
+  );
+}
+
+function IndoorBook({ game, joined }) {
+  const price = dollars(playerPrice(game));
+  const f = game.field || {};
+  const directions = mapsUrl({ fieldName: f.name, address: f.address, latitude: f.latitude, longitude: f.longitude });
+  return (
+    <>
+      {joined ? (
+        <div className="rounded-[22px] p-5 text-white flex items-center gap-3" style={{ background: '#0E7A43' }}>
+          <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0"><Check size={20} color="#0E7A43" strokeWidth={3} /></span>
+          <div>
+            <p style={{ ...ANTON, fontSize: 24 }}>YOU'RE IN</p>
+            <p className="text-[14px] text-white/80 -mt-1" style={{ fontWeight: 600 }}>Your spot is booked. See it in the Jogo app.</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <a href={APP_URL} className="flex items-center justify-between rounded-[20px] px-6 h-[62px] text-white active:scale-[0.99] transition-transform"
+            style={{ background: '#0E7A43', boxShadow: '0 14px 30px -12px rgba(14,122,67,0.6)' }}>
+            <span className="text-[17px]" style={{ fontWeight: 800 }}>Get your spot</span>
+            <span className="flex items-center gap-2 text-[17px]" style={{ fontWeight: 800 }}>{price}<ArrowRight size={20} /></span>
+          </a>
+          <p className="text-center text-[13px] mt-2.5" style={{ color: SUB, fontWeight: 600 }}>Book and pay in the Jogo app. Takes a minute.</p>
+          <StoreButtons className="mt-4" label="" />
+        </>
+      )}
+
+      <div className="mt-5 rounded-[22px] bg-white p-4 flex items-center gap-3 shadow-[0_6px_20px_-12px_rgba(11,18,32,0.2)]">
+        <div className="w-12 h-12 rounded-[14px] overflow-hidden flex-shrink-0" style={{ background: '#0E7A43' }}>
+          {game.venueLogoUrl ? <img src={game.venueLogoUrl} alt="" className="w-full h-full object-cover" /> : null}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] tracking-[0.16em]" style={{ color: '#0E7A43', fontWeight: 800 }}>HOSTED BY</p>
+          <p className="text-[16px] truncate" style={{ fontWeight: 800 }}>{game.venueName || f.name}</p>
+          {f.address ? <p className="text-[13px] truncate" style={{ color: SUB, fontWeight: 600 }}>{f.address}</p> : null}
+        </div>
+        {directions ? (
+          <a href={directions} target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#F2F3F5' }} aria-label="Directions">
+            <Navigation size={18} color={INK} />
+          </a>
+        ) : null}
+      </div>
+    </>
   );
 }
 
@@ -757,9 +881,10 @@ export default function Invite() {
   ));
   useEffect(() => {
     if (!viewerOnRoster || result || autoCheckedRef.current === viewerUid) return;
+    if (game?.venueId && game.priceCents > 0) return; // paid indoor: nothing to unlock
     autoCheckedRef.current = viewerUid;
     joinGameViaLink({ gameId }).then((res) => setResult(res.data)).catch(() => {});
-  }, [viewerOnRoster, viewerUid, gameId, result]);
+  }, [viewerOnRoster, viewerUid, gameId, result, game?.venueId, game?.priceCents]);
   // Signing out ("Not you?") hides the previous person's unlocked details.
   useEffect(() => {
     if (viewerUid === null) { setResult(null); autoCheckedRef.current = null; }
@@ -798,6 +923,8 @@ export default function Invite() {
   const mode = modeOf(game);
   const myTeamId = mode && viewerUid ? players.find((p) => p.userId === viewerUid)?.team : null;
   const myTeam = myTeamId ? mode.teams.find((t) => t.id === myTeamId) || null : null;
+  // A paid indoor facility game: its own poster + booking (pay in the app).
+  const paidIndoor = !!game?.venueId && game.priceCents > 0;
 
   return (
     <div className="min-h-screen bg-[#F2F3F5] antialiased flex flex-col overflow-x-hidden" style={{ fontFamily: BARLOW, color: INK }}>
@@ -839,6 +966,9 @@ export default function Invite() {
 
           {loading ? (
             <div className="rounded-[28px] h-[340px] bg-[#0B0D10] animate-pulse opacity-90" />
+          ) : game && paidIndoor && !unavailable ? (
+            <IndoorPoster game={game} coverImage={coverImage} playerCount={playerCount} maxPlayers={maxPlayers}
+              spotsLeft={spotsLeft} isFull={isFull} />
           ) : game ? (
             <GamePoster game={game} coverImage={coverImage} playerCount={playerCount} maxPlayers={maxPlayers}
               spotsLeft={spotsLeft} isFull={isFull} fillPct={fillPct} host={host} others={others}
@@ -853,7 +983,9 @@ export default function Invite() {
           {/* Action */}
           {!loading && game && !unavailable && (
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15, ease: EASE }} className="mt-5">
-              {result ? (
+              {paidIndoor ? (
+                <IndoorBook game={game} joined={viewerOnRoster} />
+              ) : result ? (
                 <JoinedActions result={result} gameUrl={gameUrl} myTeam={myTeam} />
               ) : (
                 <JoinGame gameId={gameId} isFull={isFull} spotsLeft={spotsLeft} onResult={setResult} />
@@ -890,11 +1022,15 @@ export default function Invite() {
             <section className="mt-8">
               <h2 className="uppercase mb-2 ml-1" style={{ ...ANTON, fontSize: 24 }}>How it works</h2>
               <div className="bg-white rounded-[22px] divide-y divide-[#EEF0F3] shadow-[0_6px_20px_-12px_rgba(11,18,32,0.2)]">
-                {[
+                {(paidIndoor ? [
+                  ['01', 'Get Jogo', 'Free on iPhone and Android.'],
+                  ['02', 'Book your spot', 'Pay in the app. Your spot is held for you.'],
+                  ['03', 'Show up and play', 'The facility has the field, the ball and the nets.'],
+                ] : [
                   ['01', 'Grab your spot', 'Free. Takes 30 seconds, right here.'],
                   ['02', 'Time & place unlock', 'You get the field, kickoff and directions.'],
                   ['03', 'Show up and play', 'Chat with the group and get reminders in the app.'],
-                ].map(([n, t, d]) => (
+                ]).map(([n, t, d]) => (
                   <div key={n} className="flex items-center gap-4 px-5 py-4">
                     <span style={{ ...ANTON, fontSize: 22, color: '#C4C8CF', width: 28 }}>{n}</span>
                     <div>
@@ -904,7 +1040,7 @@ export default function Invite() {
                   </div>
                 ))}
               </div>
-              <StoreButtons className="mt-6" label="Or get the Jogo app" />
+              {!paidIndoor ? <StoreButtons className="mt-6" label="Or get the Jogo app" /> : null}
             </section>
           )}
 
