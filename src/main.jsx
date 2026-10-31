@@ -18,6 +18,7 @@ import Crew from './Crew.jsx'
 import Event from './Event.jsx'
 import WhatsNew from './WhatsNew.jsx'
 import Indoors from './Indoors.jsx'
+import IndoorPortal from './IndoorPortal.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -44,6 +45,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/event/:eventId" element={<Event />} />
         <Route path="/whats-new" element={<WhatsNew />} />
         <Route path="/indoors" element={<Indoors />} />
+        <Route path="/indoors/portal" element={<IndoorPortal />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
