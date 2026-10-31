@@ -176,7 +176,15 @@ function Face({ p, size = 36, ring = '#FFFFFF', dark = false }) {
 // Booking means paying, which happens in the app, and the place is a public
 // facility, so nothing is locked: the pull is the price, the countdown and
 // how few spots are left.
-const playerPrice = (game) => Math.round((game?.priceCents || 0) * 1.05);
+// Same as the app's services/gamePayments withFee.
+const playerPrice = (game) => {
+  const cents = game?.priceCents || 0;
+  if (!cents) return 0;
+  const need = cents + Math.round(cents * 0.05);
+  let total = Math.ceil((need + 30) / 0.971);
+  while (total - (Math.round(total * 0.029) + 30) < need) total += 1;
+  return total;
+};
 const dollars = (cents) => `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
 
 function useNow(ms = 30000) {

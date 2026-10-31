@@ -3,8 +3,8 @@
 // The link we send to facility owners (DMs, Instagram bio, a text to a
 // manager). Same Matchday language as the homepage. Applying happens in the
 // app (+ → Create game → "Own an indoor?"), reviewed by hand in Jogo-admin.
-// Money copy matches the decided model: the player pays the indoor's price
-// plus a 5% Jogo fee; the indoor keeps its price minus card processing.
+// Money copy matches the decided model: the indoor keeps its full price; what
+// the player pays covers Jogo's 5% and the card fee (the app's withFee).
 
 import React, { useState, useEffect } from 'react';
 import { MotionConfig, motion } from 'framer-motion';
@@ -197,7 +197,7 @@ export default function Indoors() {
                   You set it.<br /><span className="text-[#4ADE80]">You keep it.</span>
                 </h2>
                 <p className="mt-5 text-base sm:text-lg leading-relaxed max-w-xl text-white/65">
-                  Players pay your price plus a small Jogo fee on top, so our cut never comes out of yours. Payouts go straight to your bank through Stripe.
+                  Players pay your price plus a service fee on top, so our cut and the card fees never come out of yours. Payouts go straight to your bank through Stripe.
                 </p>
                 <ul className="space-y-3 mt-7">
                   {GETS.map((t) => (
@@ -216,7 +216,7 @@ export default function Indoors() {
                   <div className="text-xs font-extrabold tracking-[0.18em] uppercase text-[#6B7280]">One player, one hour</div>
                   {[
                     { k: 'Your price', v: '$10.00' },
-                    { k: 'Jogo fee (5%), paid by the player', v: '+ $0.50' },
+                    { k: 'Service fee, paid by the player', v: '+ $1.13' },
                   ].map((r) => (
                     <div key={r.k} className="flex justify-between items-baseline py-4 border-b border-[#E5E7EB]">
                       <span className="font-semibold text-[#4B5563]">{r.k}</span>
@@ -225,13 +225,13 @@ export default function Indoors() {
                   ))}
                   <div className="flex justify-between items-baseline pt-4">
                     <span className="font-extrabold">Player pays</span>
-                    <span style={DISPLAY} className="text-3xl">$10.50</span>
+                    <span style={DISPLAY} className="text-3xl">$11.13</span>
                   </div>
                   <div className="mt-6 rounded-2xl bg-[#ECFDF3] px-5 py-4 flex justify-between items-baseline">
                     <span className="font-extrabold text-[#15803D]">You get</span>
                     <span style={DISPLAY} className="text-3xl text-[#15803D]">$10.00</span>
                   </div>
-                  <p className="mt-3 text-xs text-[#9CA3AF] font-medium">Less standard card processing. Free games cost you nothing.</p>
+                  <p className="mt-3 text-xs text-[#9CA3AF] font-medium">No card fees off your price. Free games cost you nothing.</p>
                 </div>
               </Reveal>
             </div>

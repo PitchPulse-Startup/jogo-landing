@@ -63,7 +63,11 @@ export default async function handler(request) {
   const paidIndoor = !!game?.venueId && Number(game?.priceCents) > 0;
   const indoorLine = (() => {
     if (!paidIndoor) return '';
-    const cents = Math.round(Number(game.priceCents) * 1.05);
+    // Same as the app's services/gamePayments withFee.
+    const base = Number(game.priceCents);
+    const need = base + Math.round(base * 0.05);
+    let cents = Math.ceil((need + 30) / 0.971);
+    while (cents - (Math.round(cents * 0.029) + 30) < need) cents += 1;
     const price = `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
     const start = game.startDateTime ? new Date(game.startDateTime) : null;
     const when = start && !Number.isNaN(start.getTime())
