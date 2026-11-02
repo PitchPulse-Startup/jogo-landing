@@ -4,7 +4,7 @@
 import React, { useMemo, useState } from 'react';
 import { Lock, Plus, X } from 'lucide-react';
 import {
-  answerSplit, approveRental, asDate, canSaveRate, createGames, deadlineText, declineRental, declineSplit, money, openPayouts, rateFor, saveRate, withFee,
+  answerSplit, approveRental, asDate, cancelBooking, canSaveRate, createGames, deadlineText, declineRental, declineSplit, money, openPayouts, rateFor, saveRate, withFee,
 } from './actions';
 import { clock } from './RatesEditor.jsx';
 import { toast } from './Toast.jsx';
@@ -48,6 +48,58 @@ function PayoutsNeeded({ what }) {
       <p className="text-sm font-semibold text-[#6B7280]">What players pay goes straight to your bank. It takes a few minutes with Stripe.</p>
       {err ? <p className="text-sm font-semibold text-[#BE123C] mt-1">{err}</p> : null}
       <button type="button" onClick={go} disabled={busy} className={`${btn} bg-[#0B0D10] text-white mt-3`}>{busy ? 'Opening…' : 'Set up payouts'}</button>
+    </div>
+  );
+}
+
+const REASONS = ['Field problem', 'Closed that day', 'Double booked', 'Staffing'];
+
+/**
+ * Calling off an approved or booked rental when something happened. It works out
+ * exactly who gets what from the payments, and a reason is required because
+ * everyone sees it. Quiet on purpose: this isn't an everyday button.
+ */
+export function CancelBooking({ r, payments }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  if (asDate(r.start).getTime() <= Date.now()) return null;
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className="text-sm font-bold text-[#6B7280] underline">Something happened? Cancel this booking</button>;
+  const paid = payments.filter((p) => p.rentalId === r.id && p.status === 'paid');
+  const refunds = paid.reduce((n, p) => n + (p.amountCents || 0), 0);
+  const fees = paid.reduce((n, p) => n + (p.cardFeeCents || 0), 0);
+  const ok = reason.trim().length >= 5;
+  const go = async () => {
+    setBusy(true); setErr(null);
+    try {
+      await cancelBooking(r, reason);
+      toast('Booking cancelled', paid.length ? `${paid.length} ${paid.length === 1 ? 'person' : 'people'} will get ${money(refunds)} back and see your reason.` : `${first(r)} has been told why.`);
+    } catch (e) {
+      console.error('cancel failed:', e);
+      setErr('Couldn\'t cancel it. Try again.');
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="mt-2 w-full bg-[#FFF1F2] rounded-2xl p-4">
+      <div className="font-extrabold text-[#0B0D10]">Cancel this booking?</div>
+      <p className="text-sm font-semibold text-[#4B5563] mt-0.5">
+        {paid.length
+          ? <>{paid.length} {paid.length === 1 ? 'person' : 'people'} paid. They all get their money back, <b>{money(refunds)}</b> in total. About <b>{money(fees)}</b> in payment fees comes off your payout, because you're the one cancelling.</>
+          : <>Nobody has paid yet, so it costs you nothing. {first(r)} will be told.</>}
+      </p>
+      <div className="flex flex-wrap gap-2 mt-3">
+        {REASONS.map((x) => (
+          <button key={x} type="button" onClick={() => setReason(x)} className={`h-9 px-3 rounded-full text-sm font-bold ${reason === x ? 'bg-[#0B0D10] text-white' : 'bg-white text-[#0B0D10]'}`}>{x}</button>
+        ))}
+      </div>
+      <input value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} placeholder="Tell them what happened" className="mt-2 w-full h-11 rounded-xl bg-white px-3 font-semibold text-[#0B0D10] outline-none focus:ring-2 focus:ring-[#BE123C]" />
+      {err ? <p className="text-sm font-semibold text-[#BE123C] mt-1">{err}</p> : null}
+      <div className="flex gap-2 mt-3">
+        <button type="button" disabled={busy} onClick={() => setOpen(false)} className={`${btn} bg-white text-[#0B0D10]`}>Keep it</button>
+        <button type="button" disabled={!ok || busy} onClick={go} className={`${btn} bg-[#BE123C] text-white`}>{busy ? 'Cancelling…' : paid.length ? 'Cancel and refund' : 'Cancel booking'}</button>
+      </div>
     </div>
   );
 }

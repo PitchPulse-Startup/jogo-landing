@@ -2,7 +2,7 @@
 // the same notifications as the app (services/rentals.js, services/venues.js), so
 // a booking answered here behaves exactly like one answered there.
 import {
-  addDoc, collection, doc, getDocs, query, serverTimestamp, Timestamp, updateDoc, where, writeBatch,
+  addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, Timestamp, updateDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../firebase';
@@ -61,6 +61,28 @@ export const answerSplit = async (r, decideAt) => {
 export const declineSplit = async (r) => {
   await updateDoc(rental(r), { split: { ...r.split, status: 'declined' }, updatedAt: serverTimestamp() });
   push(r.userId, `${r.venueName} said no to the split`, 'You can still make it a game, or message them about it.', { screen: 'MyGames' });
+};
+
+/**
+ * The indoor can't host a booking. The server refunds everyone who paid and the
+ * indoor covers the fees (functions onRentalCancelled, onPaidGameWritten); here the
+ * booking and its game go, and everyone hears why. Same as the app's cancelRental.
+ */
+export const cancelBooking = async (r, reason) => {
+  const why = String(reason || '').trim().slice(0, 200);
+  await updateDoc(rental(r), { status: 'cancelled', cancelledAt: serverTimestamp(), cancelledBy: 'venue', cancelReason: why, updatedAt: serverTimestamp() });
+  if (r.gameId) {
+    const ref = doc(db, 'games', r.gameId);
+    const snap = await getDoc(ref).catch(() => null);
+    if (snap?.exists()) {
+      const g = snap.data();
+      const ids = [...new Set([...(g.players || []), ...(g.queue || [])].map((p) => p?.userId).filter((id) => id && id !== r.userId))];
+      ids.forEach((id) => push(id, `${r.venueName} cancelled your game`, `${when(r)} is off. ${why} Anyone who paid gets a full refund.`, { gameId: r.gameId, screen: 'GameDetails', params: { game: { id: r.gameId } } }));
+      await deleteDoc(ref).catch(() => updateDoc(ref, { status: 'cancelled', cancelledAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+      getDocs(query(collection(db, 'game-chats'), where('gameId', '==', r.gameId))).then((c) => c.docs.forEach((m) => deleteDoc(m.ref).catch(() => {}))).catch(() => {});
+    }
+  }
+  push(r.userId, `${r.venueName} cancelled your booking`, `${when(r)}. ${why}`, { screen: 'MyGames' });
 };
 
 // ── Set rates ──

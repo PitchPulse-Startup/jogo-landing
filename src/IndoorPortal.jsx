@@ -1,8 +1,8 @@
 // src/IndoorPortal.jsx — jogous.io/indoors/portal, an indoor owner's desk on the
 // web. They sign in with the same account as the app and see more room than a
 // phone gives: the schedule with who's coming, bookings, what they've earned,
-// and the set rates that live here. They can answer requests and splits and create
-// games too. Cancelling a paid booking stays in the app, with its refund rules.
+// and the set rates that live here. They can answer requests and splits, create
+// games, and call off a booking when something happens.
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut,
@@ -11,14 +11,14 @@ import {
   collection, doc, getDoc, getDocs, onSnapshot, query, updateDoc, where, serverTimestamp, deleteField,
 } from 'firebase/firestore';
 import {
-  CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3,
+  CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3, BadgeCheck,
 } from 'lucide-react';
 import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import { DISPLAY, BODY, useMatchdayFonts } from './App.jsx';
 import { auth, db } from './firebase';
 import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
 import Analytics from './indoor/Analytics.jsx';
-import { CreateButton, CreateGame, RequestCard, SplitCard } from './indoor/Answers.jsx';
+import { CancelBooking, CreateButton, CreateGame, RequestCard, SplitCard } from './indoor/Answers.jsx';
 import Toaster, { toast } from './indoor/Toast.jsx';
 
 const money = (c) => `$${((c || 0) / 100).toFixed((c || 0) % 100 ? 2 : 0)}`;
@@ -110,13 +110,20 @@ const Stat = ({ k, v, sub, f }) => (
 
 const Empty = ({ children }) => <p className="text-[#6B7280] font-semibold py-4 text-center">{children}</p>;
 
-function GameRow({ game, fieldCount }) {
+// Scanned the front-desk code, so they're really here (arrivals[uid].via === 'qr').
+const verifiedAt = (game, uid) => {
+  const a = game.arrivals?.[uid];
+  return a?.status === 'arrived' ? asDate(a.at) || true : null;
+};
+
+export function GameRow({ game, fieldCount }) {
   const [open, setOpen] = useState(false);
   const st = asDate(game.startDateTime);
   const en = asDate(game.endDateTime);
   const n = attending(game);
   const max = game.maxPlayers || 0;
   const players = game.players || [];
+  const here = players.filter((p) => verifiedAt(game, p.userId)).length;
   return (
     <div className="border-t first:border-t-0 border-[#EEF0F3]">
       <button type="button" onClick={() => setOpen(!open)} className="w-full py-3.5 flex items-center gap-4 text-left">
@@ -131,6 +138,7 @@ function GameRow({ game, fieldCount }) {
         <div className="text-right shrink-0">
           <div className="font-extrabold text-[#0B0D10]">{n}/{max}</div>
           <div className="text-sm font-semibold text-[#6B7280]">{game.priceCents ? money(game.priceCents) : 'Free'}</div>
+          {here ? <div className="text-sm font-bold text-[#0E7A43] inline-flex items-center gap-1"><BadgeCheck size={14} /> {here} verified</div> : null}
         </div>
         <ChevronDown size={18} className={`text-[#9CA3AF] shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -141,7 +149,9 @@ function GameRow({ game, fieldCount }) {
               {players.map((p) => (
                 <li key={p.userId} className="flex justify-between gap-3 text-sm font-semibold text-[#0B0D10]">
                   <span className="truncate">{p.displayName || 'Player'}{p.guests ? ` +${p.guests}` : ''}</span>
-                  <span className={game.arrivals?.[p.userId]?.status === 'arrived' ? 'text-[#0E7A43]' : 'text-[#9CA3AF]'}>{game.arrivals?.[p.userId]?.status === 'arrived' ? 'Checked in' : p.paid ? 'Paid' : ''}</span>
+                  {verifiedAt(game, p.userId) ? (
+                    <span className="text-[#0E7A43] font-bold inline-flex items-center gap-1 shrink-0"><BadgeCheck size={15} /> Verified{verifiedAt(game, p.userId) instanceof Date ? ` ${timeLabel(verifiedAt(game, p.userId))}` : ''}</span>
+                  ) : <span className="text-[#9CA3AF] shrink-0">{p.paid ? 'Paid, not here yet' : 'Not here yet'}</span>}
                 </li>
               ))}
             </ul>
@@ -158,7 +168,7 @@ const STATUS = {
   paid: { t: 'Booked', c: 'bg-[#E4F5EA] text-[#0E7A43]' },
 };
 
-function BookingRow({ r, fieldCount }) {
+function BookingRow({ r, fieldCount, payments = [] }) {
   const st = asDate(r.start);
   const en = asDate(r.end);
   const s = STATUS[r.status];
@@ -176,6 +186,7 @@ function BookingRow({ r, fieldCount }) {
       </div>
       <div className="font-extrabold text-[#0B0D10]">{r.priceCents ? money(r.priceCents) : ''}</div>
       {s ? <span className={`text-xs font-extrabold tracking-wide uppercase rounded-lg px-2.5 py-1 ${s.c}`}>{s.t}</span> : null}
+      {['approved', 'paid'].includes(r.status) ? <div className="w-full mt-1"><CancelBooking r={r} payments={payments} /></div> : null}
     </div>
   );
 }
@@ -363,12 +374,12 @@ function Desk({ user, venue }) {
             </div>
             {inProgress.length ? (
               <Card title={`In progress (${inProgress.length})`} right={<button type="button" onClick={() => setTab('bookings')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
-                {inProgress.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />)}
+                {inProgress.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} />)}
               </Card>
             ) : null}
             {booked.length ? (
               <Card title={`Booked rentals (${booked.length})`} right={<button type="button" onClick={() => setTab('bookings')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
-                {booked.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />)}
+                {booked.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} />)}
               </Card>
             ) : null}
             <Card title="Coming up" right={<button type="button" onClick={() => setTab('schedule')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
@@ -397,9 +408,9 @@ function Desk({ user, venue }) {
           <div className="space-y-4">
             <Card title="Requests">{requests.length ? requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={games} rentals={rentals} />) : <Empty>No requests right now.</Empty>}</Card>
             {splits.length ? <Card title="Splits to answer">{splits.map((r) => <SplitCard key={r.id} r={r} venue={venue} />)}</Card> : null}
-            <Card title="In progress">{inProgress.length ? inProgress.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />) : <Empty>Nothing waiting on payment.</Empty>}</Card>
-            <Card title="Booked">{booked.length ? booked.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />) : <Empty>No booked rentals coming up.</Empty>}</Card>
-            <p className="text-sm font-semibold text-[#6B7280] px-2">To message a renter or cancel a booking, use your page in the Jogo app.</p>
+            <Card title="In progress">{inProgress.length ? inProgress.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} />) : <Empty>Nothing waiting on payment.</Empty>}</Card>
+            <Card title="Booked">{booked.length ? booked.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} />) : <Empty>No booked rentals coming up.</Empty>}</Card>
+            <p className="text-sm font-semibold text-[#6B7280] px-2">To message a renter, use your page in the Jogo app.</p>
           </div>
         ) : null}
 
