@@ -11,7 +11,7 @@ import {
   collection, doc, onSnapshot, query, updateDoc, where, serverTimestamp, deleteField,
 } from 'firebase/firestore';
 import {
-  CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3, BadgeCheck,
+  CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3, BadgeCheck, Settings,
 } from 'lucide-react';
 import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import { DISPLAY, BODY, useMatchdayFonts } from './App.jsx';
@@ -19,7 +19,7 @@ import { auth, db } from './firebase';
 import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
 import Analytics from './indoor/Analytics.jsx';
 import Money from './indoor/Money.jsx';
-import { CancelBooking, CreateButton, CreateGame, RequestCard, SplitCard } from './indoor/Answers.jsx';
+import { CancelBooking, CreateButton, CreateGame, DeleteIndoor, RequestCard, SplitCard } from './indoor/Answers.jsx';
 import Toaster, { toast } from './indoor/Toast.jsx';
 import { FillCountdown, PayCountdown } from './indoor/Countdown.jsx';
 
@@ -37,6 +37,7 @@ const TABS = [
   { id: 'bookings', label: 'Bookings', Icon: Key },
   { id: 'rates', label: 'Slots & rates', Icon: Clock },
   { id: 'money', label: 'Money', Icon: Wallet },
+  { id: 'settings', label: 'Settings', Icon: Settings },
 ];
 
 function SignIn({ f }) {
@@ -400,6 +401,7 @@ function Desk({ user, venue }) {
         ) : null}
 
         {tab === 'rates' ? <Rates venue={venue} /> : null}
+        {tab === 'settings' ? <DeleteIndoor venue={venue} /> : null}
         {tab === 'money' ? <Money venue={venue} payments={payments} rentals={allRentals} games={allGames} /> : null}
 
         <button type="button" onClick={() => signOut(auth)} className="lg:hidden mt-8 text-sm font-bold text-[#6B7280] inline-flex items-center gap-2"><LogOut size={15} /> Sign out of {user.email}</button>

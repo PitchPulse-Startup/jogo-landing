@@ -4,7 +4,7 @@
 import React, { useMemo, useState } from 'react';
 import { Lock, Plus, X } from 'lucide-react';
 import {
-  answerSplit, approveRental, asDate, cancelBooking, canSaveRate, createGames, deadlineText, declineRental, declineSplit, money, openPayouts, rateFor, saveRate, withFee,
+  answerSplit, approveRental, asDate, cancelBooking, canSaveRate, checkDeleteVenue, createGames, deleteVenue, deadlineText, declineRental, declineSplit, money, openPayouts, rateFor, saveRate, withFee,
 } from './actions';
 import { clock } from './RatesEditor.jsx';
 import { toast } from './Toast.jsx';
@@ -239,6 +239,68 @@ export function SplitCard({ r, venue }) {
         <button type="button" disabled={!!busy} onClick={() => act('no', async () => { await declineSplit(r); toast('Split declined', `${first(r)} has been told.`); })} className={`${btn} bg-[#F2F3F5] text-[#0B0D10]`}>{busy === 'no' ? 'Saving…' : 'Say no'}</button>
         {recommended ? <button type="button" disabled={!!busy || !decideMs} onClick={() => act('yes', async () => { await answerSplit(r, new Date(decideMs)); toast('Split agreed', `${first(r)} has until ${deadlineText(new Date(decideMs))} to fill it.`); })} className={`${btn} bg-[#0B0D10] text-white`}>{busy === 'yes' ? 'Saving…' : 'Agree'}</button> : null}
       </div>
+    </div>
+  );
+}
+
+/** Deleting the indoor. The server decides; this says what's in the way, or asks for the name. */
+export function DeleteIndoor({ venue }) {
+  const [state, setState] = useState(null); // null | 'checking' | { blockers } | 'confirm'
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const list = (b) => [
+    b.games ? `${b.games} upcoming game${b.games === 1 ? '' : 's'} with players` : null,
+    b.bookings ? `${b.bookings} approved or booked rental${b.bookings === 1 ? '' : 's'}` : null,
+    b.moneyMoving ? `${b.moneyMoving} refund${b.moneyMoving === 1 ? '' : 's'} still going through` : null,
+  ].filter(Boolean);
+  const start = async () => {
+    setState('checking'); setErr(null);
+    try {
+      const res = await checkDeleteVenue();
+      setState(res.ok ? 'confirm' : { blockers: list(res.blockers) });
+    } catch (e) {
+      console.error('delete check failed:', e);
+      setErr('Couldn\'t check that. Try again.');
+      setState(null);
+    }
+  };
+  const remove = async () => {
+    setBusy(true); setErr(null);
+    try {
+      const res = await deleteVenue();
+      if (!res.ok) { setState({ blockers: list(res.blockers) }); setBusy(false); }
+    } catch (e) {
+      console.error('delete failed:', e);
+      setErr('Couldn\'t delete it. Try again.');
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="bg-white rounded-3xl border border-[#E6E8EC] p-5 sm:p-6">
+      <h2 className="font-extrabold text-lg text-[#0B0D10]">Delete your indoor</h2>
+      <p className="text-sm font-semibold text-[#6B7280] mt-0.5">Removes your page, followers, posts and empty games from Jogo for good. You can't delete it while people are counting on it.</p>
+      {err ? <p className="text-sm font-semibold text-[#BE123C] mt-2">{err}</p> : null}
+      {state === null || state === 'checking' ? (
+        <button type="button" onClick={start} disabled={state === 'checking'} className={`${btn} bg-[#FFF1F2] text-[#BE123C] mt-3`}>{state === 'checking' ? 'Checking…' : 'Delete my indoor'}</button>
+      ) : state === 'confirm' ? (
+        <div className="bg-[#FFF1F2] rounded-2xl p-4 mt-3">
+          <div className="font-extrabold text-[#0B0D10]">This can't be undone</div>
+          <p className="text-sm font-semibold text-[#4B5563] mt-0.5">Open requests are declined. Past payments stay in your Stripe account. Type <b>{venue.name}</b> to confirm.</p>
+          <input value={typed} onChange={(e) => setTyped(e.target.value)} aria-label="Type your indoor's name" className="mt-2 w-full h-11 rounded-xl bg-white px-3 font-semibold outline-none focus:ring-2 focus:ring-[#BE123C]" />
+          <div className="flex gap-2 mt-3">
+            <button type="button" disabled={busy} onClick={() => { setState(null); setTyped(''); }} className={`${btn} bg-white text-[#0B0D10]`}>Keep it</button>
+            <button type="button" disabled={busy || typed.trim() !== venue.name} onClick={remove} className={`${btn} bg-[#BE123C] text-white`}>{busy ? 'Deleting…' : 'Delete for good'}</button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-[#FEF3C7] rounded-2xl p-4 mt-3">
+          <div className="font-extrabold text-[#0B0D10]">You can't delete it yet</div>
+          <ul className="text-sm font-semibold text-[#4B5563] mt-1 list-disc pl-5">{state.blockers.map((b) => <li key={b}>{b}</li>)}</ul>
+          <p className="text-sm font-semibold text-[#4B5563] mt-1">Finish or cancel those first.</p>
+          <button type="button" onClick={start} className={`${btn} bg-white text-[#0B0D10] mt-3`}>Check again</button>
+        </div>
+      )}
     </div>
   );
 }

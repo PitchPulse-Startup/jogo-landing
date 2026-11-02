@@ -199,6 +199,11 @@ export const createGames = async (venue, { slots, priceCents, maxPlayers, title 
   return made.length;
 };
 
+/** Can this indoor be deleted? → { ok, blockers: { games, bookings, moneyMoving } }. */
+export const checkDeleteVenue = async () => (await httpsCallable(functions, 'startTicketCheckout')({ action: 'deleteVenue', check: true })).data;
+/** Removes it from Jogo, unless the server finds something in the way. Same result. */
+export const deleteVenue = async () => (await httpsCallable(functions, 'startTicketCheckout')({ action: 'deleteVenue' })).data;
+
 /** Stripe's payouts sign-up, coming back to this page. */
 export const openPayouts = async () => {
   const { data } = await httpsCallable(functions, 'startTicketCheckout')({ action: 'venuePayouts', returnUrl: window.location.href });
