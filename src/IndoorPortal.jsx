@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut,
 } from 'firebase/auth';
 import {
-  collection, doc, getDoc, getDocs, onSnapshot, query, updateDoc, where, serverTimestamp, deleteField,
+  collection, doc, onSnapshot, query, updateDoc, where, serverTimestamp, deleteField,
 } from 'firebase/firestore';
 import {
   CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3, BadgeCheck,
@@ -283,31 +283,38 @@ function Desk({ user, venue }) {
   const [creating, setCreating] = useState(false);
   const [postedNote, setPostedNote] = useState(null);
   // For Analytics: everything, past games and every request, not just what's coming up.
-  const [allGames, setAllGames] = useState([]);
+  const [liveGames, setLiveGames] = useState([]);
+  const [pastGames, setPastGames] = useState([]);
   const [allRentals, setAllRentals] = useState([]);
   const [stats, setStats] = useState([]);
 
-  useEffect(() => onSnapshot(query(collection(db, 'games'), where('venueId', '==', venue.id)), (snap) => {
-    const cutoff = Date.now() - 2 * 3600e3;
-    setGames(snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      .filter((g) => g.status !== 'cancelled' && asDate(g.startDateTime)?.getTime() >= cutoff)
-      .sort((a, b) => asDate(a.startDateTime) - asDate(b.startDateTime)));
-  }, (e) => console.error('games failed:', e)), [venue.id]);
-  useEffect(() => onSnapshot(query(collection(db, 'rentals'), where('venueId', '==', venue.id)), (snap) => {
-    const now = Date.now();
-    setRentals(snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      .filter((r) => ['requested', 'approved', 'paid'].includes(r.status) && asDate(r.end)?.getTime() > now)
-      .sort((a, b) => asDate(a.start) - asDate(b.start)));
-  }, (e) => console.error('rentals failed:', e)), [venue.id]);
+  // Everything here is live: a scan, a request or a payment shows without a refresh.
   useEffect(() => {
-    getDocs(query(collection(db, 'gamePayments'), where('venueId', '==', venue.id)))
-      .then((s) => setPayments(s.docs.map((d) => d.data()))).catch((e) => console.error('payments failed:', e));
-    getDocs(collection(db, 'venues', venue.id, 'followers')).then((s) => setFollowers(s.size)).catch(() => {});
-    const forVenue = (name) => getDocs(query(collection(db, name), where('venueId', '==', venue.id))).then((s) => s.docs.map((d) => d.data())).catch((e) => { console.error(name, 'failed:', e); return []; });
-    Promise.all([forVenue('games'), forVenue('archived-games')]).then(([live, past]) => setAllGames([...live, ...past]));
-    forVenue('rentals').then(setAllRentals);
-    getDocs(collection(db, 'venues', venue.id, 'stats')).then((s) => setStats(s.docs.map((d) => ({ id: d.id, ...d.data() })))).catch((e) => console.error('stats failed:', e));
+    const failed = (what) => (e) => console.error(`${what} failed:`, e);
+    const forVenue = (name) => query(collection(db, name), where('venueId', '==', venue.id));
+    const unsubs = [
+      onSnapshot(forVenue('games'), (snap) => {
+        const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const cutoff = Date.now() - 2 * 3600e3;
+        setLiveGames(all);
+        setGames(all.filter((g) => g.status !== 'cancelled' && asDate(g.startDateTime)?.getTime() >= cutoff)
+          .sort((x, y) => asDate(x.startDateTime) - asDate(y.startDateTime)));
+      }, failed('games')),
+      onSnapshot(forVenue('archived-games'), (snap) => setPastGames(snap.docs.map((d) => d.data())), failed('archived games')),
+      onSnapshot(forVenue('rentals'), (snap) => {
+        const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const now = Date.now();
+        setAllRentals(all);
+        setRentals(all.filter((r) => ['requested', 'approved', 'paid'].includes(r.status) && asDate(r.end)?.getTime() > now)
+          .sort((x, y) => asDate(x.start) - asDate(y.start)));
+      }, failed('rentals')),
+      onSnapshot(forVenue('gamePayments'), (snap) => setPayments(snap.docs.map((d) => d.data())), failed('payments')),
+      onSnapshot(collection(db, 'venues', venue.id, 'followers'), (snap) => setFollowers(snap.size), failed('followers')),
+      onSnapshot(collection(db, 'venues', venue.id, 'stats'), (snap) => setStats(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), failed('stats')),
+    ];
+    return () => unsubs.forEach((u) => u());
   }, [venue.id]);
+  const allGames = useMemo(() => [...liveGames, ...pastGames], [liveGames, pastGames]);
 
   const requests = rentals.filter((r) => r.status === 'requested');
   const splits = rentals.filter((r) => r.status === 'approved' && r.split?.status === 'pending');
