@@ -51,12 +51,12 @@ function Bars({ rows, format, best }) {
   return (
     <div className="space-y-2.5">
       {rows.map((r) => (
-        <div key={r.label} className="flex items-center gap-3" title={`${r.label}: ${format(r.value)}${r.note ? ` (${r.note})` : ''}`}>
-          <div className="w-24 shrink-0 text-sm font-bold text-[#0B0D10]">{r.label}</div>
-          <div className="flex-1 h-7 rounded-md bg-[#F2F3F5] overflow-hidden">
+        <div key={r.label} className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-1" title={`${r.label}: ${format(r.value)}${r.note ? ` (${r.note})` : ''}`}>
+          <div className="flex-1 sm:flex-none sm:w-24 shrink-0 text-sm font-bold text-[#0B0D10]">{r.label}</div>
+          <div className="order-last sm:order-none w-full sm:w-auto sm:flex-1 h-5 sm:h-7 rounded-md bg-[#F2F3F5] overflow-hidden">
             <div className="h-full rounded-r" style={{ width: `${r.value * 100}%`, background: KIT, opacity: best && r.label !== best ? 0.45 : 1 }} />
           </div>
-          <div className="w-28 shrink-0 text-sm text-right">
+          <div className="sm:w-28 shrink-0 text-sm text-right">
             <span className="font-extrabold text-[#0B0D10]">{format(r.value)}</span>
             {r.note ? <span className="font-semibold text-[#6B7280]"> · {r.note}</span> : null}
           </div>

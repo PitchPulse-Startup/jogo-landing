@@ -78,10 +78,10 @@ function Bars({ rows }) {
   return (
     <div className="space-y-2.5">
       {rows.map((r) => (
-        <div key={r.label} className="flex items-center gap-3" title={`${r.label}: ${money(r.cents)}`}>
-          <div className="w-28 shrink-0 text-sm font-bold text-[#0B0D10]">{r.label}</div>
-          <div className="flex-1 h-6 rounded-md bg-[#F2F3F5] overflow-hidden"><div className="h-full rounded-r" style={{ width: `${(Math.max(r.cents, 0) / max) * 100}%`, background: KIT }} /></div>
-          <div className="w-16 shrink-0 text-sm text-right font-extrabold text-[#0B0D10]">{dollars(r.cents)}</div>
+        <div key={r.label} className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-1" title={`${r.label}: ${money(r.cents)}`}>
+          <div className="flex-1 sm:flex-none sm:w-28 shrink-0 text-sm font-bold text-[#0B0D10]">{r.label}</div>
+          <div className="order-last sm:order-none w-full sm:w-auto sm:flex-1 h-5 sm:h-6 rounded-md bg-[#F2F3F5] overflow-hidden"><div className="h-full rounded-r" style={{ width: `${(Math.max(r.cents, 0) / max) * 100}%`, background: KIT }} /></div>
+          <div className="sm:w-16 shrink-0 text-sm text-right font-extrabold text-[#0B0D10]">{dollars(r.cents)}</div>
         </div>
       ))}
     </div>
@@ -181,9 +181,9 @@ export default function Money({ venue, payments, rentals, games, now = new Date(
       <div className="bg-[#0B0D10] rounded-3xl p-5 sm:p-7 text-white">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs font-extrabold tracking-[0.16em] uppercase text-[#4ADE80]">You made</div>
-          <div className="flex gap-1 bg-white/10 rounded-full p-1">
+          <div className="flex gap-0.5 sm:gap-1 bg-white/10 rounded-full p-1 max-w-full">
             {RANGES.map((r) => (
-              <button key={r.id} type="button" onClick={() => setRange(r.id)} className={`h-8 px-3 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap ${range === r.id ? 'bg-white text-[#0B0D10]' : 'text-white/70'}`}>{r.t}</button>
+              <button key={r.id} type="button" onClick={() => setRange(r.id)} className={`h-8 px-2 sm:px-3 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap ${range === r.id ? 'bg-white text-[#0B0D10]' : 'text-white/70'}`}>{r.t}</button>
             ))}
           </div>
         </div>

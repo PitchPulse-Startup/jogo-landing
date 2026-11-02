@@ -36,7 +36,7 @@ export function FillCountdown({ have, need, decideAt }) {
   const color = full ? '#0E7A43' : tone(remaining);
   return (
     <div className="mt-2">
-      <div className="flex items-center justify-between gap-3 text-sm font-bold">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-sm font-bold">
         <span className="text-[#0B0D10]">{Math.min(have, need)} of {need} players</span>
         <span className="inline-flex items-center gap-1.5" style={{ color }}>
           <Timer size={15} />

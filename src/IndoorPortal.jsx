@@ -11,7 +11,7 @@ import {
   collection, doc, onSnapshot, query, updateDoc, where, serverTimestamp, deleteField,
 } from 'firebase/firestore';
 import {
-  CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3, BadgeCheck, Settings,
+  CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3, BadgeCheck, Settings, QrCode,
 } from 'lucide-react';
 import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import { DISPLAY, BODY, useMatchdayFonts } from './App.jsx';
@@ -19,6 +19,7 @@ import { auth, db } from './firebase';
 import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
 import Analytics from './indoor/Analytics.jsx';
 import Money from './indoor/Money.jsx';
+import CheckIn from './indoor/CheckIn.jsx';
 import { CancelBooking, CreateButton, CreateGame, DeleteIndoor, RequestCard, SplitCard } from './indoor/Answers.jsx';
 import Toaster, { toast } from './indoor/Toast.jsx';
 import { FillCountdown, PayCountdown } from './indoor/Countdown.jsx';
@@ -35,6 +36,7 @@ const TABS = [
   { id: 'analytics', label: 'Analytics', Icon: BarChart3 },
   { id: 'schedule', label: 'Schedule', Icon: CalendarDays },
   { id: 'bookings', label: 'Bookings', Icon: Key },
+  { id: 'checkin', label: 'Check-in', Icon: QrCode },
   { id: 'rates', label: 'Slots & rates', Icon: Clock },
   { id: 'money', label: 'Money', Icon: Wallet },
   { id: 'settings', label: 'Settings', Icon: Settings },
@@ -129,23 +131,26 @@ export function GameRow({ game, fieldCount }) {
   const here = players.filter((p) => verifiedAt(game, p.userId)).length;
   return (
     <div className="border-t first:border-t-0 border-[#EEF0F3]">
-      <button type="button" onClick={() => setOpen(!open)} className="w-full py-3.5 flex items-center gap-4 text-left">
-        <div className="w-32 sm:w-40 shrink-0">
-          <div className="font-extrabold text-[#0B0D10]">{st ? dayLabel(st) : ''}</div>
-          <div className="text-sm font-semibold text-[#6B7280]">{st && en ? range(st, en) : ''}</div>
+      <button type="button" onClick={() => setOpen(!open)} className="w-full py-3.5 text-left block">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-2">
+          <div className="sm:w-40 shrink-0 flex-1 sm:flex-none min-w-0">
+            <div className="font-extrabold text-[#0B0D10]">{st ? dayLabel(st) : ''}</div>
+            <div className="text-sm font-semibold text-[#6B7280]">{st && en ? range(st, en) : ''}</div>
+          </div>
+          <div className="order-last sm:order-none w-full sm:w-auto sm:flex-1 min-w-0">
+            <div className="font-bold text-[#0B0D10] truncate">{game.title}{fieldCount > 1 && game.venueField ? ` · Field ${game.venueField}` : ''}</div>
+            {game.decideAt && game.minPlayers ? null : (
+              <div className="h-1.5 rounded bg-[#EEF0F3] mt-1.5 overflow-hidden"><div className="h-full bg-[#4ADE80]" style={{ width: `${max ? Math.min(100, (n / max) * 100) : 0}%` }} /></div>
+            )}
+          </div>
+          <div className="text-right shrink-0">
+            <div className="font-extrabold text-[#0B0D10]">{n}/{max}</div>
+            <div className="text-sm font-semibold text-[#6B7280]">{game.priceCents ? money(game.priceCents) : 'Free'}</div>
+            {here ? <div className="text-sm font-bold text-[#0E7A43] inline-flex items-center gap-1"><BadgeCheck size={14} /> {here} verified</div> : null}
+          </div>
+          <ChevronDown size={18} className={`text-[#9CA3AF] shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-bold text-[#0B0D10] truncate">{game.title}{fieldCount > 1 && game.venueField ? ` · Field ${game.venueField}` : ''}</div>
-          {game.decideAt && game.minPlayers ? <FillCountdown have={n} need={game.minPlayers} decideAt={game.decideAt} /> : (
-            <div className="h-1.5 rounded bg-[#EEF0F3] mt-1.5 overflow-hidden"><div className="h-full bg-[#4ADE80]" style={{ width: `${max ? Math.min(100, (n / max) * 100) : 0}%` }} /></div>
-          )}
-        </div>
-        <div className="text-right shrink-0">
-          <div className="font-extrabold text-[#0B0D10]">{n}/{max}</div>
-          <div className="text-sm font-semibold text-[#6B7280]">{game.priceCents ? money(game.priceCents) : 'Free'}</div>
-          {here ? <div className="text-sm font-bold text-[#0E7A43] inline-flex items-center gap-1"><BadgeCheck size={14} /> {here} verified</div> : null}
-        </div>
-        <ChevronDown size={18} className={`text-[#9CA3AF] shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        {game.decideAt && game.minPlayers ? <FillCountdown have={n} need={game.minPlayers} decideAt={game.decideAt} /> : null}
       </button>
       {open ? (
         <div className="pb-4 sm:pl-44">
@@ -401,6 +406,7 @@ function Desk({ user, venue }) {
         ) : null}
 
         {tab === 'rates' ? <Rates venue={venue} /> : null}
+        {tab === 'checkin' ? <CheckIn venue={venue} games={games} /> : null}
         {tab === 'settings' ? <DeleteIndoor venue={venue} /> : null}
         {tab === 'money' ? <Money venue={venue} payments={payments} rentals={allRentals} games={allGames} /> : null}
 
