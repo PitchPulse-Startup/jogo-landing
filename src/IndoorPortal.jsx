@@ -341,12 +341,7 @@ function Desk({ user, venue }) {
 
         {tab === 'overview' ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Stat f={DISPLAY} k="This week" v={thisWeek.length} sub={`game${thisWeek.length === 1 ? '' : 's'}`} />
-              <Stat f={DISPLAY} k="Players" v={spots} sub="this week" />
-              <Stat f={DISPLAY} k="Earned" v={money(earned)} sub="so far" />
-              <Stat f={DISPLAY} k="Followers" v={followers ?? '–'} />
-            </div>
+            {/* What needs them comes first: everything else can wait. */}
             {requests.length ? (
               <Card title={`Requests to answer (${requests.length})`}>
                 {requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={games} rentals={rentals} />)}
@@ -357,8 +352,27 @@ function Desk({ user, venue }) {
                 {splits.map((r) => <SplitCard key={r.id} r={r} venue={venue} />)}
               </Card>
             ) : null}
+            {!toAnswer ? (
+              <div className="bg-[#E4F5EA] rounded-3xl px-5 py-4 font-extrabold text-[#0E7A43]">You're all caught up. No requests to answer.</div>
+            ) : null}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Stat f={DISPLAY} k="This week" v={thisWeek.length} sub={`game${thisWeek.length === 1 ? '' : 's'}`} />
+              <Stat f={DISPLAY} k="Players" v={spots} sub="this week" />
+              <Stat f={DISPLAY} k="Earned" v={money(earned)} sub="so far" />
+              <Stat f={DISPLAY} k="Followers" v={followers ?? '–'} />
+            </div>
+            {inProgress.length ? (
+              <Card title={`In progress (${inProgress.length})`} right={<button type="button" onClick={() => setTab('bookings')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
+                {inProgress.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />)}
+              </Card>
+            ) : null}
+            {booked.length ? (
+              <Card title={`Booked rentals (${booked.length})`} right={<button type="button" onClick={() => setTab('bookings')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
+                {booked.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />)}
+              </Card>
+            ) : null}
             <Card title="Coming up" right={<button type="button" onClick={() => setTab('schedule')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
-              {games.length ? games.slice(0, 5).map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} />) : <Empty>No games posted. Create them in the Jogo app.</Empty>}
+              {games.length ? games.slice(0, 5).map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} />) : <Empty>No games posted yet.</Empty>}
             </Card>
           </div>
         ) : null}
