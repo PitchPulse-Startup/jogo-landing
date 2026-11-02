@@ -1,9 +1,10 @@
 // src/indoor/RatesEditor.jsx — the indoor's rentable slots and hourly rates.
 //
 // venues/{uid}.rentalSlots: { '0': [{ from, to, cents }], … '6': [...] }, Sunday
-// first; from/to are minutes from midnight, cents is the rate per hour. A day
-// with no slots can't be rented. No rentalSlots at all = any open hour, priced
-// when the indoor approves. The app reads this in services/venueHours.js.
+// first; from/to are minutes from midnight, cents is the rate per hour. Inside a
+// slot the price is known, so players book right away. Every other open hour can
+// still be asked for, priced when the indoor approves. The app reads this in
+// services/venueHours.js.
 import React from 'react';
 import { Plus, Trash2, Copy, Check } from 'lucide-react';
 
@@ -87,7 +88,7 @@ export default function RatesEditor({ slots, hours, onChange, saved, onSave, sav
               <div className="min-w-0">
                 <div className="font-extrabold text-[#0B0D10] text-lg">{DAY_NAMES[d]}</div>
                 <div className="text-sm font-semibold text-[#6B7280]">
-                  {closed ? 'You\'re closed this day' : hours?.[d] ? `Open ${clock(hours[d].open)} – ${clock(hours[d].close)}` : list.length ? `${list.length} slot${list.length === 1 ? '' : 's'}` : 'Not available to rent'}
+                  {closed ? 'You\'re closed this day' : hours?.[d] ? `Open ${clock(hours[d].open)} – ${clock(hours[d].close)}` : list.length ? `${list.length} slot${list.length === 1 ? '' : 's'}` : 'No set rates'}
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">

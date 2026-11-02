@@ -199,9 +199,9 @@ function Rates({ venue }) {
   return (
     <div className="space-y-4">
       <Card>
-        <h2 className="font-extrabold text-lg text-[#0B0D10]">Slots you rent out</h2>
+        <h2 className="font-extrabold text-lg text-[#0B0D10]">Set rates</h2>
         <p className="text-[#6B7280] font-semibold mt-1">
-          Players book inside these slots at your rate and pay right away, with nothing for you to approve. {venue.rentalSlots ? 'Days with no slots can\'t be rented.' : 'Right now they ask for any open hour, and you set the price when you approve.'}
+          Inside these times, players book at your rate and pay right away, with nothing for you to approve. Any other open hour they can still ask for, and you set the price when you approve.
         </p>
       </Card>
       <RatesEditor slots={slots} hours={venue.hours} onChange={(s) => { setSlots(s); setState(null); }} saved={venue.rentalSlots || {}} saveState={state} onSave={() => write(slots)} />
