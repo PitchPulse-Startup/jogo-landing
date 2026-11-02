@@ -11,12 +11,13 @@ import {
   collection, doc, getDoc, getDocs, onSnapshot, query, updateDoc, where, serverTimestamp, deleteField,
 } from 'firebase/firestore';
 import {
-  CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users,
+  CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3,
 } from 'lucide-react';
 import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import { DISPLAY, BODY, useMatchdayFonts } from './App.jsx';
 import { auth, db } from './firebase';
-import RatesEditor, { dayProblem, clock } from './indoor/RatesEditor.jsx';
+import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
+import Analytics from './indoor/Analytics.jsx';
 
 const money = (c) => `$${((c || 0) / 100).toFixed((c || 0) % 100 ? 2 : 0)}`;
 const asDate = (t) => (t?.toDate ? t.toDate() : t ? new Date(t) : null);
@@ -27,6 +28,7 @@ const attending = (g) => (g.players || []).reduce((n, p) => n + 1 + (Number(p?.g
 
 const TABS = [
   { id: 'overview', label: 'Overview', Icon: LayoutDashboard },
+  { id: 'analytics', label: 'Analytics', Icon: BarChart3 },
   { id: 'schedule', label: 'Schedule', Icon: CalendarDays },
   { id: 'bookings', label: 'Bookings', Icon: Key },
   { id: 'rates', label: 'Slots & rates', Icon: Clock },
@@ -261,6 +263,10 @@ function Desk({ user, venue }) {
   const [rentals, setRentals] = useState([]);
   const [payments, setPayments] = useState([]);
   const [followers, setFollowers] = useState(null);
+  // For Analytics: everything, past games and every request, not just what's coming up.
+  const [allGames, setAllGames] = useState([]);
+  const [allRentals, setAllRentals] = useState([]);
+  const [stats, setStats] = useState([]);
 
   useEffect(() => onSnapshot(query(collection(db, 'games'), where('venueId', '==', venue.id)), (snap) => {
     const cutoff = Date.now() - 2 * 3600e3;
@@ -278,6 +284,10 @@ function Desk({ user, venue }) {
     getDocs(query(collection(db, 'gamePayments'), where('venueId', '==', venue.id)))
       .then((s) => setPayments(s.docs.map((d) => d.data()))).catch((e) => console.error('payments failed:', e));
     getDocs(collection(db, 'venues', venue.id, 'followers')).then((s) => setFollowers(s.size)).catch(() => {});
+    const forVenue = (name) => getDocs(query(collection(db, name), where('venueId', '==', venue.id))).then((s) => s.docs.map((d) => d.data())).catch((e) => { console.error(name, 'failed:', e); return []; });
+    Promise.all([forVenue('games'), forVenue('archived-games')]).then(([live, past]) => setAllGames([...live, ...past]));
+    forVenue('rentals').then(setAllRentals);
+    getDocs(collection(db, 'venues', venue.id, 'stats')).then((s) => setStats(s.docs.map((d) => ({ id: d.id, ...d.data() })))).catch((e) => console.error('stats failed:', e));
   }, [venue.id]);
 
   const requests = rentals.filter((r) => r.status === 'requested');
@@ -336,6 +346,8 @@ function Desk({ user, venue }) {
             </Card>
           </div>
         ) : null}
+
+        {tab === 'analytics' ? <Analytics games={allGames} rentals={allRentals} payments={payments} stats={stats} f={DISPLAY} /> : null}
 
         {tab === 'schedule' ? (
           <Card title={`${games.length} upcoming game${games.length === 1 ? '' : 's'}`} right={<span className="text-sm font-semibold text-[#6B7280] inline-flex items-center gap-1.5"><Users size={15} /> Tap a game for the roster</span>}>
