@@ -5,7 +5,7 @@
 // with no slots can't be rented. No rentalSlots at all = any open hour, priced
 // when the indoor approves. The app reads this in services/venueHours.js.
 import React from 'react';
-import { Plus, Trash2, Copy } from 'lucide-react';
+import { Plus, Trash2, Copy, Check } from 'lucide-react';
 
 const WEEK = [1, 2, 3, 4, 5, 6, 0]; // Monday first, the way a business lists its week
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -43,7 +43,13 @@ function TimeSelect({ value, onChange, label, options }) {
   );
 }
 
-export default function RatesEditor({ slots, hours, onChange }) {
+const same = (a, b) => JSON.stringify((a || []).map((x) => [x.from, x.to, x.cents])) === JSON.stringify((b || []).map((x) => [x.from, x.to, x.cents]));
+
+// saved: what's in the database. A day with changes gets Save right there, next
+// to what was just changed; it saves every day's changes.
+export default function RatesEditor({ slots, hours, onChange, saved, onSave, saveState }) {
+  const [savedDay, setSavedDay] = React.useState(null);
+  const anyProblem = Object.values(slots).some((l) => dayProblem(l));
   const setDay = (d, list) => onChange({ ...slots, [d]: list });
   const add = (d) => {
     const list = slots[d] || [];
@@ -123,6 +129,23 @@ export default function RatesEditor({ slots, hours, onChange }) {
                 ))}
                 {problem ? <p className="text-sm font-semibold text-[#BE123C]">{problem}</p> : null}
               </div>
+            ) : null}
+            {onSave && !same(list, saved?.[d]) ? (
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={anyProblem || saveState === 'saving'}
+                  onClick={() => { setSavedDay(d); onSave(); }}
+                  className="h-11 px-7 rounded-full bg-[#0E7A43] text-white font-extrabold disabled:opacity-40"
+                >
+                  {saveState === 'saving' ? 'Saving…' : 'Save'}
+                </button>
+                {saveState === 'error' || saveState === 'denied' ? (
+                  <span className="text-sm font-semibold text-[#BE123C]">{saveState === 'denied' ? 'This account can\'t change this indoor.' : 'Couldn\'t save. Try again.'}</span>
+                ) : null}
+              </div>
+            ) : onSave && saveState === 'saved' && savedDay === d ? (
+              <div className="mt-3 text-sm font-bold text-[#0E7A43] inline-flex items-center gap-1.5"><Check size={16} /> Saved. Players see this now.</div>
             ) : null}
           </div>
         );

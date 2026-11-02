@@ -204,7 +204,7 @@ function Rates({ venue }) {
           Players book inside these slots at your rate and pay right away, with nothing for you to approve. {venue.rentalSlots ? 'Days with no slots can\'t be rented.' : 'Right now they ask for any open hour, and you set the price when you approve.'}
         </p>
       </Card>
-      <RatesEditor slots={slots} hours={venue.hours} onChange={(s) => { setSlots(s); setState(null); }} />
+      <RatesEditor slots={slots} hours={venue.hours} onChange={(s) => { setSlots(s); setState(null); }} saved={venue.rentalSlots || {}} saveState={state} onSave={() => write(slots)} />
       <div className="sticky bottom-4 bg-[#0B0D10] rounded-2xl p-3 pl-5 flex items-center justify-between gap-3 shadow-xl">
         <span className="text-white font-semibold text-sm">
           {state === 'saved' && !dirty ? 'Saved. Players see this now.'
