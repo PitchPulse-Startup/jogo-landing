@@ -30,7 +30,7 @@ export const dayProblem = (slots) => {
   return null;
 };
 
-function TimeSelect({ value, onChange, label }) {
+function TimeSelect({ value, onChange, label, options }) {
   return (
     <select
       aria-label={label}
@@ -38,7 +38,7 @@ function TimeSelect({ value, onChange, label }) {
       onChange={(e) => onChange(Number(e.target.value))}
       className="h-11 rounded-xl bg-[#F2F3F5] px-3 font-bold text-[#0B0D10] outline-none focus:ring-2 focus:ring-[#0E7A43]"
     >
-      {TIMES.map((m) => <option key={m} value={m}>{clock(m)}</option>)}
+      {(options.includes(value) ? options : [value, ...options]).map((m) => <option key={m} value={m}>{clock(m)}</option>)}
     </select>
   );
 }
@@ -49,11 +49,20 @@ export default function RatesEditor({ slots, hours, onChange }) {
     const list = slots[d] || [];
     const last = [...list].sort((a, b) => a.to - b.to).pop();
     const open = hours?.[d];
+    const close = open?.close ?? 1440;
     const from = last ? last.to : (open?.open ?? 540);
-    const to = Math.min(from + 120, open?.close ?? 1440, 1440);
-    setDay(d, [...list, { from, to: to > from ? to : Math.min(from + 60, 1440), cents: last?.cents || 0 }]);
+    if (from + 60 > close) return; // the day is already full of slots
+    setDay(d, [...list, { from, to: Math.min(from + 120, close), cents: last?.cents || 0 }]);
   };
-  const patch = (d, i, p) => setDay(d, (slots[d] || []).map((s, k) => (k === i ? { ...s, ...p } : s)));
+  const patch = (d, i, p) => setDay(d, (slots[d] || []).map((s, k) => {
+    if (k !== i) return s;
+    const next = { ...s, ...p };
+    // Moving the start past the end brings the end along, at least an hour on.
+    if (p.from != null && next.to < next.from + 60) next.to = Math.min(next.from + 60, hours?.[d]?.close ?? 1440);
+    return next;
+  }));
+  // Only times inside the indoor's open hours: a slot outside them could never be booked.
+  const timesFor = (d) => TIMES.filter((m) => m >= (hours?.[d]?.open ?? 360) && m <= (hours?.[d]?.close ?? 1440));
   const copyToAll = (d) => {
     const next = {};
     WEEK.forEach((k) => { next[k] = hours && !hours[k] ? [] : (slots[d] || []).map((s) => ({ ...s })); });
@@ -81,7 +90,7 @@ export default function RatesEditor({ slots, hours, onChange }) {
                     <Copy size={15} /> <span className="hidden sm:inline">Use for every day</span><span className="sm:hidden">Copy</span>
                   </button>
                 ) : null}
-                {!closed ? (
+                {!closed && !(list.length && Math.max(...list.map((x) => x.to)) + 60 > (hours?.[d]?.close ?? 1440)) ? (
                   <button type="button" onClick={() => add(d)} className="h-10 px-3 rounded-full text-sm font-bold bg-[#0B0D10] text-white inline-flex items-center gap-1.5">
                     <Plus size={15} /> Add slot
                   </button>
@@ -92,9 +101,9 @@ export default function RatesEditor({ slots, hours, onChange }) {
               <div className="mt-4 space-y-2">
                 {list.map((s, i) => (
                   <div key={i} className="flex flex-wrap items-center gap-2">
-                    <TimeSelect label="From" value={s.from} onChange={(v) => patch(d, i, { from: v })} />
+                    <TimeSelect label="From" value={s.from} options={timesFor(d).slice(0, -2)} onChange={(v) => patch(d, i, { from: v })} />
                     <span className="font-semibold text-[#6B7280]">to</span>
-                    <TimeSelect label="To" value={s.to} onChange={(v) => patch(d, i, { to: v })} />
+                    <TimeSelect label="To" value={s.to} options={timesFor(d).filter((m) => m >= s.from + 60)} onChange={(v) => patch(d, i, { to: v })} />
                     <label className="h-11 rounded-xl bg-[#F2F3F5] pl-3 pr-3 inline-flex items-center gap-1 font-bold text-[#0B0D10] focus-within:ring-2 focus-within:ring-[#0E7A43]">
                       $
                       <input

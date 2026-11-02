@@ -181,7 +181,9 @@ function BookingRow({ r, fieldCount }) {
 function Rates({ venue }) {
   const [slots, setSlots] = useState(() => venue.rentalSlots || {});
   const [state, setState] = useState(null); // 'saving' | 'saved' | 'error'
-  const dirty = JSON.stringify(slots) !== JSON.stringify(venue.rentalSlots || {});
+  // The database hands fields back in its own order, so compare by value.
+  const norm = (o) => JSON.stringify(Object.keys(o || {}).sort().filter((k) => o[k].length).map((k) => [k, o[k].map((x) => [x.from, x.to, x.cents])]));
+  const dirty = norm(slots) !== norm(venue.rentalSlots);
   const problem = Object.values(slots).some((l) => dayProblem(l));
   const any = Object.values(slots).some((l) => l.length);
   const write = async (value) => {
@@ -191,7 +193,7 @@ function Rates({ venue }) {
       setState('saved');
     } catch (e) {
       console.error('saving slots failed:', e);
-      setState('error');
+      setState(e?.code === 'permission-denied' ? 'denied' : 'error');
     }
   };
   return (
@@ -199,13 +201,14 @@ function Rates({ venue }) {
       <Card>
         <h2 className="font-extrabold text-lg text-[#0B0D10]">Slots you rent out</h2>
         <p className="text-[#6B7280] font-semibold mt-1">
-          Players can only ask to rent inside these slots, and they see your rate before they ask. {venue.rentalSlots ? 'Days with no slots can\'t be rented.' : 'Right now they can ask for any open hour, and you set the price when you approve.'}
+          Players book inside these slots at your rate and pay right away, with nothing for you to approve. {venue.rentalSlots ? 'Days with no slots can\'t be rented.' : 'Right now they ask for any open hour, and you set the price when you approve.'}
         </p>
       </Card>
       <RatesEditor slots={slots} hours={venue.hours} onChange={(s) => { setSlots(s); setState(null); }} />
       <div className="sticky bottom-4 bg-[#0B0D10] rounded-2xl p-3 pl-5 flex items-center justify-between gap-3 shadow-xl">
         <span className="text-white font-semibold text-sm">
           {state === 'saved' && !dirty ? 'Saved. Players see this now.'
+            : state === 'denied' ? 'This account can\'t change this indoor.'
             : state === 'error' ? 'Couldn\'t save. Try again.'
               : problem ? 'Fix the slots marked in red.'
                 : dirty ? 'You have changes to save.' : any ? 'Your slots are live.' : 'No slots set yet.'}
