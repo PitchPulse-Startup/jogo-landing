@@ -1,8 +1,8 @@
 // src/IndoorPortal.jsx — jogous.io/indoors/portal, an indoor owner's desk on the
 // web. They sign in with the same account as the app and see more room than a
 // phone gives: the schedule with who's coming, bookings, what they've earned,
-// and the one thing that lives here: the slots they rent out and their rates.
-// Answering requests and cancelling stay in the app, where the money rules live.
+// and the set rates that live here. They can answer requests and splits and create
+// games too. Cancelling a paid booking stays in the app, with its refund rules.
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut,
@@ -18,6 +18,7 @@ import { DISPLAY, BODY, useMatchdayFonts } from './App.jsx';
 import { auth, db } from './firebase';
 import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
 import Analytics from './indoor/Analytics.jsx';
+import { CreateButton, CreateGame, RequestCard, SplitCard } from './indoor/Answers.jsx';
 
 const money = (c) => `$${((c || 0) / 100).toFixed((c || 0) % 100 ? 2 : 0)}`;
 const asDate = (t) => (t?.toDate ? t.toDate() : t ? new Date(t) : null);
@@ -266,6 +267,8 @@ function Desk({ user, venue }) {
   const [rentals, setRentals] = useState([]);
   const [payments, setPayments] = useState([]);
   const [followers, setFollowers] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [postedNote, setPostedNote] = useState(null);
   // For Analytics: everything, past games and every request, not just what's coming up.
   const [allGames, setAllGames] = useState([]);
   const [allRentals, setAllRentals] = useState([]);
@@ -294,13 +297,16 @@ function Desk({ user, venue }) {
   }, [venue.id]);
 
   const requests = rentals.filter((r) => r.status === 'requested');
-  const inProgress = rentals.filter((r) => r.status === 'approved');
+  const splits = rentals.filter((r) => r.status === 'approved' && r.split?.status === 'pending');
+  const inProgress = rentals.filter((r) => r.status === 'approved' && r.split?.status !== 'pending');
   const booked = rentals.filter((r) => r.status === 'paid');
   const week = Date.now() + 7 * 864e5;
   const thisWeek = games.filter((g) => asDate(g.startDateTime)?.getTime() < week);
   const earned = useMemo(() => payments.filter((p) => p.status === 'paid').reduce((n, p) => n + (p.shareCents || 0), 0), [payments]);
   const spots = thisWeek.reduce((n, g) => n + attending(g), 0);
   const fieldCount = venue.fieldCount || 1;
+  const toAnswer = requests.length + splits.length;
+  const finishCreating = (n) => { setCreating(false); setPostedNote(n ? `${n} game${n === 1 ? ' is' : 's are'} live.` : null); };
 
   return (
     <div style={BODY} className="min-h-screen bg-[#F2F3F5] lg:flex">
@@ -318,7 +324,7 @@ function Desk({ user, venue }) {
           {TABS.map(({ id, label, Icon }) => (
             <button key={id} type="button" onClick={() => setTab(id)} className={`h-11 px-3 rounded-xl flex items-center gap-2.5 font-bold text-sm whitespace-nowrap shrink-0 ${tab === id ? 'bg-white text-[#0B0D10]' : 'text-white/70 hover:bg-white/10'}`}>
               <Icon size={17} /> {label}
-              {id === 'bookings' && requests.length ? <span className="ml-auto bg-[#F59E0B] text-[#0B0D10] rounded-full text-xs font-extrabold px-2 py-0.5">{requests.length}</span> : null}
+              {id === 'bookings' && toAnswer ? <span className="ml-auto bg-[#F59E0B] text-[#0B0D10] rounded-full text-xs font-extrabold px-2 py-0.5">{toAnswer}</span> : null}
             </button>
           ))}
         </nav>
@@ -340,8 +346,12 @@ function Desk({ user, venue }) {
             </div>
             {requests.length ? (
               <Card title={`Requests to answer (${requests.length})`}>
-                {requests.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />)}
-                <p className="text-sm font-semibold text-[#6B7280] mt-3">Answer these on your page in the Jogo app.</p>
+                {requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={games} rentals={rentals} />)}
+              </Card>
+            ) : null}
+            {splits.length ? (
+              <Card title={`Splits to answer (${splits.length})`}>
+                {splits.map((r) => <SplitCard key={r.id} r={r} venue={venue} />)}
               </Card>
             ) : null}
             <Card title="Coming up" right={<button type="button" onClick={() => setTab('schedule')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
@@ -353,17 +363,26 @@ function Desk({ user, venue }) {
         {tab === 'analytics' ? <Analytics games={allGames} rentals={allRentals} payments={payments} stats={stats} f={DISPLAY} /> : null}
 
         {tab === 'schedule' ? (
-          <Card title={`${games.length} upcoming game${games.length === 1 ? '' : 's'}`} right={<span className="text-sm font-semibold text-[#6B7280] inline-flex items-center gap-1.5"><Users size={15} /> Tap a game for the roster</span>}>
-            {games.length ? games.map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} />) : <Empty>No games posted. Create them in the Jogo app.</Empty>}
-          </Card>
+          <div className="space-y-4">
+            {creating ? <CreateGame venue={venue} games={games} rentals={rentals} onDone={finishCreating} /> : (
+              <div className="flex items-center gap-3 flex-wrap">
+                <CreateButton onClick={() => { setPostedNote(null); setCreating(true); }} />
+                {postedNote ? <span className="font-bold text-[#0E7A43]">{postedNote}</span> : null}
+              </div>
+            )}
+            <Card title={`${games.length} upcoming game${games.length === 1 ? '' : 's'}`} right={<span className="text-sm font-semibold text-[#6B7280] inline-flex items-center gap-1.5"><Users size={15} /> Click a game for the roster</span>}>
+              {games.length ? games.map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} />) : <Empty>No games posted yet.</Empty>}
+            </Card>
+          </div>
         ) : null}
 
         {tab === 'bookings' ? (
           <div className="space-y-4">
-            <Card title="Requests">{requests.length ? requests.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />) : <Empty>No requests right now.</Empty>}</Card>
+            <Card title="Requests">{requests.length ? requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={games} rentals={rentals} />) : <Empty>No requests right now.</Empty>}</Card>
+            {splits.length ? <Card title="Splits to answer">{splits.map((r) => <SplitCard key={r.id} r={r} venue={venue} />)}</Card> : null}
             <Card title="In progress">{inProgress.length ? inProgress.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />) : <Empty>Nothing waiting on payment.</Empty>}</Card>
             <Card title="Booked">{booked.length ? booked.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} />) : <Empty>No booked rentals coming up.</Empty>}</Card>
-            <p className="text-sm font-semibold text-[#6B7280] px-2">To approve, change a price or message a renter, use your page in the Jogo app.</p>
+            <p className="text-sm font-semibold text-[#6B7280] px-2">To message a renter or cancel a booking, use your page in the Jogo app.</p>
           </div>
         ) : null}
 
