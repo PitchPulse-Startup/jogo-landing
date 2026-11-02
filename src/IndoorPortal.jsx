@@ -18,6 +18,7 @@ import { DISPLAY, BODY, useMatchdayFonts } from './App.jsx';
 import { auth, db } from './firebase';
 import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
 import Analytics from './indoor/Analytics.jsx';
+import Money from './indoor/Money.jsx';
 import { CancelBooking, CreateButton, CreateGame, RequestCard, SplitCard } from './indoor/Answers.jsx';
 import Toaster, { toast } from './indoor/Toast.jsx';
 import { FillCountdown, PayCountdown } from './indoor/Countdown.jsx';
@@ -251,40 +252,6 @@ function Rates({ venue }) {
   );
 }
 
-function Money({ venue, payments }) {
-  const paid = payments.filter((p) => p.status === 'paid');
-  const refunded = payments.filter((p) => p.status === 'refunded');
-  const total = paid.reduce((n, p) => n + (p.shareCents || 0), 0);
-  const list = [...payments].sort((a, b) => (asDate(b.createdAt) || 0) - (asDate(a.createdAt) || 0)).slice(0, 50);
-  const LABEL = { rental: 'Field booking', renterShare: 'Renter\'s share', gameSpot: 'Player spot' };
-  return (
-    <div className="space-y-4">
-      <div className="grid sm:grid-cols-3 gap-4">
-        <Stat f={DISPLAY} k="Earned" v={money(total)} sub="Your prices, paid in the app" />
-        <Stat f={DISPLAY} k="Payments" v={paid.length} sub={`${refunded.length} refunded`} />
-        <Stat f={DISPLAY} k="Payouts" v={venue.payouts?.ready ? 'ON' : 'OFF'} sub={venue.payouts?.ready ? 'Straight to your bank' : 'Set up in the app, on your wallet'} />
-      </div>
-      <Card title="Recent payments">
-        {list.length ? list.map((p, i) => {
-          const at = asDate(p.createdAt);
-          return (
-            <div key={p.sessionId || i} className="border-t first:border-t-0 border-[#EEF0F3] py-3 flex items-center justify-between gap-4">
-              <div>
-                <div className="font-bold text-[#0B0D10]">{LABEL[p.kind] || 'Payment'}</div>
-                <div className="text-sm font-semibold text-[#6B7280]">{at ? `${dayLabel(at)}, ${timeLabel(at)}` : ''}</div>
-              </div>
-              <div className="text-right">
-                <div className={`font-extrabold ${p.status === 'paid' ? 'text-[#0B0D10]' : 'text-[#9CA3AF] line-through'}`}>{money(p.shareCents)}</div>
-                <div className="text-sm font-semibold text-[#6B7280]">{p.status === 'paid' ? 'Paid' : p.status === 'kept' ? 'Kept' : p.status === 'refunded' ? 'Refunded' : p.status}</div>
-              </div>
-            </div>
-          );
-        }) : <Empty>Payments show here once players start paying.</Empty>}
-      </Card>
-    </div>
-  );
-}
-
 function Desk({ user, venue }) {
   const [tab, setTab] = useState('overview');
   const [games, setGames] = useState([]);
@@ -433,7 +400,7 @@ function Desk({ user, venue }) {
         ) : null}
 
         {tab === 'rates' ? <Rates venue={venue} /> : null}
-        {tab === 'money' ? <Money venue={venue} payments={payments} /> : null}
+        {tab === 'money' ? <Money venue={venue} payments={payments} rentals={allRentals} games={allGames} /> : null}
 
         <button type="button" onClick={() => signOut(auth)} className="lg:hidden mt-8 text-sm font-bold text-[#6B7280] inline-flex items-center gap-2"><LogOut size={15} /> Sign out of {user.email}</button>
       </main>
