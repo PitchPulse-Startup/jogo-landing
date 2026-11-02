@@ -172,7 +172,8 @@ function Face({ p, size = 36, ring = '#FFFFFF', dark = false }) {
   );
 }
 
-// ── Paid indoor games (a facility's slot, game.venueId + priceCents) ───────
+// ── Paid indoor games (a facility's slot, game.venueId + priceCents, or a
+// paid pickup host's game, game.hostId) ──────────────────────────────────
 // Booking means paying, which happens in the app, and the place is a public
 // facility, so nothing is locked: the pull is the price, the countdown and
 // how few spots are left.
@@ -180,7 +181,8 @@ function Face({ p, size = 36, ring = '#FFFFFF', dark = false }) {
 const playerPrice = (game) => {
   const cents = game?.priceCents || 0;
   if (!cents) return 0;
-  const need = cents + Math.round(cents * 0.05);
+  // Jogo's cut: 10% on a paid pickup host's game, else 5%.
+  const need = cents + Math.round(cents * (game.hostId ? 0.1 : 0.05));
   let total = Math.ceil((need + 30) / 0.971);
   while (total - (Math.round(total * 0.029) + 30) < need) total += 1;
   return total;
@@ -231,7 +233,7 @@ function IndoorPoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, is
       </div>
       <div className="relative px-5 pb-5 -mt-12">
         <div className="w-[60px] h-[60px] rounded-[16px] overflow-hidden border-[3px] border-white flex items-center justify-center" style={{ background: '#0E7A43' }}>
-          {game.venueLogoUrl ? <img src={game.venueLogoUrl} alt="" className="w-full h-full object-cover" /> : null}
+          {game.venueLogoUrl || game.hostPhotoUrl ? <img src={game.venueLogoUrl || game.hostPhotoUrl} alt="" className="w-full h-full object-cover" /> : null}
         </div>
         <p className="mt-3 text-[12px] tracking-[0.18em]" style={{ fontWeight: 800, color: '#4ADE80' }}>INDOOR · {venue.toUpperCase()}</p>
         <p className="uppercase" style={{ ...ANTON, fontSize: 44 }}>{startMs ? `${dayLabel(startMs)} · ${time}` : 'Coming up'}</p>
@@ -287,11 +289,12 @@ function IndoorBook({ game, joined }) {
 
       <div className="mt-5 rounded-[22px] bg-white p-4 flex items-center gap-3 shadow-[0_6px_20px_-12px_rgba(11,18,32,0.2)]">
         <div className="w-12 h-12 rounded-[14px] overflow-hidden flex-shrink-0" style={{ background: '#0E7A43' }}>
-          {game.venueLogoUrl ? <img src={game.venueLogoUrl} alt="" className="w-full h-full object-cover" /> : null}
+          {game.venueLogoUrl || game.hostPhotoUrl ? <img src={game.venueLogoUrl || game.hostPhotoUrl} alt="" className="w-full h-full object-cover" /> : null}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] tracking-[0.16em]" style={{ color: '#0E7A43', fontWeight: 800 }}>HOSTED BY</p>
-          <p className="text-[16px] truncate" style={{ fontWeight: 800 }}>{game.venueName || f.name}</p>
+          <p className="text-[16px] truncate" style={{ fontWeight: 800 }}>{game.hostName || game.venueName || f.name}</p>
+          {game.hostName && f.name ? <p className="text-[13px] truncate" style={{ fontWeight: 700 }}>{f.name}</p> : null}
           {f.address ? <p className="text-[13px] truncate" style={{ color: SUB, fontWeight: 600 }}>{f.address}</p> : null}
         </div>
         {directions ? (
@@ -889,10 +892,10 @@ export default function Invite() {
   ));
   useEffect(() => {
     if (!viewerOnRoster || result || autoCheckedRef.current === viewerUid) return;
-    if (game?.venueId && game.priceCents > 0) return; // paid indoor: nothing to unlock
+    if ((game?.venueId || game?.hostId) && game.priceCents > 0) return; // paid indoor: nothing to unlock
     autoCheckedRef.current = viewerUid;
     joinGameViaLink({ gameId }).then((res) => setResult(res.data)).catch(() => {});
-  }, [viewerOnRoster, viewerUid, gameId, result, game?.venueId, game?.priceCents]);
+  }, [viewerOnRoster, viewerUid, gameId, result, game?.venueId, game?.hostId, game?.priceCents]);
   // Signing out ("Not you?") hides the previous person's unlocked details.
   useEffect(() => {
     if (viewerUid === null) { setResult(null); autoCheckedRef.current = null; }
@@ -921,7 +924,8 @@ export default function Invite() {
   const spotsLeft = maxPlayers != null ? Math.max(0, maxPlayers - playerCount) : null;
   const isFull = spotsLeft === 0;
   const fillPct = maxPlayers ? Math.min(100, Math.round((playerCount / maxPlayers) * 100)) : 0;
-  const coverImage = game?.imageUrl || fieldPhoto || game?.field?.imageUrl || null;
+  // A paid pickup host's indoor isn't on Jogo, so it has no photos of its own.
+  const coverImage = game?.imageUrl || fieldPhoto || game?.field?.imageUrl || (game?.hostId ? '/images/indoor-empty.jpg' : null);
   const host = players.find((p) => p.isCreator) || null;
   const others = players.filter((p) => !p.isCreator);
   const startMs = game?.startDateTime?.toMillis ? game.startDateTime.toMillis() : null;
@@ -932,7 +936,7 @@ export default function Invite() {
   const myTeamId = mode && viewerUid ? players.find((p) => p.userId === viewerUid)?.team : null;
   const myTeam = myTeamId ? mode.teams.find((t) => t.id === myTeamId) || null : null;
   // A paid indoor facility game: its own poster + booking (pay in the app).
-  const paidIndoor = !!game?.venueId && game.priceCents > 0;
+  const paidIndoor = (!!game?.venueId || !!game?.hostId) && game.priceCents > 0;
 
   return (
     <div className="min-h-screen bg-[#F2F3F5] antialiased flex flex-col overflow-x-hidden" style={{ fontFamily: BARLOW, color: INK }}>
@@ -1033,7 +1037,7 @@ export default function Invite() {
                 {(paidIndoor ? [
                   ['01', 'Get Jogo', 'Free on iPhone and Android.'],
                   ['02', 'Book your spot', 'Pay in the app. Your spot is held for you.'],
-                  ['03', 'Show up and play', 'The facility has the field, the ball and the nets.'],
+                  ['03', 'Show up and play', game?.hostId ? 'Your host runs the game. Scan their code when you get there.' : 'The facility has the field, the ball and the nets.'],
                 ] : [
                   ['01', 'Grab your spot', 'Free. Takes 30 seconds, right here.'],
                   ['02', 'Time & place unlock', 'You get the field, kickoff and directions.'],

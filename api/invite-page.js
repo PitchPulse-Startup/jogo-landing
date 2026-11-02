@@ -53,19 +53,19 @@ export default async function handler(request) {
     ? game.players.reduce((total, p) => total + 1 + (p.guests || 0), 0)
     : (game?.currentPlayers ?? null);
   const maxPlayers = game?.maxPlayers ?? null;
-  const coverImage = game?.imageUrl || fieldPhoto || game?.field?.imageUrl || '';
+  const coverImage = game?.imageUrl || fieldPhoto || game?.field?.imageUrl || (game?.hostId ? `${SITE_URL}/images/indoor-empty.jpg` : '');
   const avatars = (game?.players || []).filter((p) => p.photoURL).slice(0, 5);
   const extraCount = Math.max(0, (playerCount || 0) - avatars.length);
   const gameTitle = game?.title || 'Pickup Soccer Game';
 
-  // A paid indoor facility game reads like a booking: where, when, price,
+  // A paid indoor game (a facility's or a paid pickup host's) reads like a booking: where, when, price,
   // and how few spots are left. Times in New York time (this runs in UTC).
-  const paidIndoor = !!game?.venueId && Number(game?.priceCents) > 0;
+  const paidIndoor = (!!game?.venueId || !!game?.hostId) && Number(game?.priceCents) > 0;
   const indoorLine = (() => {
     if (!paidIndoor) return '';
     // Same as the app's services/gamePayments withFee.
     const base = Number(game.priceCents);
-    const need = base + Math.round(base * 0.05);
+    const need = base + Math.round(base * (game.hostId ? 0.1 : 0.05));
     let cents = Math.ceil((need + 30) / 0.971);
     while (cents - (Math.round(cents * 0.029) + 30) < need) cents += 1;
     const price = `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;

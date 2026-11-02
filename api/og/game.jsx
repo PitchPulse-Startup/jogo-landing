@@ -25,7 +25,7 @@ export default async function handler(request) {
     ? game.players.reduce((total, p) => total + 1 + (p.guests || 0), 0)
     : (game?.currentPlayers ?? null);
   const maxPlayers = game?.maxPlayers ?? null;
-  const coverImage = game?.imageUrl || fieldPhoto || game?.field?.imageUrl || null;
+  const coverImage = game?.imageUrl || fieldPhoto || game?.field?.imageUrl || (game?.hostId ? 'https://jogous.io/images/indoor-empty.jpg' : null);
 
   return new ImageResponse(
     (
