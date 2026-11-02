@@ -20,6 +20,7 @@ import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
 import Analytics from './indoor/Analytics.jsx';
 import { CancelBooking, CreateButton, CreateGame, RequestCard, SplitCard } from './indoor/Answers.jsx';
 import Toaster, { toast } from './indoor/Toast.jsx';
+import { FillCountdown, PayCountdown } from './indoor/Countdown.jsx';
 
 const money = (c) => `$${((c || 0) / 100).toFixed((c || 0) % 100 ? 2 : 0)}`;
 const asDate = (t) => (t?.toDate ? t.toDate() : t ? new Date(t) : null);
@@ -133,7 +134,9 @@ export function GameRow({ game, fieldCount }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-bold text-[#0B0D10] truncate">{game.title}{fieldCount > 1 && game.venueField ? ` · Field ${game.venueField}` : ''}</div>
-          <div className="h-1.5 rounded bg-[#EEF0F3] mt-1.5 overflow-hidden"><div className="h-full bg-[#4ADE80]" style={{ width: `${max ? Math.min(100, (n / max) * 100) : 0}%` }} /></div>
+          {game.decideAt && game.minPlayers ? <FillCountdown have={n} need={game.minPlayers} decideAt={game.decideAt} /> : (
+            <div className="h-1.5 rounded bg-[#EEF0F3] mt-1.5 overflow-hidden"><div className="h-full bg-[#4ADE80]" style={{ width: `${max ? Math.min(100, (n / max) * 100) : 0}%` }} /></div>
+          )}
         </div>
         <div className="text-right shrink-0">
           <div className="font-extrabold text-[#0B0D10]">{n}/{max}</div>
@@ -168,7 +171,8 @@ const STATUS = {
   paid: { t: 'Booked', c: 'bg-[#E4F5EA] text-[#0E7A43]' },
 };
 
-function BookingRow({ r, fieldCount, payments = [] }) {
+function BookingRow({ r, fieldCount, payments = [], games = [] }) {
+  const splitGame = r.gameId ? games.find((g) => g.id === r.gameId) : null;
   const st = asDate(r.start);
   const en = asDate(r.end);
   const s = STATUS[r.status];
@@ -186,6 +190,13 @@ function BookingRow({ r, fieldCount, payments = [] }) {
       </div>
       <div className="font-extrabold text-[#0B0D10]">{r.priceCents ? money(r.priceCents) : ''}</div>
       {s ? <span className={`text-xs font-extrabold tracking-wide uppercase rounded-lg px-2.5 py-1 ${s.c}`}>{s.t}</span> : null}
+      {r.status === 'approved' && r.split?.status === 'approved' && r.split.decideAt ? (
+        <div className="w-full">
+          {r.gameId ? <FillCountdown have={splitGame ? attending(splitGame) : 0} need={r.split.minPlayers || r.split.maxPlayers} decideAt={r.split.decideAt} />
+            : <FillCountdown have={0} need={r.split.minPlayers || r.split.maxPlayers} decideAt={r.split.decideAt} />}
+          {!r.gameId ? <p className="text-xs font-semibold text-[#6B7280] mt-1">Waiting on {(r.userName || 'the renter').split(' ')[0]} to pay their share and start the game.</p> : null}
+        </div>
+      ) : r.status === 'approved' && !['pending', 'countered'].includes(r.split?.status) && !r.split?.reached ? <div className="w-full"><PayCountdown r={r} /></div> : null}
       {['approved', 'paid'].includes(r.status) ? <div className="w-full mt-1"><CancelBooking r={r} payments={payments} /></div> : null}
     </div>
   );
@@ -381,12 +392,12 @@ function Desk({ user, venue }) {
             </div>
             {inProgress.length ? (
               <Card title={`In progress (${inProgress.length})`} right={<button type="button" onClick={() => setTab('bookings')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
-                {inProgress.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} />)}
+                {inProgress.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />)}
               </Card>
             ) : null}
             {booked.length ? (
               <Card title={`Booked rentals (${booked.length})`} right={<button type="button" onClick={() => setTab('bookings')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
-                {booked.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} />)}
+                {booked.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />)}
               </Card>
             ) : null}
             <Card title="Coming up" right={<button type="button" onClick={() => setTab('schedule')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
@@ -415,8 +426,8 @@ function Desk({ user, venue }) {
           <div className="space-y-4">
             <Card title="Requests">{requests.length ? requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={games} rentals={rentals} />) : <Empty>No requests right now.</Empty>}</Card>
             {splits.length ? <Card title="Splits to answer">{splits.map((r) => <SplitCard key={r.id} r={r} venue={venue} />)}</Card> : null}
-            <Card title="In progress">{inProgress.length ? inProgress.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} />) : <Empty>Nothing waiting on payment.</Empty>}</Card>
-            <Card title="Booked">{booked.length ? booked.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} />) : <Empty>No booked rentals coming up.</Empty>}</Card>
+            <Card title="In progress">{inProgress.length ? inProgress.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />) : <Empty>Nothing waiting on payment.</Empty>}</Card>
+            <Card title="Booked">{booked.length ? booked.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />) : <Empty>No booked rentals coming up.</Empty>}</Card>
             <p className="text-sm font-semibold text-[#6B7280] px-2">To message a renter, use your page in the Jogo app.</p>
           </div>
         ) : null}
