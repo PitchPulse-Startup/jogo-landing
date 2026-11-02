@@ -19,6 +19,7 @@ import { auth, db } from './firebase';
 import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
 import Analytics from './indoor/Analytics.jsx';
 import { CreateButton, CreateGame, RequestCard, SplitCard } from './indoor/Answers.jsx';
+import Toaster, { toast } from './indoor/Toast.jsx';
 
 const money = (c) => `$${((c || 0) / 100).toFixed((c || 0) % 100 ? 2 : 0)}`;
 const asDate = (t) => (t?.toDate ? t.toDate() : t ? new Date(t) : null);
@@ -192,6 +193,7 @@ function Rates({ venue }) {
     try {
       await updateDoc(doc(db, 'venues', venue.id), { rentalSlots: value, updatedAt: serverTimestamp() });
       setState('saved');
+      toast('Rates saved', 'Players can book those times right away.');
     } catch (e) {
       console.error('saving slots failed:', e);
       setState(e?.code === 'permission-denied' ? 'denied' : 'error');
@@ -310,6 +312,7 @@ function Desk({ user, venue }) {
 
   return (
     <div style={BODY} className="min-h-screen bg-[#F2F3F5] lg:flex">
+      <Toaster />
       <aside className="bg-[#0B0D10] text-white lg:w-64 lg:min-h-screen lg:sticky lg:top-0 lg:self-start shrink-0 flex flex-col">
         <div className="p-5 flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl overflow-hidden bg-[#0E7A43] border-2 border-white shrink-0">

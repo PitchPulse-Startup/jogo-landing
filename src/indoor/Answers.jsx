@@ -7,6 +7,7 @@ import {
   answerSplit, approveRental, asDate, canSaveRate, createGames, deadlineText, declineRental, declineSplit, money, openPayouts, rateFor, saveRate, withFee,
 } from './actions';
 import { clock } from './RatesEditor.jsx';
+import { toast } from './Toast.jsx';
 
 const DAY_NAMES = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
 const dayLabel = (d) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -17,6 +18,7 @@ const toLocalInput = (ms) => {
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
+const first = (r) => (r.userName || 'The renter').split(' ')[0];
 const btn = 'h-11 px-6 rounded-full font-extrabold disabled:opacity-40';
 
 const Head = ({ r, fieldCount }) => {
@@ -108,13 +110,17 @@ export function RequestCard({ r, venue, games, rentals }) {
       <p className="text-sm font-bold text-[#0E7A43] mt-3 inline-flex items-center gap-1.5"><Lock size={14} /> Price locks in when you approve</p>
       {err ? <p className="text-sm font-semibold text-[#BE123C] mt-1">{err}</p> : null}
       <div className="mt-3 flex gap-2">
-        <button type="button" disabled={!!busy} onClick={() => act('decline', () => declineRental(r))} className={`${btn} bg-[#F2F3F5] text-[#0B0D10]`}>{busy === 'decline' ? 'Declining…' : 'Decline'}</button>
+        <button type="button" disabled={!!busy} onClick={() => act('decline', async () => { await declineRental(r); toast('Request declined', `${first(r)} has been told.`); })} className={`${btn} bg-[#F2F3F5] text-[#0B0D10]`}>{busy === 'decline' ? 'Declining…' : 'Decline'}</button>
         <button
           type="button"
           disabled={!!busy || cents < 100 || !ready}
           onClick={() => act('approve', async () => {
             await approveRental(r, { priceCents: cents, field, venue });
-            if (keep && offerKeep) await saveRate(venue, start, end, cents).catch((e) => console.error('saving the rate failed:', e));
+            let rateSaved = false;
+            if (keep && offerKeep) rateSaved = await saveRate(venue, start, end, cents).then(() => true).catch((e) => { console.error('saving the rate failed:', e); return false; });
+            toast(`Approved at ${money(cents)}`, keep && offerKeep
+              ? (rateSaved ? `${first(r)} has been told, and your rate is saved.` : `${first(r)} has been told, but your rate didn't save. Add it under Slots & rates.`)
+              : `${first(r)} has been told and can pay now.`);
           })}
           className={`${btn} bg-[#0B0D10] text-white`}
         >
@@ -178,8 +184,8 @@ export function SplitCard({ r, venue }) {
       ) : <p className="text-sm font-semibold text-[#B45309] mt-3">It's too close to the start to split this one.</p>}
       {err ? <p className="text-sm font-semibold text-[#BE123C] mt-2">{err}</p> : null}
       <div className="mt-3 flex gap-2">
-        <button type="button" disabled={!!busy} onClick={() => act('no', () => declineSplit(r))} className={`${btn} bg-[#F2F3F5] text-[#0B0D10]`}>{busy === 'no' ? 'Saving…' : 'Say no'}</button>
-        {recommended ? <button type="button" disabled={!!busy || !decideMs} onClick={() => act('yes', () => answerSplit(r, new Date(decideMs)))} className={`${btn} bg-[#0B0D10] text-white`}>{busy === 'yes' ? 'Saving…' : 'Agree'}</button> : null}
+        <button type="button" disabled={!!busy} onClick={() => act('no', async () => { await declineSplit(r); toast('Split declined', `${first(r)} has been told.`); })} className={`${btn} bg-[#F2F3F5] text-[#0B0D10]`}>{busy === 'no' ? 'Saving…' : 'Say no'}</button>
+        {recommended ? <button type="button" disabled={!!busy || !decideMs} onClick={() => act('yes', async () => { await answerSplit(r, new Date(decideMs)); toast('Split agreed', `${first(r)} has until ${deadlineText(new Date(decideMs))} to fill it.`); })} className={`${btn} bg-[#0B0D10] text-white`}>{busy === 'yes' ? 'Saving…' : 'Agree'}</button> : null}
       </div>
     </div>
   );
@@ -231,6 +237,7 @@ export function CreateGame({ venue, games, rentals, onDone }) {
     setBusy(true); setErr(null);
     try {
       await createGames(venue, { slots: good, priceCents: cents, maxPlayers: spots, title });
+      toast(good.length === 1 ? 'Your game is live' : `${good.length} games are live`, 'Players nearby can see it on Jogo now.');
       onDone(good.length);
     } catch (e) {
       console.error('creating games failed:', e);
