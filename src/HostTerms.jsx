@@ -9,7 +9,7 @@ const SECTIONS = [
   ['1. Eligibility', 'You must be at least 18 years old. The name, photo and other information you submit must be accurate and your own. You may not host on behalf of someone else, and you may not share your host account.'],
   ['2. Field Bookings', 'Before charging players for a game, you must hold a confirmed booking for the field at the date and time listed. You are solely responsible for that booking, for paying the facility, and for following its rules. You must personally attend every game you host, and no one else may cover for you.'],
   ['3. Cancellations and Refunds', 'If you cancel a game or leave it, the game is cancelled and every player who paid receives a full refund. A player who leaves before kickoff also receives a full refund. You are responsible for all card processing and other fees resulting from refunds on a game you cancel. Jogo may deduct these amounts from your balance or future payouts.'],
-  ['4. Fees and Payouts', 'Jogo retains a service fee on each payment. Payouts are processed through Stripe, and you must complete and maintain Stripe\'s verification requirements to receive them. Refunds and disputed charges may be recovered from your balance or future payouts.'],
+  ['4. Fees and Payouts', 'Jogo retains a service fee on each payment. Payouts are processed through Stripe and are released for each game after that game ends; money for games that have not yet taken place stays in your Stripe account. You must complete and maintain Stripe\'s verification requirements to receive them. Refunds and disputed charges may be recovered from your balance or future payouts.'],
   ['5. Fair Pricing and Fraud', 'Your price must fairly reflect the actual cost of the field and of running the game, and you may not overcharge or price-gouge players. You may not list a game or field you have not booked, misrepresent a game\'s location, time or details, inflate your player count, or make fake bookings or payments. If Jogo reasonably suspects fraud, it may refund affected players, recover those amounts from your balance or future payouts, remove you as a host, and report the matter to the appropriate authorities.'],
   ['6. Payments Outside Jogo', 'All payments for a game must be made through the Jogo platform. You may not post, share or request Cash App, Zelle, Venmo, PayPal, cash or any other payment method not authorized on the Jogo platform to receive payment for a game. A violation may result in immediate disqualification as a host and removal of your games.'],
   ['7. Removal', 'Jogo may suspend or remove you as a host, and may cancel and refund your games, at its discretion, including for player complaints, payment disputes, inaccurate information, or a violation of these Host Terms.'],
@@ -51,7 +51,7 @@ const HostTerms = ({ onBackToMain }) => {
         <article className="container mx-auto px-4 sm:px-6 max-w-3xl">
           <header className="mb-10 text-center">
             <h1 className="text-4xl sm:text-5xl font-black mb-3 leading-tight text-white">Host Terms</h1>
-            <p className="text-white/60">Effective date: November 2, 2026</p>
+            <p className="text-white/60">Effective date: November 3, 2026</p>
           </header>
 
           <p className="mb-8 leading-relaxed text-white/80">These Host Terms apply to anyone who hosts paid games on Jogo. By applying to host or hosting a game, you agree to them.</p>
