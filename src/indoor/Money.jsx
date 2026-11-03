@@ -25,6 +25,8 @@ export const netOf = (p, rental) => {
   if (p.status === 'paid' || p.status === 'kept') return share;
   if (p.status !== 'refunded') return 0;
   if (rental?.cancelledBy === 'venue') return -(p.cardFeeCents || 0);
+  // Free cancellation, minus card fees: the fee went to Stripe, the indoor keeps nothing.
+  if (rental?.freeCancel) return 0;
   const partOfBooking = p.kind === 'rental' || p.kind === 'renterShare';
   if (partOfBooking && rental?.refundCents && rental.refundCents < p.amountCents) {
     return Math.round(share * (1 - rental.refundCents / p.amountCents));
