@@ -8,6 +8,7 @@ import Blog from './Blog.jsx'
 import Media from './Media.jsx'
 import Policy from './Policy.jsx'
 import Terms from './Terms.jsx'
+import HostTerms from './HostTerms.jsx'
 import Feedback from './Feedback.jsx'
 import DeleteAccount from './DeleteAccount.jsx'
 import Support from './Support.jsx'
@@ -35,6 +36,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/media" element={<Media onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/policy" element={<Policy onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/terms" element={<Terms onBackToMain={() => window.location.href = '/'} />} />
+        <Route path="/host-terms" element={<HostTerms onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/feedback" element={<Feedback onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/delete-account" element={<DeleteAccount onBackToMain={() => window.location.href = '/'} />} />
         <Route path="/support" element={<Support onBackToMain={() => window.location.href = '/'} />} />
