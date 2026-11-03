@@ -92,7 +92,7 @@ const Terms = ({ onBackToMain }) => {
               <p><strong>To the fullest extent permitted by law, you assume all such risks and release Jogo and its owners, employees and affiliates from all claims arising from injury, illness, death, or loss, theft or damage to property in connection with any game, event, field or facility, or travel to or from them.</strong> This release does not apply to liability that cannot be excluded by law.</p>
 
               <h2>4. Payments and Refunds</h2>
-              <p>Payments are processed by Stripe. The price, including applicable fees, is shown before you pay. The refund rules for each paid game or event are shown on its page and apply to your purchase. If you cancel a field rental during its free cancellation period, your refund excludes card processing fees.</p>
+              <p>Payments are processed by Stripe. The price, including applicable fees, is shown before you pay. The refund rules for each paid game or event are shown on its page and apply to your purchase. If you leave a paid game yourself, your refund excludes the service fee. If you cancel a field rental during its free cancellation period, your refund excludes card processing fees.</p>
               <p>All payments for a paid game or event must be made through the Jogo platform. Jogo is not responsible for payments made outside the platform.</p>
               <p>Hosts of paid games are also subject to the <Link to="/host-terms">Host Terms</Link>.</p>
 
