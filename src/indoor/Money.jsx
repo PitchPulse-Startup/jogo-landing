@@ -228,7 +228,7 @@ export default function Money({ venue, payments, rentals, games, now = new Date(
         )}
       >
         <p className="text-sm font-semibold text-[#6B7280]">{stripeErr || 'What you made is shown here as soon as a player pays. Stripe shows when each deposit reaches your bank.'}</p>
-        {venue.payouts?.ready ? null : <p className="text-sm font-bold text-[#78350F] bg-[#FEF3C7] rounded-xl p-3 mt-3">When Stripe asks for your industry, choose Entertainment and Recreation, then the closest sports or recreation option.</p>}
+        {venue.payouts?.ready ? null : <p className="text-sm font-bold text-[#78350F] bg-[#FEF3C7] rounded-xl p-3 mt-3">When Stripe asks for your industry, choose Entertainment and Recreation, then any option in that category that fits, like sports or recreation.</p>}
       </Card>
 
       <Card

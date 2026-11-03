@@ -46,7 +46,7 @@ function PayoutsNeeded({ what }) {
     <div className="bg-[#FEF3C7] rounded-2xl p-4 mt-3">
       <div className="font-extrabold text-[#0B0D10]">Set up payouts to {what}</div>
       <p className="text-sm font-semibold text-[#6B7280]">What players pay goes straight to your bank. It takes a few minutes with Stripe.</p>
-      <p className="text-sm font-bold text-[#78350F] mt-2">When Stripe asks for your industry, choose Entertainment and Recreation, then the closest sports or recreation option.</p>
+      <p className="text-sm font-bold text-[#78350F] mt-2">When Stripe asks for your industry, choose Entertainment and Recreation, then any option in that category that fits, like sports or recreation.</p>
       {err ? <p className="text-sm font-semibold text-[#BE123C] mt-1">{err}</p> : null}
       <button type="button" onClick={go} disabled={busy} className={`${btn} bg-[#0B0D10] text-white mt-3`}>{busy ? 'Opening…' : 'Set up payouts'}</button>
     </div>
