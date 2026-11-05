@@ -64,7 +64,7 @@ export function Reveal({ children, delay = 0, className = '' }) {
 }
 
 // The screenshots are 864×1939 Android captures, so the frame keeps that ratio.
-function Phone({ src, alt, className = '', eager = false }) {
+export function Phone({ src, alt, className = '', eager = false }) {
   return (
     <div className={`rounded-[13%/6%] p-[2.6%] bg-[#111111] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.6)] ring-1 ring-white/10 ${className}`}>
       <div className="rounded-[11%/5%] overflow-hidden bg-[#EDEEF1]" style={{ aspectRatio: '864 / 1939' }}>
