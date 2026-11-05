@@ -696,10 +696,86 @@ function Faq() {
 
 // ── Page ────────────────────────────────────────────────────────────────
 
+// "Get seen" screens. Phones get a steady swipe carousel (one fade-in for the
+// whole row, so cards don't rise up as they scroll in sideways) with dots;
+// bigger screens keep the grid.
+function SeenGallery() {
+  const trackRef = React.useRef(null);
+  const [active, setActive] = useState(0);
+
+  const onScroll = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.firstElementChild;
+    if (!card) return;
+    const step = card.getBoundingClientRect().width + 16;
+    setActive(Math.max(0, Math.min(SEEN.length - 1, Math.round(el.scrollLeft / step))));
+  };
+
+  const goTo = (i) => {
+    trackRef.current?.children[i]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  };
+
+  return (
+    <>
+      {/* Phones */}
+      <Reveal className="sm:hidden mt-10">
+        <div
+          ref={trackRef}
+          onScroll={onScroll}
+          className="-mx-5 flex gap-4 overflow-x-auto snap-x snap-mandatory hp-noscroll overscroll-x-contain"
+          style={{ paddingInline: '18%', scrollPaddingInline: '18%', WebkitOverflowScrolling: 'touch' }}
+        >
+          {SEEN.map((s, i) => (
+            <div key={s.t} className="snap-center snap-always shrink-0 w-full">
+              <Phone
+                src={s.src}
+                alt={s.alt}
+                className={`w-full transition-[opacity,transform] duration-300 ${i === active ? 'opacity-100 scale-100' : 'opacity-50 scale-[0.94]'}`}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 text-center px-2 min-h-[4.5rem]">
+          <div className="text-lg font-extrabold">{SEEN[active].t}</div>
+          <div className="text-[#4B5563] font-medium leading-snug max-w-[300px] mx-auto">{SEEN[active].b}</div>
+        </div>
+        <div className="mt-3 flex justify-center gap-2" role="tablist" aria-label="Screens">
+          {SEEN.map((s, i) => (
+            <button
+              key={s.t}
+              type="button"
+              role="tab"
+              aria-selected={i === active}
+              aria-label={s.t}
+              onClick={() => goTo(i)}
+              className="p-1.5"
+            >
+              <span className={`block h-2 rounded-full transition-all duration-300 ${i === active ? 'w-6 bg-[#16A34A]' : 'w-2 bg-[#0B0D10]/20'}`} />
+            </button>
+          ))}
+        </div>
+      </Reveal>
+
+      {/* Tablet and up */}
+      <div className="hidden sm:grid mt-12 grid-cols-2 lg:grid-cols-4 gap-6">
+        {SEEN.map((s, i) => (
+          <Reveal key={s.t} delay={i * 0.08}>
+            <Phone src={s.src} alt={s.alt} className="w-full max-w-[250px] mx-auto" />
+            <div className="mt-5 text-left max-w-[250px] mx-auto">
+              <div className="text-lg font-extrabold">{s.t}</div>
+              <div className="text-[#4B5563] font-medium leading-snug">{s.b}</div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export default function Indoors() {
   useMatchdayFonts();
   const [scrolled, setScrolled] = useState(false);
-  const [showSticky, setShowSticky] = useState(false);
 
   useEffect(() => {
     document.title = 'Host your indoor on Jogo';
@@ -708,10 +784,6 @@ export default function Indoors() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     const onScroll = () => {
       setScrolled(window.scrollY > 10);
-      const apply = document.getElementById('apply');
-      const pastHero = window.scrollY > 640;
-      const atApply = apply ? apply.getBoundingClientRect().top < window.innerHeight * 0.8 : false;
-      setShowSticky(pastHero && !atApply);
     };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -758,28 +830,6 @@ export default function Indoors() {
             </div>
           </div>
         </header>
-
-        {/* ── STICKY MOBILE CTA ──────────────────────────────────────── */}
-        <AnimatePresence>
-          {showSticky && (
-            <motion.div
-              initial={{ y: 120 }}
-              animate={{ y: 0 }}
-              exit={{ y: 120 }}
-              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              className="fixed bottom-0 inset-x-0 z-50 md:hidden px-4"
-              style={{
-                paddingBottom: 'max(env(safe-area-inset-bottom), 14px)',
-                paddingTop: 14,
-                background: 'linear-gradient(to top, rgba(11,13,16,0.95) 60%, rgba(11,13,16,0))',
-              }}
-            >
-              <a href="#apply" className="flex items-center justify-center gap-2 bg-[#16A34A] text-white font-extrabold py-3.5 rounded-xl text-[15px] active:opacity-80">
-                Put your indoor on Jogo <ArrowRight size={18} />
-              </a>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <main>
           {/* ── HERO ───────────────────────────────────────────────────── */}
@@ -917,17 +967,7 @@ export default function Indoors() {
                 </p>
               </Reveal>
 
-              <div className="mt-12 -mx-5 px-5 sm:mx-0 sm:px-0 flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 overflow-x-auto sm:overflow-visible snap-x snap-mandatory hp-noscroll pb-2">
-                {SEEN.map((s, i) => (
-                  <Reveal key={s.t} delay={i * 0.08} className="snap-center shrink-0 w-[68%] sm:w-auto">
-                    <Phone src={s.src} alt={s.alt} className="w-full max-w-[250px] mx-auto" />
-                    <div className="mt-5 text-center sm:text-left max-w-[250px] mx-auto">
-                      <div className="text-lg font-extrabold">{s.t}</div>
-                      <div className="text-[#4B5563] font-medium leading-snug">{s.b}</div>
-                    </div>
-                  </Reveal>
-                ))}
-              </div>
+              <SeenGallery />
             </div>
           </section>
 
@@ -1199,8 +1239,6 @@ export default function Indoors() {
           </div>
         </footer>
 
-        {/* Room for the sticky CTA on phones */}
-        <div className="h-20 md:hidden bg-[#EDEEF1]" />
       </div>
     </MotionConfig>
   );
