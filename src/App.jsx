@@ -484,7 +484,7 @@ export default function App() {
               flip
             >
               <Link to="/whats-new" className="mt-8 inline-flex items-center gap-2 font-extrabold text-[#0B0D10] hover:text-[#16A34A] transition-colors">
-                See what's new in 2.1 <ArrowRight size={18} />
+                See what's new in 2.3 <ArrowRight size={18} />
               </Link>
             </Feature>
           </section>
