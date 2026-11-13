@@ -174,9 +174,11 @@ function Face({ p, size = 36, ring = '#FFFFFF', dark = false }) {
 
 // ── Paid indoor games (a facility's slot, game.venueId + priceCents, or a
 // paid pickup host's game, game.hostId) ──────────────────────────────────
-// Booking means paying, which happens in the app, and the place is a public
-// facility, so nothing is locked: the pull is the price, the countdown and
-// how few spots are left.
+// Booking means paying, right here (Stripe Checkout through startTicketCheckout,
+// the same call the app makes; the webhook puts them on the roster), and the
+// place is a public facility, so nothing is locked: the pull is the price, the
+// countdown and how few spots are left. Leaving, chat and check-in stay in the
+// app, and the page says so: paying is the moment to send them there.
 // Same as the app's services/gamePayments withFee.
 const playerPrice = (game) => {
   const cents = game?.priceCents || 0;
@@ -188,6 +190,24 @@ const playerPrice = (game) => {
   return total;
 };
 const dollars = (cents) => `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
+// The refund rule before paying. Same words as the app's paidGameTerms for
+// someone who isn't in yet (services/gamePayments).
+const tsMs = (t) => (t?.toMillis ? t.toMillis() : 0);
+const whenTxt = (t) => new Date(t).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).replace(':00', '');
+const refundRule = (game, now = Date.now()) => {
+  const until = tsMs(game?.refundUntil);
+  if (game?.minPlayers && tsMs(game.decideAt) > now) return `Not enough players by ${whenTxt(tsMs(game.decideAt))}? You get your money back.`;
+  if (game?.minPlayers) return 'The game is on. No refund if you leave. If it\'s cancelled, you get your money back.';
+  if (until && until > now) return `Leave by ${whenTxt(until)} for a refund of the game price. The service fee isn't refundable.`;
+  if (until) return 'No refund if you leave now. If it\'s cancelled, you get your money back.';
+  return 'Leave before the game for a refund of the game price. The service fee isn\'t refundable.';
+};
+const startTicketCheckout = httpsCallable(functions, 'startTicketCheckout');
+function payErrorMessage(e) {
+  if (['functions/failed-precondition', 'functions/resource-exhausted'].includes(e?.code) && e.message) return e.message;
+  if (e?.code === 'functions/not-found') return 'This game no longer exists.';
+  return 'Couldn\'t start checkout. Please try again.';
+}
 
 function useNow(ms = 30000) {
   const [now, setNow] = useState(Date.now());
@@ -261,29 +281,93 @@ function IndoorPoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, is
   );
 }
 
-function IndoorBook({ game, joined }) {
+// Back from Stripe, the webhook adds them a moment later: wait for the roster,
+// and after a while say the payment went through anyway.
+function Confirming() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setSlow(true), 25000); return () => clearTimeout(t); }, []);
+  return (
+    <div className="rounded-[22px] bg-white p-5 flex items-center gap-3 shadow-[0_10px_30px_-14px_rgba(11,18,32,0.25)]">
+      <Loader2 size={22} className="animate-spin flex-shrink-0" color="#0E7A43" />
+      <div>
+        <p style={{ ...ANTON, fontSize: 22 }}>{slow ? 'PAYMENT RECEIVED' : 'CONFIRMING YOUR SPOT…'}</p>
+        <p className="text-[13.5px] -mt-0.5" style={{ color: SUB, fontWeight: 600 }}>
+          {slow ? 'Your spot shows up here in a minute. If it doesn\'t, refresh the page.' : 'Payment went through. Adding you to the game.'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function IndoorBook({ game, joined, gameId, isFull, spotsLeft, checkout }) {
   const price = dollars(playerPrice(game));
   const f = game.field || {};
   const directions = mapsUrl({ fieldName: f.name, address: f.address, latitude: f.latitude, longitude: f.longitude });
   return (
     <>
       {joined ? (
-        <div className="rounded-[22px] p-5 text-white flex items-center gap-3" style={{ background: '#0E7A43' }}>
-          <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0"><Check size={20} color="#0E7A43" strokeWidth={3} /></span>
-          <div>
-            <p style={{ ...ANTON, fontSize: 24 }}>YOU'RE IN</p>
-            <p className="text-[14px] text-white/80 -mt-1" style={{ fontWeight: 600 }}>Your spot is booked. See it in the Jogo app.</p>
+        <>
+          <div className="rounded-[22px] p-5 text-white flex items-center gap-3" style={{ background: '#0E7A43' }}>
+            <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0"><Check size={20} color="#0E7A43" strokeWidth={3} /></span>
+            <div>
+              <p style={{ ...ANTON, fontSize: 24 }}>YOU'RE IN</p>
+              <p className="text-[14px] text-white/80 -mt-1" style={{ fontWeight: 600 }}>Your spot is paid and booked.</p>
+            </div>
           </div>
-        </div>
-      ) : (
+          {/* Paying is done: now the app. What they'd miss without it, in their words. */}
+          <div className="mt-4 rounded-[24px] p-5 text-white relative overflow-hidden" style={{ background: INK }}>
+            <div className="absolute pointer-events-none" style={{ top: -60, right: -90, width: 200, height: 360, transform: 'rotate(24deg)', background: '#0E7A43', opacity: 0.9 }} />
+            <div className="relative">
+              <p className="uppercase" style={{ ...ANTON, fontSize: 26 }}>Now get the app</p>
+              <p className="text-[13.5px] text-white/75 mt-0.5" style={{ fontWeight: 600 }}>Log in with the same email. Your spot is already there.</p>
+              <ul className="mt-3 mb-4 space-y-1.5">
+                {[
+                  game.hostId ? 'Scan your host\'s code when you get there' : 'Scan in at the desk when you get there',
+                  'Chat with everyone in the game',
+                  'A reminder before kickoff, and word if anything changes',
+                  'Leave and get your refund if plans change',
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2 text-[14px]" style={{ fontWeight: 700 }}>
+                    <Check size={16} strokeWidth={3} color="#4ADE80" className="mt-[3px] flex-shrink-0" /> {t}
+                  </li>
+                ))}
+              </ul>
+              <div className="grid grid-cols-2 gap-2">
+                <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 bg-white rounded-full h-12 hover:opacity-90 transition-opacity" style={{ color: INK }}>
+                  <AppleLogo size={17} /><span className="text-[14px]" style={{ fontWeight: 800 }}>App Store</span>
+                </a>
+                <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 bg-white rounded-full h-12 hover:opacity-90 transition-opacity" style={{ color: INK }}>
+                  <PlayLogo size={15} /><span className="text-[14px]" style={{ fontWeight: 800 }}>Google Play</span>
+                </a>
+              </div>
+              <p className="text-[12.5px] text-white/55 mt-3" style={{ fontWeight: 600 }}>No app? You're still in. Give your name {game.hostId ? 'to your host' : 'at the desk'}.</p>
+            </div>
+          </div>
+        </>
+      ) : checkout === 'success' ? (
+        <Confirming />
+      ) : isFull ? (
         <>
           <a href={APP_URL} className="flex items-center justify-between rounded-[20px] px-6 h-[62px] text-white active:scale-[0.99] transition-transform"
-            style={{ background: '#0E7A43', boxShadow: '0 14px 30px -12px rgba(14,122,67,0.6)' }}>
-            <span className="text-[17px]" style={{ fontWeight: 800 }}>Get your spot</span>
-            <span className="flex items-center gap-2 text-[17px]" style={{ fontWeight: 800 }}>{price}<ArrowRight size={20} /></span>
+            style={{ background: INK }}>
+            <span className="text-[17px]" style={{ fontWeight: 800 }}>Full. Find another game on Jogo</span>
+            <ArrowRight size={20} />
           </a>
-          <p className="text-center text-[13px] mt-2.5" style={{ color: SUB, fontWeight: 600 }}>Book and pay in the Jogo app. Takes a minute.</p>
           <StoreButtons className="mt-4" label="" />
+        </>
+      ) : (
+        <>
+          {checkout === 'cancel' ? (
+            <p className="text-center text-[13.5px] mb-3 rounded-2xl bg-white px-4 py-3" style={{ fontWeight: 700 }}>Payment cancelled. You haven't been charged, and your spot isn't booked yet.</p>
+          ) : null}
+          <JoinGame gameId={gameId} isFull={false} spotsLeft={spotsLeft} onResult={() => {}} price={price} />
+          <div className="mt-3 rounded-2xl bg-white px-4 py-3 shadow-[0_6px_20px_-12px_rgba(11,18,32,0.2)]">
+            <p className="text-[13px]" style={{ fontWeight: 700 }}>{refundRule(game)}</p>
+            <p className="text-[12.5px] mt-1" style={{ color: SUB, fontWeight: 600 }}>To leave and get your refund, use the Jogo app.</p>
+          </div>
+          <a href={APP_URL} className="block text-center text-[13px] mt-3 underline underline-offset-4" style={{ color: SUB, fontWeight: 600 }}>Have Jogo? Open it in the app</a>
         </>
       )}
 
@@ -478,7 +562,9 @@ function GamePoster({ game, coverImage, playerCount, maxPlayers, spotsLeft, isFu
 }
 
 // ── Join flow ─────────────────────────────────────────────────────────
-function JoinGame({ gameId, isFull, spotsLeft, onResult }) {
+// price set = a paid game: the same sign-up, then Stripe Checkout instead of
+// joinGameViaLink. Stripe sends them back here with ?checkout=success|cancel.
+function JoinGame({ gameId, isFull, spotsLeft, onResult, price = null }) {
   const [user, setUser] = useState(() => auth.currentUser);
   const [mode, setMode] = useState(null); // null | 'signup' | 'login' | 'reset'
   const [name, setName] = useState('');
@@ -495,6 +581,21 @@ function JoinGame({ gameId, isFull, spotsLeft, onResult }) {
   const runJoin = async (displayName) => {
     setJoining(true);
     setJoinError('');
+    if (price) {
+      try {
+        const returnUrl = `${window.location.origin}${window.location.pathname}`;
+        const res = await startTicketCheckout({ gameId, returnUrl, displayName: displayName || undefined });
+        window.location.assign(res.data.url); // stays "Taking you to checkout…" while the page leaves
+      } catch (e) {
+        // Already paid and on the roster: the page shows YOU'RE IN on its own.
+        if (e?.code !== 'functions/already-exists') {
+          console.error('Error starting checkout:', e);
+          setJoinError(payErrorMessage(e));
+        }
+        setJoining(false);
+      }
+      return;
+    }
     try {
       const res = await joinGameViaLink({ gameId, displayName: displayName || undefined });
       onResult(res.data);
@@ -562,17 +663,24 @@ function JoinGame({ gameId, isFull, spotsLeft, onResult }) {
         onClick={handlePrimary}
         disabled={joining}
         className="relative overflow-hidden flex items-center justify-center gap-2.5 w-full h-[60px] rounded-full text-white disabled:opacity-80 shadow-[0_14px_30px_-12px_rgba(11,13,16,0.6)]"
-        style={{ background: INK, fontFamily: BARLOW, fontWeight: 800, fontSize: 17.5 }}
+        style={{ background: price ? '#0E7A43' : INK, fontFamily: BARLOW, fontWeight: 800, fontSize: 17.5 }}
       >
         <span className="invite-shine absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
         {joining ? (
-          <><Loader2 size={18} className="animate-spin" /> {isFull ? 'Joining the waitlist…' : 'Grabbing your spot…'}</>
+          <><Loader2 size={18} className="animate-spin" /> {price ? 'Taking you to checkout…' : isFull ? 'Joining the waitlist…' : 'Grabbing your spot…'}</>
+        ) : price ? (
+          <>Get your spot · {price} <ArrowRight size={19} strokeWidth={2.6} /></>
         ) : (
           <>{isFull ? 'Join the waitlist' : 'Grab my spot'} <ArrowRight size={19} strokeWidth={2.6} /></>
         )}
       </motion.button>
 
-      {!mode && !user && (
+      {price && !mode && !user && (
+        <p className="text-center text-[12.5px] mt-2.5" style={{ color: SUB, fontFamily: BARLOW, fontWeight: 600 }}>
+          {spotsLeft != null && spotsLeft <= 3 ? 'Going fast. ' : ''}Pay right here, no app needed. Secure checkout by Stripe.
+        </p>
+      )}
+      {!price && !mode && !user && (
         <p className="text-center text-[12.5px] mt-2.5" style={{ color: SUB, fontFamily: BARLOW, fontWeight: 600 }}>
           {isFull ? "We'll notify you in the app when a spot opens." : spotsLeft != null && spotsLeft <= 3 ? 'Going fast — takes 30 seconds, no app needed.' : 'Free · No app needed · 30 seconds'}
         </p>
@@ -634,8 +742,8 @@ function JoinGame({ gameId, isFull, spotsLeft, onResult }) {
                 className="w-full h-[52px] rounded-full text-white mt-3 disabled:opacity-70 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                 style={{ background: INK, fontWeight: 800, fontSize: 16 }}>
                 {submitting && <Loader2 size={16} className="animate-spin" />}
-                {mode === 'signup' ? (isFull ? 'Create account & join waitlist' : 'Create account & join')
-                  : mode === 'login' ? (isFull ? 'Log in & join waitlist' : 'Log in & join')
+                {mode === 'signup' ? (price ? 'Create account & pay' : isFull ? 'Create account & join waitlist' : 'Create account & join')
+                  : mode === 'login' ? (price ? 'Log in & pay' : isFull ? 'Log in & join waitlist' : 'Log in & join')
                   : 'Send reset link'}
               </button>
 
@@ -826,6 +934,8 @@ export default function Invite() {
   const { gameId } = useParams();
   const [searchParams] = useSearchParams();
   const ref = searchParams.get('ref');
+  // Stripe Checkout sends paid-game buyers back with ?checkout=success|cancel.
+  const checkout = searchParams.get('checkout');
 
   const [loading, setLoading] = useState(true);
   const [game, setGame] = useState(null);
@@ -996,7 +1106,7 @@ export default function Invite() {
           {!loading && game && !unavailable && (
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15, ease: EASE }} className="mt-5">
               {paidIndoor ? (
-                <IndoorBook game={game} joined={viewerOnRoster} />
+                <IndoorBook game={game} joined={viewerOnRoster} gameId={gameId} isFull={isFull} spotsLeft={spotsLeft} checkout={viewerUid === undefined ? null : checkout} />
               ) : result ? (
                 <JoinedActions result={result} gameUrl={gameUrl} myTeam={myTeam} />
               ) : (
@@ -1030,13 +1140,13 @@ export default function Invite() {
           {!loading && game?.description ? <About text={game.description} /> : null}
 
           {/* How it works — only before joining */}
-          {!loading && game && !unavailable && !result && (
+          {!loading && game && !unavailable && !result && !(paidIndoor && viewerOnRoster) && (
             <section className="mt-8">
               <h2 className="uppercase mb-2 ml-1" style={{ ...ANTON, fontSize: 24 }}>How it works</h2>
               <div className="bg-white rounded-[22px] divide-y divide-[#EEF0F3] shadow-[0_6px_20px_-12px_rgba(11,18,32,0.2)]">
                 {(paidIndoor ? [
-                  ['01', 'Get Jogo', 'Free on iPhone and Android.'],
-                  ['02', 'Book your spot', 'Pay in the app. Your spot is held for you.'],
+                  ['01', 'Pay for your spot', 'Right here, takes a minute. No app needed.'],
+                  ['02', 'Get Jogo', game?.hostId ? 'Scan in, chat with the game, get reminders.' : 'Scan in at the desk, chat with the game, get reminders.'],
                   ['03', 'Show up and play', game?.hostId ? 'Your host runs the game. Scan their code when you get there.' : 'The facility has the field, the ball and the nets.'],
                 ] : [
                   ['01', 'Grab your spot', 'Free. Takes 30 seconds, right here.'],
