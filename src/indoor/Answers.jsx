@@ -158,7 +158,7 @@ export function RequestCard({ r, venue, games, rentals }) {
           </span>
         </label>
       ) : null}
-      {clash ? <p className="text-sm font-semibold text-[#B45309] mt-2">Field {field} already has a game or rental then.</p> : null}
+      {clash ? <p className="text-sm font-semibold text-[#B45309] mt-2">Field {field} is already taken then (a game, a rental or time you blocked).</p> : null}
       {!ready ? <PayoutsNeeded what="approve this" /> : null}
       <p className="text-sm font-bold text-[#0E7A43] mt-3 inline-flex items-center gap-1.5"><Lock size={14} /> Price locks in when you approve</p>
       {err ? <p className="text-sm font-semibold text-[#BE123C] mt-1">{err}</p> : null}

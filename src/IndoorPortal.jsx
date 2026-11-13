@@ -20,6 +20,7 @@ import RatesEditor, { dayProblem } from './indoor/RatesEditor.jsx';
 import Analytics from './indoor/Analytics.jsx';
 import Money from './indoor/Money.jsx';
 import CheckIn from './indoor/CheckIn.jsx';
+import Blocks from './indoor/Blocks.jsx';
 import { CancelBooking, CreateButton, CreateGame, DeleteIndoor, RequestCard, SplitCard } from './indoor/Answers.jsx';
 import Toaster, { toast } from './indoor/Toast.jsx';
 import { FillCountdown, PayCountdown } from './indoor/Countdown.jsx';
@@ -271,6 +272,7 @@ function Desk({ user, venue }) {
   const [pastGames, setPastGames] = useState([]);
   const [allRentals, setAllRentals] = useState([]);
   const [stats, setStats] = useState([]);
+  const [blocks, setBlocks] = useState([]); // hours booked outside Jogo, still to come
 
   // Everything here is live: a scan, a request or a payment shows without a refresh.
   useEffect(() => {
@@ -295,10 +297,20 @@ function Desk({ user, venue }) {
       onSnapshot(forVenue('gamePayments'), (snap) => setPayments(snap.docs.map((d) => d.data())), failed('payments')),
       onSnapshot(collection(db, 'venues', venue.id, 'followers'), (snap) => setFollowers(snap.size), failed('followers')),
       onSnapshot(collection(db, 'venues', venue.id, 'stats'), (snap) => setStats(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), failed('stats')),
+      // busy also holds rentals' times (server-written); only manual ones are blocks.
+      onSnapshot(collection(db, 'venues', venue.id, 'busy'), (snap) => {
+        const now = Date.now();
+        setBlocks(snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          .filter((b) => b.manual && asDate(b.end)?.getTime() > now)
+          .sort((x, y) => asDate(x.start) - asDate(y.start)));
+      }, failed('blocks')),
     ];
     return () => unsubs.forEach((u) => u());
   }, [venue.id]);
   const allGames = useMemo(() => [...liveGames, ...pastGames], [liveGames, pastGames]);
+  // Blocks shaped like games, for the clash checks when approving or creating
+  // (no field = every field).
+  const taken = useMemo(() => [...games, ...blocks.map((b) => ({ id: b.id, startDateTime: b.start, endDateTime: b.end, venueField: b.field || null }))], [games, blocks]);
 
   const requests = rentals.filter((r) => r.status === 'requested');
   const splits = rentals.filter((r) => r.status === 'approved' && r.split?.status === 'pending');
@@ -346,7 +358,7 @@ function Desk({ user, venue }) {
             {/* What needs them comes first: everything else can wait. */}
             {requests.length ? (
               <Card title={`Requests to answer (${requests.length})`}>
-                {requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={games} rentals={rentals} />)}
+                {requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={taken} rentals={rentals} />)}
               </Card>
             ) : null}
             {splits.length ? (
@@ -383,7 +395,7 @@ function Desk({ user, venue }) {
 
         {tab === 'schedule' ? (
           <div className="space-y-4">
-            {creating ? <CreateGame venue={venue} games={games} rentals={rentals} onDone={finishCreating} /> : (
+            {creating ? <CreateGame venue={venue} games={taken} rentals={rentals} onDone={finishCreating} /> : (
               <div className="flex items-center gap-3 flex-wrap">
                 <CreateButton onClick={() => { setPostedNote(null); setCreating(true); }} />
                 {postedNote ? <span className="font-bold text-[#0E7A43]">{postedNote}</span> : null}
@@ -392,12 +404,13 @@ function Desk({ user, venue }) {
             <Card title={`${games.length} upcoming game${games.length === 1 ? '' : 's'}`} right={<span className="text-sm font-semibold text-[#6B7280] inline-flex items-center gap-1.5"><Users size={15} /> Click a game for the roster</span>}>
               {games.length ? games.map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} />) : <Empty>No games posted yet.</Empty>}
             </Card>
+            <Blocks venue={venue} blocks={blocks} games={games} rentals={rentals} />
           </div>
         ) : null}
 
         {tab === 'bookings' ? (
           <div className="space-y-4">
-            <Card title="Requests">{requests.length ? requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={games} rentals={rentals} />) : <Empty>No requests right now.</Empty>}</Card>
+            <Card title="Requests">{requests.length ? requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={taken} rentals={rentals} />) : <Empty>No requests right now.</Empty>}</Card>
             {splits.length ? <Card title="Splits to answer">{splits.map((r) => <SplitCard key={r.id} r={r} venue={venue} />)}</Card> : null}
             <Card title="In progress">{inProgress.length ? inProgress.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />) : <Empty>Nothing waiting on payment.</Empty>}</Card>
             <Card title="Booked">{booked.length ? booked.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />) : <Empty>No booked rentals coming up.</Empty>}</Card>

@@ -35,6 +35,14 @@ const push = async (userId, title, body, data) => {
   await httpsCallable(functions, 'sendPushNotification')({ userId, type: 'field_update', title, body, notificationData: data }).catch(() => {});
 };
 
+// Hours booked outside Jogo (a league, a phone booking): a manual busy doc, the
+// same place rentals hold their times, so players see it crossed out on Rent a
+// field and the app's own tools treat it as taken. field null = every field.
+export const addBlock = (venueId, { start, end, field }) => addDoc(collection(db, 'venues', venueId, 'busy'), {
+  start: Timestamp.fromDate(start), end: Timestamp.fromDate(end), field: field || null, manual: true, createdAt: serverTimestamp(),
+});
+export const removeBlock = (venueId, id) => deleteDoc(doc(db, 'venues', venueId, 'busy', id));
+
 const rental = (r) => doc(db, 'rentals', r.id);
 const when = (r) => whenText(asDate(r.start), asDate(r.end));
 
