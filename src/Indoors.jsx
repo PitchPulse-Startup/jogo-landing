@@ -10,7 +10,11 @@
 // price." No fee math, no "what the player pays", no breakdowns.
 // Don't promise free forever (we may charge monthly once we have ~20 indoors):
 // say "free while we launch", never "no monthly fee" or "no contract".
-// Players need the Jogo app to book, pay and check in. Never say "no app needed".
+// Players can book and pay in the app or straight from a share link in a
+// browser (Invite.jsx); check-in, chat and reminders need the app.
+// Payout timing: indoors are on Stripe's automatic schedule, so money lands
+// about 2 business days after a player pays (hosts are the ones paid after
+// the game). Never say "after the game" for indoors.
 
 import React, { useState, useEffect } from 'react';
 import { MotionConfig, AnimatePresence, motion } from 'framer-motion';
@@ -55,7 +59,7 @@ const NAV = [
   { href: '#faq', label: 'FAQ' },
 ];
 
-const TICKER = ['Pickup nights', 'Field rentals', 'Front-desk check-in', 'Paid after every game', 'One-tap share links', 'Your own page', 'Schedule in minutes', 'Player analytics'];
+const TICKER = ['Pickup nights', 'Field rentals', 'Front-desk check-in', 'Paid up front', 'One-tap share links', 'Your own page', 'Schedule in minutes', 'Player analytics'];
 
 // Every place a player runs into your indoor.
 const SEEN = [
@@ -129,10 +133,11 @@ const PORTAL_TABS = [
 
 const FAQ = [
   { q: 'What does it cost to join?', a: 'Nothing right now. Joining is free while we launch with our first indoors. You set your price and get your cut, and card fees and Jogo’s fee are already included in the price.' },
-  { q: 'When do I get paid?', a: 'Your cut goes to your bank through Stripe after each game ends. Setting up Stripe takes a few minutes, and free games don’t need it at all.' },
+  { q: 'When do I get paid?', a: 'Stripe sends your cut to your bank automatically, usually 2 business days after a player pays. Your very first payout can take about a week. Setting up Stripe takes a few minutes, and free games don’t need it at all.' },
   { q: 'What if a player cancels?', a: 'For field rentals you set the rules: free cancellation until 24, 48 or 72 hours before, and after that you keep 25%, 50% or all of it.' },
   { q: 'What if I have to cancel a game?', a: 'Every player who paid gets a full refund automatically. The card fees on those refunds come out of your balance, so it’s best to cancel only when you have to.' },
-  { q: 'Do players need the Jogo app?', a: 'Yes. Players book, pay and check in with the Jogo app, which is free on iPhone and Android. Your share links send new players straight to it.' },
+  { q: 'Do players need the Jogo app?', a: 'Not to book. Anyone you send a game link to can pay right in their browser. The free Jogo app is where they check in at your desk, chat with the game and get reminders, so once they’ve paid we point them to it.' },
+  { q: 'What about hours I’ve already booked?', a: 'Block them. In your portal, under Schedule, add any time you’ve already sold by phone, to a league or for a party, on one field or all of them. Players can’t ask for those hours on Jogo.' },
   { q: 'Can players rent a whole field?', a: 'Yes. They pick a day, a time and a field and send you a request. For hours where you’ve set a rate they can book straight away; for the rest you set the price when you approve. A renter can also ask to split the cost with other players, and you decide whether to agree.' },
   { q: 'I have more than one field. Does that work?', a: 'Yes. Tell us how many fields you have and each game gets one. When players check in, Jogo tells them exactly which field to go to.' },
   { q: 'Can I run it from a computer?', a: 'Yes. Sign in at jogous.io/indoors/portal with the same account. You get your schedule, bookings and check-ins, plus hourly rates for set slots, analytics on what fills best, and a spreadsheet of every payment for your accountant.' },
@@ -1030,7 +1035,7 @@ export default function Indoors() {
                 <Points
                   items={[
                     'Paid up front, so no chasing anyone for cash',
-                    'Your cut goes to your bank after every game',
+                    'Your cut goes to your bank automatically',
                     'Run free games whenever you want',
                   ]}
                 />
@@ -1039,9 +1044,9 @@ export default function Indoors() {
               <Reveal delay={0.12}>
                 <ol className="relative bg-white text-[#0B0D10] rounded-3xl p-6 sm:p-8 max-w-md lg:ml-auto shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)]">
                   {[
-                    { I: CreditCard, t: 'A player books', b: 'They pay up front in the Jogo app.' },
+                    { I: CreditCard, t: 'A player books', b: 'They pay up front, in the app or from your link.' },
                     { I: QrCode, t: 'They show up and play', b: 'Checked in at your front desk.' },
-                    { I: Landmark, t: 'Your cut hits your bank', b: 'Sent through Stripe after the game.' },
+                    { I: Landmark, t: 'Your cut hits your bank', b: 'Sent through Stripe, usually in 2 business days.' },
                   ].map(({ I, t, b }, i) => (
                     <li key={t} className={`relative flex items-center gap-4 ${i ? 'mt-7' : ''}`}>
                       <span className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${i === 2 ? 'bg-[#16A34A] text-white' : 'bg-[#ECFDF3] text-[#15803D]'}`}><I size={21} /></span>
