@@ -15,7 +15,11 @@ const PRINT_CSS = `@media print {
   @page { margin: 0.5in; }
 }`;
 
-export default function CheckIn({ venue, games }) {
+// renderGame: IndoorPortal's GameRow (passed in, so this file doesn't import
+// the portal that imports it). Today's games list under the code with their
+// rosters open; they tick to Verified live as players scan (games are an
+// onSnapshot in IndoorPortal), so this page can stay up at the front desk.
+export default function CheckIn({ venue, games, renderGame }) {
   const code = `jogo-venue:${venue.id}`;
   const canvasRef = useRef(null);
   const save = () => {
@@ -27,7 +31,9 @@ export default function CheckIn({ venue, games }) {
     a.click();
   };
   const now = new Date();
-  const today = games.filter((g) => g.status !== 'cancelled' && asDate(g.startDateTime)?.toDateString() === now.toDateString());
+  const today = games
+    .filter((g) => g.status !== 'cancelled' && asDate(g.startDateTime)?.toDateString() === now.toDateString())
+    .sort((a, b) => asDate(a.startDateTime) - asDate(b.startDateTime));
   const booked = today.reduce((n, g) => n + (g.players || []).length, 0);
   const here = today.reduce((n, g) => n + (g.players || []).filter((p) => g.arrivals?.[p.userId]?.status === 'arrived').length, 0);
   return (
@@ -54,6 +60,18 @@ export default function CheckIn({ venue, games }) {
           <div className="text-sm font-semibold text-[#6B7280]">{today.length ? 'This updates as players scan.' : 'Check-ins show here on game days.'}</div>
         </div>
       </section>
+
+      {today.length && renderGame ? (
+        <section className="bg-white rounded-3xl border border-[#E6E8EC] p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-extrabold text-lg text-[#0B0D10]">Today's games</h3>
+            <span className="text-sm font-bold text-[#0E7A43] inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" /> Live
+            </span>
+          </div>
+          <div className="mt-1">{today.map((g) => renderGame(g))}</div>
+        </section>
+      ) : null}
 
       {/* A full-resolution copy for Save image, off screen. */}
       <div ref={canvasRef} className="hidden"><QRCodeCanvas value={code} size={1200} level="M" marginSize={4} /></div>

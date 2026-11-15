@@ -122,8 +122,9 @@ const verifiedAt = (game, uid) => {
   return a?.status === 'arrived' ? asDate(a.at) || true : null;
 };
 
-export function GameRow({ game, fieldCount }) {
-  const [open, setOpen] = useState(false);
+// defaultOpen: the Check-in tab shows today's rosters already open.
+export function GameRow({ game, fieldCount, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   const st = asDate(game.startDateTime);
   const en = asDate(game.endDateTime);
   const n = attending(game);
@@ -419,7 +420,8 @@ function Desk({ user, venue }) {
         ) : null}
 
         {tab === 'rates' ? <Rates venue={venue} /> : null}
-        {tab === 'checkin' ? <CheckIn venue={venue} games={games} /> : null}
+        {/* liveGames, not games: games drops one 2 hours after it starts, and a game that's on keeps getting check-ins. */}
+        {tab === 'checkin' ? <CheckIn venue={venue} games={liveGames} renderGame={(g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} defaultOpen />} /> : null}
         {tab === 'settings' ? <DeleteIndoor venue={venue} /> : null}
         {tab === 'money' ? <Money venue={venue} payments={payments} rentals={allRentals} games={allGames} /> : null}
 
