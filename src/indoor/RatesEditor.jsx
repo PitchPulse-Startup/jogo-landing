@@ -13,8 +13,9 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const TIMES = Array.from({ length: 37 }, (_, i) => 360 + i * 30); // 6 AM to midnight
 
 export const clock = (m) => {
-  if (m >= 1440) return 'Midnight';
-  const h = Math.floor(m / 60);
+  if (m === 1440) return 'Midnight';
+  // Hours can close past midnight (up to 3 AM): 1560 = 2 AM.
+  const h = Math.floor(m / 60) % 24;
   const mm = m % 60;
   return `${h % 12 || 12}${mm ? `:${String(mm).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`;
 };

@@ -306,8 +306,14 @@ export function DeleteIndoor({ venue }) {
   );
 }
 
-const TIMES = Array.from({ length: 36 }, (_, i) => 360 + i * 30);
+// 6 AM to 2:30 AM the next morning. Starts past 1440 belong to the picked
+// date (its hours can close up to 3 AM); only times before the indoor's
+// latest close are offered.
+const TIMES = Array.from({ length: 42 }, (_, i) => 360 + i * 30);
 const LENGTHS = [60, 90, 120, 150, 180, 240];
+const latestClose = (venue) => (Array.isArray(venue.hours) && venue.hours.length === 7
+  ? Math.max(1440, ...venue.hours.map((h) => (h ? Math.min(h.close, 1620) : 0)))
+  : 1440);
 
 /** Open games, on one date or the same time for several weeks. Teams stay in the app. */
 export function CreateGame({ venue, games, rentals, onDone }) {
@@ -330,10 +336,12 @@ export function CreateGame({ venue, games, rentals, onDone }) {
     if (!date) return [];
     const [y, m, d] = date.split('-').map(Number);
     return Array.from({ length: weeks }, (_, i) => {
+      // The picked date's hours, even for a start after midnight (it rolls into the next morning).
+      const day = new Date(y, m - 1, d + i * 7);
       const start = new Date(y, m - 1, d + i * 7, 0, startMin);
       const end = new Date(y, m - 1, d + i * 7, 0, startMin + length);
-      const key = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
-      const open = (venue.closedDates || []).includes(key) ? null : Array.isArray(venue.hours) ? venue.hours[start.getDay()] : { open: 360, close: 1440 };
+      const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+      const open = (venue.closedDates || []).includes(key) ? null : Array.isArray(venue.hours) ? venue.hours[day.getDay()] : { open: 360, close: 1440 };
       const why = start.getTime() <= Date.now() ? 'already passed'
         : !open || startMin < open.open || startMin + length > open.close ? 'outside your hours'
           : games.some((g) => g.status !== 'cancelled' && (!g.venueField || g.venueField === field) && overlaps(start, end, asDate(g.startDateTime), asDate(g.endDateTime) || start))
@@ -368,7 +376,7 @@ export function CreateGame({ venue, games, rentals, onDone }) {
       </div>
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
         <label className="col-span-2 sm:col-span-1"><span className={label}>Date</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${input} w-full`} /></label>
-        <label><span className={label}>Starts</span><select value={startMin} onChange={(e) => setStartMin(Number(e.target.value))} className={`${input} w-full`}>{TIMES.map((m) => <option key={m} value={m}>{clock(m)}</option>)}</select></label>
+        <label><span className={label}>Starts</span><select value={startMin} onChange={(e) => setStartMin(Number(e.target.value))} className={`${input} w-full`}>{TIMES.filter((m) => m < latestClose(venue)).map((m) => <option key={m} value={m}>{m >= 1440 ? `${clock(m)} (late)` : clock(m)}</option>)}</select></label>
         <label><span className={label}>How long</span><select value={length} onChange={(e) => setLength(Number(e.target.value))} className={`${input} w-full`}>{LENGTHS.map((m) => <option key={m} value={m}>{m / 60} hr{m === 60 ? '' : 's'}</option>)}</select></label>
         <label><span className={label}>Repeat</span><select value={weeks} onChange={(e) => setWeeks(Number(e.target.value))} className={`${input} w-full`}>{[1, 2, 3, 4, 6, 8, 12].map((n) => <option key={n} value={n}>{n === 1 ? 'Just once' : `${n} weeks`}</option>)}</select></label>
         {fieldCount > 1 ? <label><span className={label}>Field</span><select value={field} onChange={(e) => setField(Number(e.target.value))} className={`${input} w-full`}>{Array.from({ length: fieldCount }, (_, i) => <option key={i} value={i + 1}>Field {i + 1}</option>)}</select></label> : null}
