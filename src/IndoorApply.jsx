@@ -5,25 +5,23 @@
 //
 // Desktop: the form on the left, the page it makes on the right, drawn live in
 // a phone (src/indoor/VenuePreview.jsx). Phones: the form, plus a floating
-// "Preview my page" pill that opens the same phone full screen.
+// "Preview my page" pill that opens the page full screen (FullPreview).
 //
 // The login comes LAST: they build the page first, then create a Jogo login
 // (or sign in) to send it. One-off closed dates aren't asked here; they set
 // those later in the app.
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail,
   onAuthStateChanged, updateProfile, signOut,
 } from 'firebase/auth';
 import {
-  ImagePlus, Plus, Minus, X, MapPin, Clock, Loader2, Eye, ArrowRight, Check, CheckCircle2,
+  ImagePlus, Plus, Minus, X, MapPin, Clock, Loader2, Eye, ArrowRight, Check,
 } from 'lucide-react';
 import jogoLogo from './assets/jogo-logo-2026.png';
-import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
-import { DISPLAY, BODY, EASE, useMatchdayFonts, StoreRow } from './App.jsx';
+import { DISPLAY, BODY, useMatchdayFonts, StoreRow } from './App.jsx';
 import { auth } from './firebase';
-import VenuePreview from './indoor/VenuePreview.jsx';
+import VenuePreview, { FullPreview } from './indoor/VenuePreview.jsx';
 import {
   MAX_FIELDS, MAX_PHOTOS, CANCEL_HOURS, CANCEL_KEEP, HOURS_MIN, HOURS_MAX, HOURS_STEP, DEFAULT_DAY,
   DEFAULT_HOURS, WEEK_ORDER, weekdayName, timeText, loadImage, newPlacesSession, autocompletePlaces,
@@ -498,6 +496,7 @@ export default function IndoorApply() {
   };
 
   const f = (part) => () => setFocus(part);
+  const closePreview = useCallback(() => setPreview(false), []);
 
   return (
     <div style={BODY} className="min-h-screen bg-[#EDEEF1] text-[#0B0D10] antialiased">
@@ -512,7 +511,7 @@ export default function IndoorApply() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-12 grid lg:grid-cols-[minmax(0,1fr)_440px] gap-10 xl:gap-16 items-start">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-8 sm:pt-12 pb-28 lg:pb-12 grid lg:grid-cols-[minmax(0,1fr)_440px] gap-10 xl:gap-16 items-start">
         {/* ── The form ── */}
         <div className="min-w-0 max-w-[640px] w-full mx-auto lg:mx-0">
           {sent ? (
@@ -709,48 +708,7 @@ export default function IndoorApply() {
           <Eye size={18} /> Preview my page
         </button>
       ) : null}
-      <AnimatePresence>
-        {preview ? <MobilePreview venue={previewVenue} focus="hero" onClose={() => setPreview(false)} /> : null}
-      </AnimatePresence>
+      {preview ? <FullPreview venue={previewVenue} onClose={closePreview} /> : null}
     </div>
-  );
-}
-
-function MobilePreview({ venue, focus, onClose }) {
-  const [size, setSize] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
-  useEffect(() => {
-    const on = () => setSize({ w: window.innerWidth, h: window.innerHeight });
-    window.addEventListener('resize', on);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('resize', on); document.body.style.overflow = prev; };
-  }, []);
-  // The whole phone fits: under the close bar, inside a 16px gutter.
-  const scale = Math.min(1, (size.w - 32) / 380, (size.h - 110) / (PHONE_H + 20));
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25, ease: EASE }}
-      className="lg:hidden fixed inset-0 z-50 bg-[#0B0D10] flex flex-col items-center"
-      role="dialog"
-      aria-label="Preview of your page"
-    >
-      <div className="w-full flex items-center justify-between px-4 h-16 shrink-0">
-        <img src={jogoLogoWhite} alt="Jogo" className="h-[18px] w-auto" />
-        <button type="button" onClick={onClose} className="inline-flex items-center gap-1.5 rounded-full bg-white text-[#0B0D10] font-extrabold px-4 h-10">
-          <X size={16} /> Back to form
-        </button>
-      </div>
-      <div style={{ height: (PHONE_H + 20) * scale, width: 380 * scale }}>
-        <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: 380 }}>
-          <VenuePreview venue={venue} focus={focus} height={PHONE_H} ring={false} />
-        </div>
-      </div>
-      <div className="mt-3 text-xs font-extrabold tracking-[0.18em] uppercase text-white/50 flex items-center gap-2">
-        <CheckCircle2 size={14} className="text-[#4ADE80]" /> What players see once you’re approved
-      </div>
-    </motion.div>
   );
 }

@@ -50,7 +50,9 @@ const Ring = ({ on, children, className = '', radius = 22 }) => (
   </div>
 );
 
-export default function VenuePreview({ venue, focus, height = 760, ring = true }) {
+// bare: no phone drawn around it; it fills its box (the full-screen preview on
+// a phone, where the visitor's own phone is the frame).
+export default function VenuePreview({ venue, focus, height = 760, ring = true, bare = false }) {
   const scroller = useRef(null);
   const parts = { hero: useRef(null), about: useRef(null), hours: useRef(null), map: useRef(null) };
   const [page, setPage] = useState(0);
@@ -86,24 +88,26 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true }
   ].filter(Boolean);
   const loc = venue.location;
 
-  return (
-    <div className="relative mx-auto" style={{ width: 380 }}>
-      {/* The phone */}
-      <div className="rounded-[56px] bg-[#0B0D10] p-[10px] shadow-[0_40px_80px_-30px_rgba(11,13,16,0.55)] ring-1 ring-white/15">
-        <div className="relative overflow-hidden rounded-[46px]" style={{ height, background: SOFT }}>
-          {/* Status bar + island, over everything */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-[50px] flex items-center justify-between px-8 text-white text-[14px]" style={{ fontWeight: 700 }}>
-            <span>9:41</span>
-            <span className="flex items-center gap-1.5">
-              <span className="flex items-end gap-[2px]">{[5, 7, 9, 11].map((h) => <span key={h} className="w-[3px] rounded-sm bg-white" style={{ height: h }} />)}</span>
-              <span className="ml-1 w-[22px] h-[11px] rounded-[3px] border border-white/80 p-[1.5px]"><span className="block h-full w-[70%] rounded-[1px] bg-white" /></span>
-            </span>
-          </div>
-          <div className="pointer-events-none absolute left-1/2 top-[11px] z-30 h-[30px] w-[110px] -translate-x-1/2 rounded-full bg-black" />
-          {/* Back, glass, like the app */}
-          <div className="pointer-events-none absolute left-4 top-[58px] z-20 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(11,13,16,0.4)', border: '1px solid rgba(255,255,255,0.2)' }}>
-            <ChevronLeft size={22} color="#FFFFFF" />
-          </div>
+  const heroH = bare ? HERO_H : HERO_H + 50;
+  const screen = (
+        <div className={`relative overflow-hidden ${bare ? 'h-full w-full' : 'rounded-[46px]'}`} style={{ height: bare ? '100%' : height, background: SOFT }}>
+          {!bare ? (
+            <>
+              {/* Status bar + island, over everything */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-[50px] flex items-center justify-between px-8 text-white text-[14px]" style={{ fontWeight: 700 }}>
+                <span>9:41</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="flex items-end gap-[2px]">{[5, 7, 9, 11].map((h) => <span key={h} className="w-[3px] rounded-sm bg-white" style={{ height: h }} />)}</span>
+                  <span className="ml-1 w-[22px] h-[11px] rounded-[3px] border border-white/80 p-[1.5px]"><span className="block h-full w-[70%] rounded-[1px] bg-white" /></span>
+                </span>
+              </div>
+              <div className="pointer-events-none absolute left-1/2 top-[11px] z-30 h-[30px] w-[110px] -translate-x-1/2 rounded-full bg-black" />
+              {/* Back, glass, like the app */}
+              <div className="pointer-events-none absolute left-4 top-[58px] z-20 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(11,13,16,0.4)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <ChevronLeft size={22} color="#FFFFFF" />
+              </div>
+            </>
+          ) : null}
 
           <div ref={scroller} className="vp-scroll h-full overflow-y-auto overflow-x-hidden" style={{ fontFamily: "'Barlow', system-ui, sans-serif" }}>
             {/* ── Hero ── */}
@@ -111,7 +115,7 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true }
               <Ring on={ring && focus === 'hero'} radius={0}>
                 <div
                   className="relative flex flex-col justify-end"
-                  style={{ height: HERO_H + 50, background: INK, cursor: gallery.length > 1 ? 'pointer' : 'default' }}
+                  style={{ height: heroH, background: INK, cursor: gallery.length > 1 ? 'pointer' : 'default' }}
                   onClick={() => gallery.length > 1 && setPage((page + 1) % gallery.length)}
                   title={gallery.length > 1 ? 'Next photo' : undefined}
                 >
@@ -267,10 +271,45 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true }
             </div>
           </div>
           {/* Home indicator */}
-          <div className="pointer-events-none absolute bottom-2 left-1/2 z-30 h-[5px] w-[130px] -translate-x-1/2 rounded-full bg-black/80" />
+          {!bare ? <div className="pointer-events-none absolute bottom-2 left-1/2 z-30 h-[5px] w-[130px] -translate-x-1/2 rounded-full bg-black/80" /> : null}
         </div>
+  );
+  const css = <style>{'.vp-scroll { scrollbar-width: none; } .vp-scroll::-webkit-scrollbar { display: none; }'}</style>;
+  if (bare) return <>{screen}{css}</>;
+  return (
+    <div className="relative mx-auto" style={{ width: 380 }}>
+      {/* The phone */}
+      <div className="rounded-[56px] bg-[#0B0D10] p-[10px] shadow-[0_40px_80px_-30px_rgba(11,13,16,0.55)] ring-1 ring-white/15">
+        {screen}
       </div>
-      <style>{'.vp-scroll { scrollbar-width: none; } .vp-scroll::-webkit-scrollbar { display: none; }'}</style>
+      {css}
+    </div>
+  );
+}
+
+/**
+ * The page full screen on a phone: a slim bar to get back, then the page
+ * edge to edge, the way it'll look in the app.
+ */
+export function FullPreview({ venue, onClose, label = 'Preview · what players see' }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#0B0D10]" role="dialog" aria-label="Preview of your page">
+      <div className="shrink-0 h-14 px-4 flex items-center justify-between gap-3 border-b border-white/10">
+        <span className="flex items-center gap-2 text-[11px] font-extrabold tracking-[0.16em] uppercase text-white/60 truncate">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] shrink-0" /> {label}
+        </span>
+        <button type="button" onClick={onClose} className="shrink-0 h-9 px-4 rounded-full bg-white text-[#0B0D10] text-sm font-extrabold">Done</button>
+      </div>
+      <div className="flex-1 min-h-0">
+        <VenuePreview venue={venue} focus="hero" ring={false} bare />
+      </div>
     </div>
   );
 }
