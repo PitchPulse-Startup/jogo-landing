@@ -8,13 +8,30 @@
 //
 // `focus` ('hero' | 'about' | 'hours' | 'map') scrolls that part into view and
 // rings it, so the owner sees where what they're typing lands.
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronLeft, CheckCircle2, Plus, Bell, CalendarDays, Key, ChevronRight, ChevronDown, ChevronUp,
   Clock, Navigation, Instagram, Globe, Building2, ImagePlus,
 } from 'lucide-react';
 import { DISPLAY } from '../App.jsx';
 import { hoursLines, openStatus } from './applyKit';
+import { withFee } from './actions';
+
+const chipTop = (d) => {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const diff = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - t) / 864e5);
+  return diff === 0 ? 'TODAY' : diff === 1 ? 'TMRW' : d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+};
+const timeOf = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(':00', '').replace(' ', '').toLowerCase();
+const lenOf = (g) => {
+  const m = Math.round((g.end - g.start) / 60000);
+  return m % 60 ? `${(m / 60).toFixed(1)} hrs` : `${m / 60} hr${m === 60 ? '' : 's'}`;
+};
+const priceLabel = (c) => `$${(c / 100).toFixed(c % 100 ? 2 : 0)}`;
+const ago = (d) => {
+  const s = Math.max(0, (Date.now() - d) / 1000);
+  return s < 60 ? 'now' : s < 3600 ? `${Math.floor(s / 60)}m` : s < 86400 ? `${Math.floor(s / 3600)}h` : `${Math.floor(s / 86400)}d`;
+};
 
 const INK = '#0B0D10';
 const MUTED = '#5B6270';
@@ -30,6 +47,26 @@ export const previewFromVenue = (v) => ({
   name: v.name, bio: v.bio, address: v.address, city: v.city || '', location: v.location, hours: v.hours,
   fieldCount: v.fieldCount, instagram: v.instagram, tiktok: v.tiktok, website: v.website,
   bannerSrc: v.bannerUrl, logoSrc: v.logoUrl, photoSrcs: v.photos || [],
+});
+
+const toDate = (t) => (t instanceof Date ? t : t?.toDate ? t.toDate() : t ? new Date(t) : null);
+/** A games doc → a SlotCard. Rentals' own games and cancelled ones stay off the page. */
+export const previewFromGame = (g, isNew = false) => ({
+  id: g.id,
+  start: toDate(g.startDateTime),
+  end: toDate(g.endDateTime) || toDate(g.startDateTime),
+  maxPlayers: g.maxPlayers,
+  booked: (g.players || []).reduce((n, p) => n + 1 + (Number(p?.guests) || 0), 0),
+  priceCents: g.priceCents || 0,
+  title: g.title,
+  venueName: g.venueName,
+  kotf: g.miniTournament?.format === 'winnerStays',
+  teams: g.miniTournament ? `${g.miniTournament.teamCount} teams of ${g.miniTournament.teamSize}` : '',
+  isNew,
+});
+/** A feedPosts doc → a PostCard. */
+export const previewFromPost = (p, isNew = false) => ({
+  id: p.id, text: p.content, mediaUrl: p.mediaUrl, mediaType: p.mediaType, poster: p.videoThumbnail, at: toDate(p.createdAt) || new Date(), isNew,
 });
 
 // TikTok isn't in lucide; a small mark in the same weight.
@@ -52,9 +89,89 @@ const Ring = ({ on, children, className = '', radius = 22 }) => (
 
 // bare: no phone drawn around it; it fills its box (the full-screen preview on
 // a phone, where the visitor's own phone is the frame).
-export default function VenuePreview({ venue, focus, height = 760, ring = true, bare = false }) {
+// One game the way a player sees it (the app's SlotCard): time + length, the
+// name, spots (amber when few), a fill bar, the player's price.
+function SlotCard({ game: g }) {
+  const max = g.maxPlayers || 10;
+  const n = Math.min(max, g.booked || 0);
+  const left = max - n;
+  const full = left === 0;
+  const low = !full && left <= 5;
+  return (
+    <div
+      className="flex items-center gap-3.5 bg-white rounded-[20px] p-3.5 mb-2.5 transition-shadow"
+      style={{ border: `1px solid ${g.isNew ? MINT : EDGE}`, boxShadow: g.isNew ? '0 0 0 3px rgba(74,222,128,0.25)' : 'none' }}
+    >
+      <div style={{ width: 74 }}>
+        <div style={{ ...DISPLAY, color: INK, fontSize: 24, lineHeight: '32px', whiteSpace: 'nowrap' }}>{timeOf(g.start)}</div>
+        <div style={{ color: MUTED, fontSize: 12, fontWeight: 700 }}>{lenOf(g)}</div>
+      </div>
+      <div className="flex-1 min-w-0">
+        {g.title && g.title !== g.venueName ? <div className="truncate" style={{ color: INK, fontSize: 15, fontWeight: 800, marginBottom: 2 }}>{g.title}</div> : null}
+        <div className="truncate" style={{ color: full ? FAINT : low ? '#B45309' : INK, fontSize: 13.5, fontWeight: 800 }}>
+          {full ? 'Full · join the waitlist' : low ? `Only ${left} left` : `${left} spots open`}
+        </div>
+        {g.kotf ? <div style={{ color: MUTED, fontSize: 12.5, fontWeight: 600, marginTop: 1 }}>King of the field · {g.teams}</div> : null}
+        <div className="mt-1.5 h-[5px] rounded-full overflow-hidden" style={{ background: '#EEF0F3' }}>
+          <div className="h-full rounded-full" style={{ width: `${Math.round((n / max) * 100)}%`, background: full ? '#E5E7EB' : MINT }} />
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <div style={{ ...DISPLAY, color: INK, fontSize: 20, lineHeight: '26px' }}>{g.priceCents ? priceLabel(withFee(g.priceCents)) : 'Free'}</div>
+        <ChevronRight size={18} color={FAINT} />
+      </div>
+    </div>
+  );
+}
+
+// One update the way followers see it on the page.
+function PostCard({ post: p, venue }) {
+  return (
+    <div className="bg-white rounded-[20px] overflow-hidden" style={{ border: `1px solid ${p.isNew ? MINT : EDGE}`, boxShadow: p.isNew ? '0 0 0 3px rgba(74,222,128,0.25)' : 'none' }}>
+      <div className="flex items-center gap-2.5 p-3.5 pb-2.5">
+        <div className="w-9 h-9 rounded-[11px] overflow-hidden flex items-center justify-center shrink-0" style={{ background: KIT }}>
+          {venue.logoSrc ? <img src={venue.logoSrc} alt="" className="w-full h-full object-cover" /> : <Building2 size={16} color="#FFFFFF" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate" style={{ color: INK, fontSize: 14.5, fontWeight: 800 }}>{venue.name || 'Your indoor'}</div>
+          <div style={{ color: FAINT, fontSize: 12, fontWeight: 700 }}>
+            <span style={{ color: KIT, letterSpacing: '0.1em' }}>INDOOR</span> · {p.at ? ago(p.at) : 'now'}
+          </div>
+        </div>
+      </div>
+      {p.text ? <p className="px-3.5 pb-3 whitespace-pre-wrap" style={{ color: INK, fontSize: 15, lineHeight: '22px', fontWeight: 500, overflowWrap: 'anywhere' }}>{p.text}</p> : null}
+      {p.mediaUrl ? (
+        p.mediaType === 'video'
+          ? <video src={p.mediaUrl} poster={p.poster || undefined} muted playsInline loop autoPlay className="w-full max-h-[380px] object-cover bg-black" />
+          : <img src={p.mediaUrl} alt="" className="w-full max-h-[380px] object-cover" />
+      ) : null}
+    </div>
+  );
+}
+
+// games: [{ id, start: Date, end: Date, maxPlayers, booked, priceCents, title, kotf, isNew }]
+//   (priceCents is the indoor's price; players see it with the fee, like the app)
+// posts: [{ id, text, mediaUrl, mediaType, at: Date, isNew }]
+export default function VenuePreview({ venue, focus, height = 760, ring = true, bare = false, games = [], posts = [] }) {
   const scroller = useRef(null);
-  const parts = { hero: useRef(null), about: useRef(null), hours: useRef(null), map: useRef(null) };
+  const parts = {
+    hero: useRef(null), games: useRef(null), updates: useRef(null), about: useRef(null), hours: useRef(null), map: useRef(null),
+  };
+  const [pickedDay, setPickedDay] = useState(null);
+  const [scrolled, setScrolled] = useState(false); // past the banner: the status bar gets a backing
+  const days = useMemo(() => {
+    const out = [];
+    [...games].filter((g) => g.end > new Date()).sort((a, b) => a.start - b.start).forEach((g) => {
+      const key = g.start.toDateString();
+      const last = out[out.length - 1];
+      if (last && last.key === key) last.games.push(g);
+      else out.push({ key, date: g.start, games: [g] });
+    });
+    return out.slice(0, 21);
+  }, [games]);
+  // A draft game shows its own day; otherwise the one picked, else the soonest.
+  const newDay = days.find((d) => d.games.some((g) => g.isNew));
+  const shownDay = newDay || days.find((d) => d.key === pickedDay) || days[0];
   const [page, setPage] = useState(0);
   const [hoursOpen, setHoursOpen] = useState(false);
 
@@ -74,9 +191,9 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true, 
     const el = parts[focus]?.current;
     const box = scroller.current;
     if (!el || !box) return;
-    const top = focus === 'hero' ? 0 : el.offsetTop - 90;
+    const top = focus === 'hero' ? 0 : el.offsetTop - (bare ? 16 : 64);
     box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-  }, [focus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focus, games.some((g) => g.isNew) && games.find((g) => g.isNew)?.start?.getTime(), posts.some((p) => p.isNew)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const name = venue.name?.trim();
   const status = openStatus(venue.hours);
@@ -94,7 +211,7 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true, 
           {!bare ? (
             <>
               {/* Status bar + island, over everything */}
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-[50px] flex items-center justify-between px-8 text-white text-[14px]" style={{ fontWeight: 700 }}>
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-[50px] flex items-center justify-between px-8 text-white text-[14px] transition-colors duration-200" style={{ fontWeight: 700, background: scrolled ? INK : 'transparent' }}>
                 <span>9:41</span>
                 <span className="flex items-center gap-1.5">
                   <span className="flex items-end gap-[2px]">{[5, 7, 9, 11].map((h) => <span key={h} className="w-[3px] rounded-sm bg-white" style={{ height: h }} />)}</span>
@@ -103,13 +220,13 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true, 
               </div>
               <div className="pointer-events-none absolute left-1/2 top-[11px] z-30 h-[30px] w-[110px] -translate-x-1/2 rounded-full bg-black" />
               {/* Back, glass, like the app */}
-              <div className="pointer-events-none absolute left-4 top-[58px] z-20 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(11,13,16,0.4)', border: '1px solid rgba(255,255,255,0.2)' }}>
+              <div className="pointer-events-none absolute left-4 top-[58px] z-20 w-10 h-10 rounded-full flex items-center justify-center transition-opacity" style={{ background: 'rgba(11,13,16,0.4)', border: '1px solid rgba(255,255,255,0.2)', opacity: scrolled ? 0 : 1 }}>
                 <ChevronLeft size={22} color="#FFFFFF" />
               </div>
             </>
           ) : null}
 
-          <div ref={scroller} className="vp-scroll h-full overflow-y-auto overflow-x-hidden" style={{ fontFamily: "'Barlow', system-ui, sans-serif" }}>
+          <div ref={scroller} onScroll={(e) => { const on = e.currentTarget.scrollTop > heroH - 60; if (on !== scrolled) setScrolled(on); }} className="vp-scroll h-full overflow-y-auto overflow-x-hidden" style={{ fontFamily: "'Barlow', system-ui, sans-serif" }}>
             {/* ── Hero ── */}
             <div ref={parts.hero}>
               <Ring on={ring && focus === 'hero'} radius={0}>
@@ -155,7 +272,7 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true, 
                           {(name || 'Your indoor').toUpperCase()}
                         </div>
                         <div className="truncate" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14.5, fontWeight: 700, marginTop: -2 }}>
-                          {['Indoor', venue.city].filter(Boolean).join(' · ')}
+                          {['Indoor', venue.city, venue.followers ? `${venue.followers} follower${venue.followers === 1 ? '' : 's'}` : null].filter(Boolean).join(' · ')}
                         </div>
                       </div>
                     </div>
@@ -178,11 +295,33 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true, 
 
             {/* ── Body ── */}
             <div style={{ background: SOFT, borderTopLeftRadius: 28, borderTopRightRadius: 28, marginTop: -28, padding: '6px 16px 40px' }}>
-              <div style={{ ...DISPLAY, color: INK, fontSize: 24, lineHeight: '32px', margin: '24px 0 12px 4px' }}>JOIN A GAME</div>
-              <div className="bg-white rounded-[20px] p-6 flex flex-col items-center text-center gap-1" style={{ border: `1px solid ${EDGE}` }}>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-1.5" style={{ background: '#E4F5EA' }}><CalendarDays size={22} color={KIT} /></div>
-                <div style={{ color: INK, fontSize: 16, fontWeight: 800 }}>New times drop soon</div>
-                <div style={{ color: MUTED, fontSize: 14, lineHeight: '20px', fontWeight: 600 }}>Follow to hear the moment they post.</div>
+              <div ref={parts.games}>
+                <Ring on={ring && focus === 'games'} radius={22}>
+                  <div style={{ ...DISPLAY, color: INK, fontSize: 24, lineHeight: '32px', margin: '24px 0 12px 4px' }}>JOIN A GAME</div>
+                  {days.length ? (
+                    <>
+                      <div className="vp-scroll -mx-4 px-4 flex gap-2 overflow-x-auto mb-3">
+                        {days.map((d) => {
+                          const on = d.key === shownDay?.key;
+                          return (
+                            <button key={d.key} type="button" onClick={() => setPickedDay(d.key)} className="shrink-0 w-[76px] rounded-[18px] py-2.5 flex flex-col items-center" style={{ background: on ? INK : '#FFFFFF', border: `1px solid ${on ? INK : EDGE}` }}>
+                              <span style={{ color: on ? MINT : MUTED, fontSize: 10.5, letterSpacing: '0.12em', fontWeight: 800 }}>{chipTop(d.date)}</span>
+                              <span style={{ ...DISPLAY, color: on ? '#FFFFFF' : INK, fontSize: 26, lineHeight: '34px' }}>{d.date.getDate()}</span>
+                              <span style={{ color: on ? 'rgba(255,255,255,0.6)' : FAINT, fontSize: 11, fontWeight: 700 }}>{d.games.length} game{d.games.length === 1 ? '' : 's'}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {shownDay.games.map((g) => <SlotCard key={g.id} game={g} />)}
+                    </>
+                  ) : (
+                    <div className="bg-white rounded-[20px] p-6 flex flex-col items-center text-center gap-1" style={{ border: `1px solid ${EDGE}` }}>
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center mb-1.5" style={{ background: '#E4F5EA' }}><CalendarDays size={22} color={KIT} /></div>
+                      <div style={{ color: INK, fontSize: 16, fontWeight: 800 }}>New times drop soon</div>
+                      <div style={{ color: MUTED, fontSize: 14, lineHeight: '20px', fontWeight: 600 }}>Follow to hear the moment they post.</div>
+                    </div>
+                  )}
+                </Ring>
               </div>
 
               <div className="mt-3.5 bg-white rounded-[20px] p-3.5 flex items-center gap-3" style={{ border: `1px solid ${EDGE}` }}>
@@ -195,6 +334,17 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true, 
                 </div>
                 <ChevronRight size={18} color={FAINT} />
               </div>
+
+              {posts?.length ? (
+                <div ref={parts.updates}>
+                  <Ring on={ring && focus === 'updates'} radius={22}>
+                    <div style={{ ...DISPLAY, color: INK, fontSize: 24, lineHeight: '32px', margin: '24px 0 12px 4px' }}>UPDATES</div>
+                    <div className="space-y-3">
+                      {posts.slice(0, 3).map((p) => <PostCard key={p.id} post={p} venue={venue} />)}
+                    </div>
+                  </Ring>
+                </div>
+              ) : null}
 
               <div style={{ ...DISPLAY, color: INK, fontSize: 24, lineHeight: '32px', margin: '24px 0 12px 4px' }}>ABOUT</div>
               <div className="bg-white rounded-[22px] overflow-hidden" style={{ border: `1px solid ${EDGE}` }}>
@@ -291,7 +441,7 @@ export default function VenuePreview({ venue, focus, height = 760, ring = true, 
  * The page full screen on a phone: a slim bar to get back, then the page
  * edge to edge, the way it'll look in the app.
  */
-export function FullPreview({ venue, onClose, label = 'Preview · what players see' }) {
+export function FullPreview({ venue, onClose, label = 'Preview · what players see', games = [], posts = [], focus = 'hero' }) {
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -308,7 +458,7 @@ export function FullPreview({ venue, onClose, label = 'Preview · what players s
         <button type="button" onClick={onClose} className="shrink-0 h-9 px-4 rounded-full bg-white text-[#0B0D10] text-sm font-extrabold">Done</button>
       </div>
       <div className="flex-1 min-h-0">
-        <VenuePreview venue={venue} focus="hero" ring={false} bare />
+        <VenuePreview venue={venue} focus={focus} ring={false} bare games={games} posts={posts} />
       </div>
     </div>
   );

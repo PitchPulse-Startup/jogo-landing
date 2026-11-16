@@ -4,9 +4,11 @@
 import React, { useMemo, useState } from 'react';
 import { Lock, Plus, X } from 'lucide-react';
 import {
-  answerSplit, approveRental, asDate, cancelBooking, canSaveRate, checkDeleteVenue, createGames, deleteVenue, deadlineText, declineRental, declineSplit, money, openPayouts, rateFor, saveRate, withFee,
+  answerSplit, approveRental, asDate, cancelBooking, makeTeams, canSaveRate, checkDeleteVenue, createGames, deleteVenue, deadlineText, declineRental, declineSplit, money, openPayouts, rateFor, saveRate, withFee,
 } from './actions';
 import { clock } from './RatesEditor.jsx';
+import { usePhoneScale, PHONE_H } from './formKit.jsx';
+import VenuePreview, { FullPreview, previewFromVenue } from './VenuePreview.jsx';
 import { toast } from './Toast.jsx';
 
 const DAY_NAMES = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
@@ -315,9 +317,12 @@ const latestClose = (venue) => (Array.isArray(venue.hours) && venue.hours.length
   ? Math.max(1440, ...venue.hours.map((h) => (h ? Math.min(h.close, 1620) : 0)))
   : 1440);
 
-/** Open games, on one date or the same time for several weeks. Teams stay in the app. */
-export function CreateGame({ venue, games, rentals, onDone }) {
+/** Games on one date or the same time for several weeks: an open game (spots)
+ *  or teams playing King of the field, like the app's Scheduler. The phone on
+ *  the right shows them on the page before they post. */
+export function CreateGame({ venue, games, rentals, pageGames = [], posts = [], followers, onDone }) {
   const fieldCount = Math.max(1, Number(venue.fieldCount) || 1);
+  const phoneScale = usePhoneScale();
   const [date, setDate] = useState('');
   const [startMin, setStartMin] = useState(1140);
   const [length, setLength] = useState(60);
@@ -325,11 +330,16 @@ export function CreateGame({ venue, games, rentals, onDone }) {
   const [weeks, setWeeks] = useState(1);
   const [paid, setPaid] = useState(true);
   const [price, setPrice] = useState('');
+  const [mode, setMode] = useState('open'); // 'open' | 'teams'
   const [spots, setSpots] = useState(14);
+  const [teamCount, setTeamCount] = useState(4);
+  const [teamSize, setTeamSize] = useState(5);
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const [preview, setPreview] = useState(false);
   const cents = paid ? Math.round((parseFloat(price) || 0) * 100) : 0;
+  const perGame = mode === 'teams' ? teamCount * teamSize : spots;
 
   // Each date, and why it can't post if it can't.
   const plan = useMemo(() => {
@@ -359,58 +369,105 @@ export function CreateGame({ venue, games, rentals, onDone }) {
   const post = async () => {
     setBusy(true); setErr(null);
     try {
-      await createGames(venue, { slots: good, priceCents: cents, maxPlayers: spots, title });
+      await createGames(venue, { slots: good, priceCents: cents, maxPlayers: spots, title, teams: mode === 'teams' ? { teamCount, teamSize } : null });
       toast(good.length === 1 ? 'Your game is live' : `${good.length} games are live`, 'Players nearby can see it on Jogo now.');
       onDone(good.length);
     } catch (e) {
       console.error('creating games failed:', e);
-      setErr('Couldn\'t post your games. Try again.');
+      setErr('Couldn’t post your games. Try again.');
       setBusy(false);
     }
   };
+
+  // The page with these games on it, highlighted.
+  const drafts = good.map((p, i) => ({
+    id: `draft-${i}`, start: p.start, end: p.end, maxPlayers: perGame, booked: 0, priceCents: cents,
+    title: title.trim() || venue.name, venueName: venue.name, kotf: mode === 'teams', teams: `${teamCount} teams of ${teamSize}`, isNew: true,
+  }));
+  const shownGames = [...pageGames, ...drafts];
+  const page = { ...previewFromVenue(venue), followers };
+
   return (
-    <div className="bg-white rounded-3xl border border-[#E6E8EC] p-5 sm:p-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-extrabold text-lg text-[#0B0D10]">Create games</h2>
-        <button type="button" onClick={() => onDone(0)} aria-label="Close" className="w-10 h-10 rounded-full bg-[#F2F3F5] inline-flex items-center justify-center"><X size={17} /></button>
+    <div className="grid xl:grid-cols-[minmax(0,1fr)_400px] gap-8 items-start">
+      <div className="bg-white rounded-3xl border border-[#E6E8EC] p-5 sm:p-6 min-w-0">
+        <div className="flex items-center justify-between">
+          <h2 className="font-extrabold text-lg text-[#0B0D10]">Create games</h2>
+          <button type="button" onClick={() => onDone(0)} aria-label="Close" className="w-10 h-10 rounded-full bg-[#F2F3F5] inline-flex items-center justify-center"><X size={17} /></button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {[['open', 'Open game', 'Players grab a spot'], ['teams', 'King of the field', 'Players pick a team · winner stays on']].map(([v, t, sub]) => (
+            <button key={v} type="button" onClick={() => setMode(v)} className={`text-left rounded-2xl p-4 border-2 transition-colors ${mode === v ? 'border-[#0B0D10] bg-[#0B0D10] text-white' : 'border-[#E6E8EC] hover:border-[#C9CED6]'}`}>
+              <div className="font-extrabold">{t}</div>
+              <div className={`text-sm font-semibold ${mode === v ? 'text-white/65' : 'text-[#6B7280]'}`}>{sub}</div>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <label className="col-span-2 sm:col-span-1"><span className={label}>Date</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${input} w-full`} /></label>
+          <label><span className={label}>Starts</span><select value={startMin} onChange={(e) => setStartMin(Number(e.target.value))} className={`${input} w-full`}>{TIMES.filter((m) => m < latestClose(venue)).map((m) => <option key={m} value={m}>{m >= 1440 ? `${clock(m)} (late)` : clock(m)}</option>)}</select></label>
+          <label><span className={label}>How long</span><select value={length} onChange={(e) => setLength(Number(e.target.value))} className={`${input} w-full`}>{LENGTHS.map((m) => <option key={m} value={m}>{m / 60} hr{m === 60 ? '' : 's'}</option>)}</select></label>
+          <label><span className={label}>Repeat</span><select value={weeks} onChange={(e) => setWeeks(Number(e.target.value))} className={`${input} w-full`}>{[1, 2, 3, 4, 6, 8, 12].map((n) => <option key={n} value={n}>{n === 1 ? 'Just once' : `${n} weeks`}</option>)}</select></label>
+          {fieldCount > 1 ? <label><span className={label}>Field</span><select value={field} onChange={(e) => setField(Number(e.target.value))} className={`${input} w-full`}>{Array.from({ length: fieldCount }, (_, i) => <option key={i} value={i + 1}>Field {i + 1}</option>)}</select></label> : null}
+          {mode === 'open' ? (
+            <label><span className={label}>Spots</span><input inputMode="numeric" value={spots} onChange={(e) => setSpots(Math.min(40, Number(e.target.value.replace(/[^0-9]/g, '')) || 0))} onBlur={() => setSpots(Math.max(2, spots))} className={`${input} w-full`} /></label>
+          ) : (
+            <>
+              <label><span className={label}>Teams</span><select value={teamCount} onChange={(e) => setTeamCount(Number(e.target.value))} className={`${input} w-full`}>{[2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n} teams</option>)}</select></label>
+              <label><span className={label}>Per team</span><select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value))} className={`${input} w-full`}>{[3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}v{n}</option>)}</select></label>
+            </>
+          )}
+          <div><span className={label}>Price</span>
+            <div className="flex gap-1">
+              <button type="button" onClick={() => setPaid(true)} className={`h-11 px-3 rounded-xl font-bold text-sm ${paid ? 'bg-[#0E7A43] text-white' : 'bg-[#F2F3F5]'}`}>Paid</button>
+              <button type="button" onClick={() => setPaid(false)} className={`h-11 px-3 rounded-xl font-bold text-sm ${!paid ? 'bg-[#0E7A43] text-white' : 'bg-[#F2F3F5]'}`}>Free</button>
+            </div>
+          </div>
+          {paid ? <label><span className={label}>Per player</span><span className={`${input} inline-flex items-center gap-1 w-full`}>$<input inputMode="decimal" placeholder="0" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, '').slice(0, 6))} className="w-full bg-transparent outline-none" /></span></label> : null}
+          <label className="col-span-2"><span className={label}>Name (optional)</span><input value={title} maxLength={60} placeholder={venue.name} onChange={(e) => setTitle(e.target.value)} className={`${input} w-full`} /></label>
+        </div>
+        {mode === 'teams' ? (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {makeTeams(teamCount).map((t) => (
+              <span key={t.id} className="inline-flex items-center gap-1.5 h-8 pl-1.5 pr-3 rounded-full bg-[#F2F3F5] text-sm font-extrabold">
+                <span className="w-5 h-5 rounded-full" style={{ background: t.color }} /> {t.name}
+              </span>
+            ))}
+            <span className="text-sm font-semibold text-[#6B7280]">= {perGame} spots per game. On game day a player keeps score in the app.</span>
+          </div>
+        ) : null}
+        {paid && cents >= 100 ? (
+          <p className="text-sm font-semibold mt-3 text-[#6B7280]">
+            <span className="font-extrabold text-[#0E7A43]">A full game pays you {money(cents * perGame)}.</span> Each player pays {money(withFee(cents))} with the service fee.
+          </p>
+        ) : null}
+        {plan.length > 1 || plan.some((p) => p.why) ? (
+          <ul className="mt-3 space-y-1">
+            {plan.map((p) => (
+              <li key={p.start.getTime()} className={`text-sm font-semibold ${p.why ? 'text-[#9CA3AF]' : 'text-[#0B0D10]'}`}>
+                <span className={p.why ? 'line-through' : ''}>{dayLabel(p.start)}, {timeLabel(p.start)} – {timeLabel(p.end)}</span>{p.why ? ` · ${p.why}` : ''}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {needPayouts ? <PayoutsNeeded what="charge for games" /> : null}
+        {err ? <p className="text-sm font-semibold text-[#BE123C] mt-2">{err}</p> : null}
+        <div className="mt-4 flex items-center gap-3 flex-wrap">
+          <button type="button" disabled={!!problem || busy} onClick={post} className={`${btn} bg-[#0E7A43] text-white`}>{busy ? 'Posting…' : `Post ${good.length || ''} game${good.length === 1 ? '' : 's'}`}</button>
+          <button type="button" onClick={() => setPreview(true)} className={`${btn} xl:hidden border border-[#E6E8EC]`}>Preview</button>
+          {problem ? <span className="text-sm font-semibold text-[#6B7280]">{problem}</span> : null}
+        </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <label className="col-span-2 sm:col-span-1"><span className={label}>Date</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${input} w-full`} /></label>
-        <label><span className={label}>Starts</span><select value={startMin} onChange={(e) => setStartMin(Number(e.target.value))} className={`${input} w-full`}>{TIMES.filter((m) => m < latestClose(venue)).map((m) => <option key={m} value={m}>{m >= 1440 ? `${clock(m)} (late)` : clock(m)}</option>)}</select></label>
-        <label><span className={label}>How long</span><select value={length} onChange={(e) => setLength(Number(e.target.value))} className={`${input} w-full`}>{LENGTHS.map((m) => <option key={m} value={m}>{m / 60} hr{m === 60 ? '' : 's'}</option>)}</select></label>
-        <label><span className={label}>Repeat</span><select value={weeks} onChange={(e) => setWeeks(Number(e.target.value))} className={`${input} w-full`}>{[1, 2, 3, 4, 6, 8, 12].map((n) => <option key={n} value={n}>{n === 1 ? 'Just once' : `${n} weeks`}</option>)}</select></label>
-        {fieldCount > 1 ? <label><span className={label}>Field</span><select value={field} onChange={(e) => setField(Number(e.target.value))} className={`${input} w-full`}>{Array.from({ length: fieldCount }, (_, i) => <option key={i} value={i + 1}>Field {i + 1}</option>)}</select></label> : null}
-        <label><span className={label}>Spots</span><input inputMode="numeric" value={spots} onChange={(e) => setSpots(Math.min(40, Number(e.target.value.replace(/[^0-9]/g, '')) || 0))} onBlur={() => setSpots(Math.max(2, spots))} className={`${input} w-full`} /></label>
-        <div><span className={label}>Price</span>
-          <div className="flex gap-1">
-            <button type="button" onClick={() => setPaid(true)} className={`h-11 px-3 rounded-xl font-bold text-sm ${paid ? 'bg-[#0E7A43] text-white' : 'bg-[#F2F3F5]'}`}>Paid</button>
-            <button type="button" onClick={() => setPaid(false)} className={`h-11 px-3 rounded-xl font-bold text-sm ${!paid ? 'bg-[#0E7A43] text-white' : 'bg-[#F2F3F5]'}`}>Free</button>
+      <aside className="hidden xl:block sticky top-6">
+        <div className="text-center mb-3 text-xs font-extrabold tracking-[0.18em] uppercase text-[#5B6270]">{drafts.length ? 'How players will see it' : 'Your page'}</div>
+        <div style={{ height: (PHONE_H + 20) * Math.min(phoneScale, 0.92) }}>
+          <div style={{ transform: `scale(${Math.min(phoneScale, 0.92)})`, transformOrigin: 'top center' }}>
+            <VenuePreview venue={page} focus="games" height={PHONE_H} games={shownGames} posts={posts} />
           </div>
         </div>
-        {paid ? <label><span className={label}>Per player</span><span className={`${input} inline-flex items-center gap-1 w-full`}>$<input inputMode="decimal" placeholder="0" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, '').slice(0, 6))} className="w-full bg-transparent outline-none" /></span></label> : null}
-        <label className="col-span-2"><span className={label}>Name (optional)</span><input value={title} maxLength={60} placeholder={venue.name} onChange={(e) => setTitle(e.target.value)} className={`${input} w-full`} /></label>
-      </div>
-      {paid && cents >= 100 ? (
-        <p className="text-sm font-semibold mt-3 text-[#6B7280]">
-          <span className="font-extrabold text-[#0E7A43]">A full game pays you {money(cents * spots)}.</span> Each player pays {money(withFee(cents))} with the service fee.
-        </p>
-      ) : null}
-      {plan.length > 1 || plan.some((p) => p.why) ? (
-        <ul className="mt-3 space-y-1">
-          {plan.map((p) => (
-            <li key={p.start.getTime()} className={`text-sm font-semibold ${p.why ? 'text-[#9CA3AF]' : 'text-[#0B0D10]'}`}>
-              <span className={p.why ? 'line-through' : ''}>{dayLabel(p.start)}, {timeLabel(p.start)} – {timeLabel(p.end)}</span>{p.why ? ` · ${p.why}` : ''}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {needPayouts ? <PayoutsNeeded what="charge for games" /> : null}
-      {err ? <p className="text-sm font-semibold text-[#BE123C] mt-2">{err}</p> : null}
-      <div className="mt-4 flex items-center gap-3 flex-wrap">
-        <button type="button" disabled={!!problem || busy} onClick={post} className={`${btn} bg-[#0E7A43] text-white`}>{busy ? 'Posting…' : `Post ${good.length || ''} game${good.length === 1 ? '' : 's'}`}</button>
-        {problem ? <span className="text-sm font-semibold text-[#6B7280]">{problem}</span> : null}
-      </div>
-      <p className="text-sm font-semibold text-[#6B7280] mt-3">For King of the field, use the Jogo app.</p>
+      </aside>
+      {preview ? <FullPreview venue={page} games={shownGames} posts={posts} focus="games" onClose={() => setPreview(false)} label={drafts.length ? 'How players will see it' : 'Your page'} /> : null}
     </div>
   );
 }

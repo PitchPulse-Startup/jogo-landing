@@ -211,7 +211,7 @@ const toJpeg = async (file, maxWidth) => {
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode'))), 'image/jpeg', 0.75));
 };
 
-const uploadImage = async (file, preset, path) => {
+export const uploadImage = async (file, preset, path) => {
   const blob = await toJpeg(file, PRESETS[preset]);
   const r = ref(storage, path);
   await uploadBytes(r, blob, { contentType: 'image/jpeg', cacheControl: CACHE_HEADER });
@@ -219,7 +219,7 @@ const uploadImage = async (file, preset, path) => {
 };
 
 // Same folders as the app (storage rules: banners/{uid}, squad_images/{uid}).
-const upload = (uid, file, kind, i = 0) => {
+export const upload = (uid, file, kind, i = 0) => {
   if (!file) return Promise.resolve(null);
   if (typeof file === 'string') return Promise.resolve(file); // already uploaded
   const t = Date.now();
@@ -241,8 +241,9 @@ export const getVenue = async (uid) => {
  *         banner, photos, fieldCount, cancelHours, cancelKeepPct, hours }
  * logo/banner/photos are File objects (or URLs already uploaded).
  */
-export const submitVenue = async (user, form, existing = null) => {
-  const uid = user.uid;
+// The profile half of the venue doc, built the same way for an application and
+// for an edit. Uploads any new images first.
+const buildProfile = async (uid, form, existing) => {
   const [logoUrl, bannerUrl, photos] = await Promise.all([
     upload(uid, form.logo, 'logo'),
     upload(uid, form.banner, 'banner'),
@@ -263,13 +264,22 @@ export const submitVenue = async (user, form, existing = null) => {
     cancelKeepPct: CANCEL_KEEP.includes(form.cancelKeepPct) ? form.cancelKeepPct : 50,
     photos,
     hours: form.hours || null,
-    closedDates: existing?.closedDates || [],
+    closedDates: (form.closedDates ?? existing?.closedDates ?? []).slice(0, 60),
     updatedAt: serverTimestamp(),
   };
   if (profile.location) {
-    const { state, city } = await reverseGeocodeStateCity(profile.location.latitude, profile.location.longitude);
-    if (state) { profile.state = state; profile.city = city; }
+    const moved = !existing?.location || existing.location.latitude !== profile.location.latitude || existing.location.longitude !== profile.location.longitude;
+    if (moved || !existing?.state) {
+      const { state, city } = await reverseGeocodeStateCity(profile.location.latitude, profile.location.longitude);
+      if (state) { profile.state = state; profile.city = city; }
+    }
   }
+  return profile;
+};
+
+export const submitVenue = async (user, form, existing = null) => {
+  const uid = user.uid;
+  const profile = await buildProfile(uid, form, existing);
   const venueRef = doc(db, 'venues', uid);
   if (!existing) {
     await setDoc(venueRef, {
@@ -286,4 +296,10 @@ export const submitVenue = async (user, form, existing = null) => {
   } else {
     throw new Error('already-applied');
   }
+};
+
+/** The portal's Edit page: saves the profile of a live (or pending) indoor. */
+export const saveVenueProfile = async (venue, form) => {
+  const profile = await buildProfile(venue.id, form, venue);
+  await updateDoc(doc(db, 'venues', venue.id), profile);
 };

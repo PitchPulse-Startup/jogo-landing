@@ -129,8 +129,18 @@ export const saveRate = (venue, start, end, priceCents) => {
 };
 
 // ── Creating games ── the same game the app's postVenueSlots writes.
-/** slots: [{ start: Date, end: Date, field }]. title blank = the venue's name. */
-export const createGames = async (venue, { slots, priceCents, maxPlayers, title }) => {
+// Team colors, in order (jogo-APP services/miniTournament.js TEAM_META / makeTeams).
+export const TEAM_META = [
+  { name: 'Green', color: '#16A34A' }, { name: 'Black', color: '#0F1115' }, { name: 'Orange', color: '#EA580C' },
+  { name: 'Blue', color: '#2563EB' }, { name: 'Red', color: '#DC2626' }, { name: 'Purple', color: '#7C3AED' },
+  { name: 'Yellow', color: '#CA8A04' }, { name: 'Pink', color: '#DB2777' },
+];
+export const makeTeams = (count) => TEAM_META.slice(0, count).map((t, i) => ({ id: String.fromCharCode(65 + i), ...t }));
+
+/** slots: [{ start: Date, end: Date, field }]. title blank = the venue's name.
+ *  teams: { teamCount, teamSize } for King of the field (spots = count × size). */
+export const createGames = async (venue, { slots, priceCents, maxPlayers: openSpots, title, teams = null }) => {
+  const maxPlayers = teams ? teams.teamCount * teams.teamSize : openSpots;
   const gameTitle = String(title || '').trim().slice(0, 60) || venue.name;
   const fieldCount = Math.max(1, Number(venue.fieldCount) || 1);
   const field = {
@@ -140,6 +150,8 @@ export const createGames = async (venue, { slots, priceCents, maxPlayers, title 
     longitude: venue.location?.longitude ?? null,
     surface: 'indoor',
     imageUrl: venue.bannerUrl || null,
+    state: venue.state || null,
+    city: venue.city || null,
   };
   const noGear = { needed: false, claimedBy: null, claimedByName: null, claimedByPhotoURL: null };
   const batch = writeBatch(db);
@@ -167,7 +179,9 @@ export const createGames = async (venue, { slots, priceCents, maxPlayers, title 
       squadName: null,
       isPrivate: false,
       qrCheckInEnabled: true,
-      miniTournament: null,
+      miniTournament: teams
+        ? { status: 'planned', format: 'winnerStays', teamCount: teams.teamCount, teamSize: teams.teamSize, teams: makeTeams(teams.teamCount) }
+        : null,
       status: 'open',
       isLive: false,
       equipment: { soccerBall: noGear, pennies: noGear, nets: noGear },
@@ -217,4 +231,83 @@ export const openPayouts = async () => {
   const { data } = await httpsCallable(functions, 'startTicketCheckout')({ action: 'venuePayouts', returnUrl: window.location.href });
   if (data?.url) window.location.href = data.url;
   return data;
+};
+
+// ── Editing / cancelling one game (the app's VenueGameEditor, services/venues.js
+// updateVenueGame + deleteVenueGame). Everyone booked or waitlisted hears about
+// a new time or field, and about a cancel. Paid players are refunded by the
+// server when they come off the game (functions onPaidGameWritten).
+const rosterIds = (game) => [...new Set([
+  ...(game.players || []).map((p) => p?.userId),
+  ...(game.queue || []).map((p) => p?.userId),
+].filter((id) => id && id !== game.venueId))];
+export const bookedCount = (game) => rosterIds(game).length;
+const tellRoster = (game, title, body) => Promise.all(rosterIds(game).map((id) => push(id, title, body, { gameId: game.id, screen: 'GameDetails', params: { game: { id: game.id } } })));
+
+/** What cancelling means, said before they do it. */
+export const cancelMessage = (game) => {
+  const paid = (game.players || []).filter((p) => p?.paid).length;
+  const told = rosterIds(game).length;
+  const count = (n) => `${n} player${n === 1 ? '' : 's'}`;
+  if (!told) return 'Nobody has joined yet. It’s removed from your schedule and from Jogo.';
+  if (!paid) return `It’s removed for everyone, and the ${count(told)} booked will be told it’s off.`;
+  const each = withFee(game.priceCents);
+  const fees = paid * (Math.round(each * 0.029) + 30);
+  return `${count(paid)} paid. Each gets the full ${money(each)} back on their card and is told it’s off. Refunds can take 5–10 days to show. Because you’re cancelling, about ${money(fees)} in payment fees comes off your payout.`;
+};
+
+/** patch: { start: Date, end: Date, field, maxPlayers, title }. */
+export const updateVenueGame = async (game, { start, end, field, maxPlayers, title }) => {
+  const oldStart = asDate(game.startDateTime);
+  const oldEnd = asDate(game.endDateTime);
+  const update = { updatedAt: serverTimestamp() };
+  const changes = [];
+  if (start.getTime() !== oldStart?.getTime() || end.getTime() !== oldEnd?.getTime()) {
+    update.startDateTime = Timestamp.fromDate(start);
+    update.endDateTime = Timestamp.fromDate(end);
+    changes.push(whenText(start, end));
+  }
+  if ((field || 1) !== (game.venueField || 1)) {
+    update.venueField = field || 1;
+    changes.push(`Field ${field || 1}`);
+  }
+  if (maxPlayers != null && maxPlayers !== game.maxPlayers) update.maxPlayers = maxPlayers;
+  if (title !== undefined) {
+    const t = String(title).trim().slice(0, 60) || game.venueName || game.title;
+    if (t !== game.title) update.title = t;
+  }
+  await updateDoc(doc(db, 'games', game.id), update);
+  if (changes.length) await tellRoster(game, `${game.venueName || 'Your indoor'} changed your game`, `Now ${changes.join(' · ')}. Tap to see it.`);
+};
+
+export const deleteVenueGame = async (game) => {
+  const start = asDate(game.startDateTime);
+  const end = asDate(game.endDateTime) || start;
+  await tellRoster(game, `${game.venueName || 'Your indoor'} cancelled a game`, `${start ? whenText(start, end) : 'Your game'} is off. Sorry about that.`);
+  const ref = doc(db, 'games', game.id);
+  try { await deleteDoc(ref); } catch { await updateDoc(ref, { status: 'cancelled', cancelledAt: serverTimestamp(), updatedAt: serverTimestamp() }); }
+  try {
+    const chat = await getDocs(query(collection(db, 'game-chats'), where('gameId', '==', game.id)));
+    await Promise.all(chat.docs.map((m) => deleteDoc(m.ref)));
+  } catch { /* best effort */ }
+  try {
+    const posts = await getDocs(query(collection(db, 'feedPosts'), where('gameData.id', '==', game.id)));
+    await Promise.all(posts.docs.filter((p) => p.data().venueId === game.venueId).map((p) => deleteDoc(p.ref)));
+  } catch { /* best effort */ }
+};
+
+// ── Messages with a renter (services/rentals.js sendRentalMessage, as the indoor) ──
+export const sendRentalMessage = async (r, uid, text) => {
+  const body = String(text || '').trim().slice(0, 1000);
+  if (!body) return;
+  await addDoc(collection(db, 'rentals', r.id, 'messages'), { senderId: uid, fromVenue: true, text: body, createdAt: serverTimestamp() });
+  await updateDoc(doc(db, 'rentals', r.id), {
+    lastMsgAt: serverTimestamp(), lastMsgBy: uid, lastMsgText: body.slice(0, 120), chatOpen: true, ownerReadAt: serverTimestamp(),
+  });
+  push(r.userId, r.venueName, body.length > 90 ? `${body.slice(0, 90)}…` : body, { screen: 'MyGames' });
+};
+export const markRentalRead = (r) => updateDoc(doc(db, 'rentals', r.id), { ownerReadAt: serverTimestamp() }).catch(() => {});
+export const hasUnread = (r, uid) => {
+  if (!r?.lastMsgAt || r.lastMsgBy === uid) return false;
+  return !r.ownerReadAt || r.ownerReadAt.toMillis?.() < r.lastMsgAt.toMillis?.();
 };

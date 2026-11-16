@@ -1,8 +1,10 @@
 // src/IndoorPortal.jsx — jogous.io/indoors/portal, an indoor owner's desk on the
 // web. They sign in with the same account as the app and see more room than a
 // phone gives: the schedule with who's coming, bookings, what they've earned,
-// and the set rates that live here. They can answer requests and splits, create
-// games, and call off a booking when something happens.
+// and the set rates that live here. Everything the app does is here too, so an
+// indoor never needs the app: edit the page, create games (open or King of the
+// field), edit or cancel one, post updates, message renters, answer requests and
+// splits, payouts. Anything players will see is previewed in a phone first.
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut,
@@ -12,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import {
   CalendarDays, Key, Wallet, Clock, LayoutDashboard, LogOut, ChevronDown, Users, BarChart3, BadgeCheck, Settings, QrCode,
+  Smartphone, Megaphone, MessageCircle, Pencil, Plus, Bell, ArrowRight,
 } from 'lucide-react';
 import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import { DISPLAY, BODY, useMatchdayFonts } from './App.jsx';
@@ -25,6 +28,12 @@ import { CancelBooking, CreateButton, CreateGame, DeleteIndoor, RequestCard, Spl
 import Toaster, { toast } from './indoor/Toast.jsx';
 import { FillCountdown, PayCountdown } from './indoor/Countdown.jsx';
 import NotLive from './indoor/NotLive.jsx';
+import PageEditor from './indoor/PageEditor.jsx';
+import Posts from './indoor/Posts.jsx';
+import GameEditor from './indoor/GameEditor.jsx';
+import RentalChat from './indoor/RentalChat.jsx';
+import VenuePreview, { previewFromVenue, previewFromGame, previewFromPost } from './indoor/VenuePreview.jsx';
+import { hasUnread } from './indoor/actions';
 
 const money = (c) => `$${((c || 0) / 100).toFixed((c || 0) % 100 ? 2 : 0)}`;
 const asDate = (t) => (t?.toDate ? t.toDate() : t ? new Date(t) : null);
@@ -35,12 +44,14 @@ const attending = (g) => (g.players || []).reduce((n, p) => n + 1 + (Number(p?.g
 
 const TABS = [
   { id: 'overview', label: 'Overview', Icon: LayoutDashboard },
-  { id: 'analytics', label: 'Analytics', Icon: BarChart3 },
+  { id: 'page', label: 'Your page', Icon: Smartphone },
   { id: 'schedule', label: 'Schedule', Icon: CalendarDays },
+  { id: 'posts', label: 'Posts', Icon: Megaphone },
   { id: 'bookings', label: 'Bookings', Icon: Key },
   { id: 'checkin', label: 'Check-in', Icon: QrCode },
   { id: 'rates', label: 'Slots & rates', Icon: Clock },
   { id: 'money', label: 'Money', Icon: Wallet },
+  { id: 'analytics', label: 'Analytics', Icon: BarChart3 },
   { id: 'settings', label: 'Settings', Icon: Settings },
 ];
 
@@ -124,7 +135,7 @@ const verifiedAt = (game, uid) => {
 };
 
 // defaultOpen: the Check-in tab shows today's rosters already open.
-export function GameRow({ game, fieldCount, defaultOpen = false }) {
+export function GameRow({ game, fieldCount, defaultOpen = false, onEdit = null }) {
   const [open, setOpen] = useState(defaultOpen);
   const st = asDate(game.startDateTime);
   const en = asDate(game.endDateTime);
@@ -169,6 +180,9 @@ export function GameRow({ game, fieldCount, defaultOpen = false }) {
               ))}
             </ul>
           ) : <p className="text-sm font-semibold text-[#6B7280]">Nobody yet.</p>}
+          {onEdit ? (
+            <button type="button" onClick={onEdit} className="mt-3 h-9 px-4 rounded-full bg-[#F2F3F5] hover:bg-[#E9EBEF] text-sm font-extrabold inline-flex items-center gap-1.5"><Pencil size={14} /> Edit or cancel</button>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -181,7 +195,17 @@ const STATUS = {
   paid: { t: 'Booked', c: 'bg-[#E4F5EA] text-[#0E7A43]' },
 };
 
-function BookingRow({ r, fieldCount, payments = [], games = [] }) {
+// Message the renter, with a dot when they've written and it's unread.
+function MessageButton({ r, uid, onOpen }) {
+  const unread = hasUnread(r, uid);
+  return (
+    <button type="button" onClick={() => onOpen(r)} className={`relative h-9 px-3.5 rounded-full text-sm font-extrabold inline-flex items-center gap-1.5 ${unread ? 'bg-[#0E7A43] text-white' : 'bg-[#F2F3F5] hover:bg-[#E9EBEF] text-[#0B0D10]'}`}>
+      <MessageCircle size={14} /> {unread ? 'New message' : 'Message'}
+    </button>
+  );
+}
+
+function BookingRow({ r, fieldCount, payments = [], games = [], uid, onMessage }) {
   const splitGame = r.gameId ? games.find((g) => g.id === r.gameId) : null;
   const st = asDate(r.start);
   const en = asDate(r.end);
@@ -200,6 +224,7 @@ function BookingRow({ r, fieldCount, payments = [], games = [] }) {
       </div>
       <div className="font-extrabold text-[#0B0D10]">{r.priceCents ? money(r.priceCents) : ''}</div>
       {s ? <span className={`text-xs font-extrabold tracking-wide uppercase rounded-lg px-2.5 py-1 ${s.c}`}>{s.t}</span> : null}
+      {onMessage ? <MessageButton r={r} uid={uid} onOpen={onMessage} /> : null}
       {r.status === 'approved' && r.split?.status === 'approved' && r.split.decideAt ? (
         <div className="w-full">
           {r.gameId ? <FillCountdown have={splitGame ? attending(splitGame) : 0} need={r.split.minPlayers || r.split.maxPlayers} decideAt={r.split.decideAt} />
@@ -261,6 +286,63 @@ function Rates({ venue }) {
   );
 }
 
+// Overview's top: their page as players see it right now (a small phone), the
+// numbers that matter, and the three things they do most.
+export function PageHero({ venue, followers, bells, games, posts, go, onCreate }) {
+  const next = games.filter((g) => g.start > new Date()).sort((a, b) => a.start - b.start)[0];
+  const actions = [
+    { t: 'Create games', I: Plus, on: onCreate, primary: true },
+    { t: 'Post an update', I: Megaphone, on: () => go('posts') },
+    { t: 'Edit your page', I: Pencil, on: () => go('page') },
+  ];
+  return (
+    <section className="relative overflow-hidden rounded-3xl bg-[#0B0D10] text-white">
+      {venue.bannerUrl ? <img src={venue.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-35" /> : null}
+      <div aria-hidden="true" className="absolute inset-0" style={{ background: 'linear-gradient(100deg, #0B0D10 30%, rgba(11,13,16,0.75) 60%, rgba(11,13,16,0.4) 100%)' }} />
+      <div className="relative grid md:grid-cols-[minmax(0,1fr)_auto] gap-6 p-6 sm:p-8 items-center">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-extrabold tracking-[0.14em] uppercase bg-black/40 ring-1 ring-[#4ADE80]/40">
+            <BadgeCheck size={13} className="text-[#4ADE80]" /> Live on Jogo
+          </div>
+          <h2 style={DISPLAY} className="uppercase text-4xl sm:text-5xl leading-[1.25] mt-3 line-clamp-2 [overflow-wrap:anywhere]">{venue.name}</h2>
+          <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
+            {[
+              [followers ?? '–', 'followers', Users],
+              [bells, 'with your bell on', Bell],
+              [games.length, `game${games.length === 1 ? '' : 's'} coming up`, CalendarDays],
+            ].map(([v, k, I]) => (
+              <div key={k}>
+                <div style={DISPLAY} className="text-3xl leading-[1.3]">{v}</div>
+                <div className="text-xs font-bold text-white/55 inline-flex items-center gap-1"><I size={12} /> {k}</div>
+              </div>
+            ))}
+          </div>
+          {next ? (
+            <p className="mt-4 text-sm font-semibold text-white/65">
+              Next up: <span className="text-white font-extrabold">{dayLabel(next.start)}, {timeLabel(next.start)}</span> · {Math.max(0, (next.maxPlayers || 0) - next.booked)} spots open
+            </p>
+          ) : <p className="mt-4 text-sm font-semibold text-white/65">No games coming up. Create some and players nearby see them right away.</p>}
+          <div className="mt-6 flex flex-wrap gap-2">
+            {actions.map(({ t, I, on, primary }) => (
+              <button key={t} type="button" onClick={on} className={`h-11 px-5 rounded-full font-extrabold text-sm inline-flex items-center gap-2 transition-colors ${primary ? 'bg-[#16A34A] hover:bg-[#15803D]' : 'bg-white/10 hover:bg-white/20'}`}>
+                <I size={16} /> {t}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button type="button" onClick={() => go('page')} className="hidden md:block group text-center" title="Open your page">
+          <div style={{ width: 190, height: 300, WebkitMaskImage: 'linear-gradient(black 70%, transparent)', maskImage: 'linear-gradient(black 70%, transparent)' }} className="relative overflow-hidden transition-transform group-hover:-translate-y-1">
+            <div style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: 380 }}>
+              <VenuePreview venue={{ ...previewFromVenue(venue), followers }} ring={false} height={520} games={games} posts={posts} />
+            </div>
+          </div>
+          <div className="mt-2 text-xs font-extrabold text-white/60 group-hover:text-white inline-flex items-center gap-1">See your page <ArrowRight size={13} /></div>
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function Desk({ user, venue }) {
   const [tab, setTab] = useState('overview');
   const [games, setGames] = useState([]);
@@ -275,6 +357,10 @@ function Desk({ user, venue }) {
   const [allRentals, setAllRentals] = useState([]);
   const [stats, setStats] = useState([]);
   const [blocks, setBlocks] = useState([]); // hours booked outside Jogo, still to come
+  const [posts, setPosts] = useState([]);
+  const [bells, setBells] = useState(0);
+  const [editing, setEditing] = useState(null); // a game being changed or cancelled
+  const [chat, setChat] = useState(null); // the rental whose messages are open
 
   // Everything here is live: a scan, a request or a payment shows without a refresh.
   useEffect(() => {
@@ -297,7 +383,12 @@ function Desk({ user, venue }) {
           .sort((x, y) => asDate(x.start) - asDate(y.start)));
       }, failed('rentals')),
       onSnapshot(forVenue('gamePayments'), (snap) => setPayments(snap.docs.map((d) => d.data())), failed('payments')),
-      onSnapshot(collection(db, 'venues', venue.id, 'followers'), (snap) => setFollowers(snap.size), failed('followers')),
+      onSnapshot(collection(db, 'venues', venue.id, 'followers'), (snap) => {
+        setFollowers(snap.size);
+        setBells(snap.docs.filter((d) => d.data().notify).length);
+      }, failed('followers')),
+      onSnapshot(forVenue('feedPosts'), (snap) => setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.toMillis?.() || Date.now()) - (a.createdAt?.toMillis?.() || Date.now()))), failed('posts')),
       onSnapshot(collection(db, 'venues', venue.id, 'stats'), (snap) => setStats(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), failed('stats')),
       // busy also holds rentals' times (server-written); only manual ones are blocks.
       onSnapshot(collection(db, 'venues', venue.id, 'busy'), (snap) => {
@@ -324,6 +415,12 @@ function Desk({ user, venue }) {
   const spots = thisWeek.reduce((n, g) => n + attending(g), 0);
   const fieldCount = venue.fieldCount || 1;
   const toAnswer = requests.length + splits.length;
+  // What players see on the page: games still to come, and updates (not the "new games" cards).
+  const pageGames = useMemo(() => games.map((g) => previewFromGame(g)), [games]);
+  const pagePosts = useMemo(() => posts.filter((p) => p.postType !== 'game').map((p) => previewFromPost(p)), [posts]);
+  const unread = rentals.filter((r) => hasUnread(r, user.uid)).length;
+  const wide = ['page', 'posts'].includes(tab) || (tab === 'schedule' && creating);
+  const go = (t) => { setTab(t); window.scrollTo({ top: 0 }); };
   const finishCreating = (n) => { setCreating(false); setPostedNote(n ? `${n} game${n === 1 ? ' is' : 's are'} live.` : null); };
 
   return (
@@ -341,9 +438,9 @@ function Desk({ user, venue }) {
         </div>
         <nav className="flex lg:flex-col gap-1 px-3 pb-3 overflow-x-auto">
           {TABS.map(({ id, label, Icon }) => (
-            <button key={id} type="button" onClick={() => setTab(id)} className={`h-11 px-3 rounded-xl flex items-center gap-2.5 font-bold text-sm whitespace-nowrap shrink-0 ${tab === id ? 'bg-white text-[#0B0D10]' : 'text-white/70 hover:bg-white/10'}`}>
+            <button key={id} type="button" onClick={() => go(id)} className={`h-11 px-3 rounded-xl flex items-center gap-2.5 font-bold text-sm whitespace-nowrap shrink-0 ${tab === id ? 'bg-white text-[#0B0D10]' : 'text-white/70 hover:bg-white/10'}`}>
               <Icon size={17} /> {label}
-              {id === 'bookings' && toAnswer ? <span className="ml-auto bg-[#F59E0B] text-[#0B0D10] rounded-full text-xs font-extrabold px-2 py-0.5">{toAnswer}</span> : null}
+              {id === 'bookings' && toAnswer + unread ? <span className="ml-auto bg-[#F59E0B] text-[#0B0D10] rounded-full text-xs font-extrabold px-2 py-0.5">{toAnswer + unread}</span> : null}
             </button>
           ))}
         </nav>
@@ -352,15 +449,16 @@ function Desk({ user, venue }) {
         </button>
       </aside>
 
-      <main className="flex-1 min-w-0 p-4 sm:p-8 max-w-5xl">
+      <main className={`flex-1 min-w-0 p-4 sm:p-8 ${wide ? 'max-w-[1240px]' : 'max-w-5xl'}`}>
         <h1 style={DISPLAY} className="text-4xl sm:text-5xl leading-[1.3] text-[#0B0D10] mb-4">{TABS.find((t) => t.id === tab).label.toUpperCase()}</h1>
 
         {tab === 'overview' ? (
           <div className="space-y-4">
+            <PageHero venue={venue} followers={followers} bells={bells} games={pageGames} posts={pagePosts} go={go} onCreate={() => { setCreating(true); go('schedule'); }} />
             {/* What needs them comes first: everything else can wait. */}
             {requests.length ? (
               <Card title={`Requests to answer (${requests.length})`}>
-                {requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={taken} rentals={rentals} />)}
+                {requests.map((r) => <div key={r.id}><RequestCard r={r} venue={venue} games={taken} rentals={rentals} /><div className="-mt-1 mb-3"><MessageButton r={r} uid={user.uid} onOpen={setChat} /></div></div>)}
               </Card>
             ) : null}
             {splits.length ? (
@@ -379,16 +477,16 @@ function Desk({ user, venue }) {
             </div>
             {inProgress.length ? (
               <Card title={`In progress (${inProgress.length})`} right={<button type="button" onClick={() => setTab('bookings')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
-                {inProgress.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />)}
+                {inProgress.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} uid={user.uid} onMessage={setChat} />)}
               </Card>
             ) : null}
             {booked.length ? (
               <Card title={`Booked rentals (${booked.length})`} right={<button type="button" onClick={() => setTab('bookings')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
-                {booked.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />)}
+                {booked.slice(0, 5).map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} uid={user.uid} onMessage={setChat} />)}
               </Card>
             ) : null}
             <Card title="Coming up" right={<button type="button" onClick={() => setTab('schedule')} className="text-sm font-bold text-[#0E7A43]">See all</button>}>
-              {games.length ? games.slice(0, 5).map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} />) : <Empty>No games posted yet.</Empty>}
+              {games.length ? games.slice(0, 5).map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} onEdit={g.createdBy === venue.id ? () => setEditing(g) : null} />) : <Empty>No games posted yet.</Empty>}
             </Card>
           </div>
         ) : null}
@@ -397,14 +495,14 @@ function Desk({ user, venue }) {
 
         {tab === 'schedule' ? (
           <div className="space-y-4">
-            {creating ? <CreateGame venue={venue} games={taken} rentals={rentals} onDone={finishCreating} /> : (
+            {creating ? <CreateGame venue={venue} games={taken} rentals={rentals} pageGames={pageGames} posts={pagePosts} followers={followers} onDone={finishCreating} /> : (
               <div className="flex items-center gap-3 flex-wrap">
                 <CreateButton onClick={() => { setPostedNote(null); setCreating(true); }} />
                 {postedNote ? <span className="font-bold text-[#0E7A43]">{postedNote}</span> : null}
               </div>
             )}
             <Card title={`${games.length} upcoming game${games.length === 1 ? '' : 's'}`} right={<span className="text-sm font-semibold text-[#6B7280] inline-flex items-center gap-1.5"><Users size={15} /> Click a game for the roster</span>}>
-              {games.length ? games.map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} />) : <Empty>No games posted yet.</Empty>}
+              {games.length ? games.map((g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} onEdit={g.createdBy === venue.id ? () => setEditing(g) : null} />) : <Empty>No games posted yet.</Empty>}
             </Card>
             <Blocks venue={venue} blocks={blocks} games={games} rentals={rentals} />
           </div>
@@ -412,11 +510,10 @@ function Desk({ user, venue }) {
 
         {tab === 'bookings' ? (
           <div className="space-y-4">
-            <Card title="Requests">{requests.length ? requests.map((r) => <RequestCard key={r.id} r={r} venue={venue} games={taken} rentals={rentals} />) : <Empty>No requests right now.</Empty>}</Card>
+            <Card title="Requests">{requests.length ? requests.map((r) => <div key={r.id}><RequestCard r={r} venue={venue} games={taken} rentals={rentals} /><div className="-mt-1 mb-3"><MessageButton r={r} uid={user.uid} onOpen={setChat} /></div></div>) : <Empty>No requests right now.</Empty>}</Card>
             {splits.length ? <Card title="Splits to answer">{splits.map((r) => <SplitCard key={r.id} r={r} venue={venue} />)}</Card> : null}
-            <Card title="In progress">{inProgress.length ? inProgress.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />) : <Empty>Nothing waiting on payment.</Empty>}</Card>
-            <Card title="Booked">{booked.length ? booked.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} />) : <Empty>No booked rentals coming up.</Empty>}</Card>
-            <p className="text-sm font-semibold text-[#6B7280] px-2">To message a renter, use your page in the Jogo app.</p>
+            <Card title="In progress">{inProgress.length ? inProgress.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} uid={user.uid} onMessage={setChat} />) : <Empty>Nothing waiting on payment.</Empty>}</Card>
+            <Card title="Booked">{booked.length ? booked.map((r) => <BookingRow key={r.id} r={r} fieldCount={fieldCount} payments={payments} games={games} uid={user.uid} onMessage={setChat} />) : <Empty>No booked rentals coming up.</Empty>}</Card>
           </div>
         ) : null}
 
@@ -424,6 +521,10 @@ function Desk({ user, venue }) {
         {/* liveGames, not games: games drops one 2 hours after it starts, and a game that's on keeps getting check-ins. */}
         {tab === 'checkin' ? <CheckIn venue={venue} games={liveGames} renderGame={(g) => <GameRow key={g.id} game={g} fieldCount={fieldCount} defaultOpen />} /> : null}
         {tab === 'settings' ? <DeleteIndoor venue={venue} /> : null}
+        {tab === 'page' ? <PageEditor venue={venue} games={pageGames} posts={pagePosts} followers={followers} /> : null}
+        {tab === 'posts' ? <Posts venue={venue} games={pageGames} posts={posts} followers={followers} /> : null}
+        {editing ? <GameEditor game={editing} venue={venue} games={games} rentals={rentals} blocks={blocks} onClose={() => setEditing(null)} /> : null}
+        {chat ? <RentalChat rental={rentals.find((r) => r.id === chat.id) || chat} uid={user.uid} onClose={() => setChat(null)} /> : null}
         {tab === 'money' ? <Money venue={venue} payments={payments} rentals={allRentals} games={allGames} /> : null}
 
         <button type="button" onClick={() => signOut(auth)} className="lg:hidden mt-8 text-sm font-bold text-[#6B7280] inline-flex items-center gap-2"><LogOut size={15} /> Sign out of {user.email}</button>
