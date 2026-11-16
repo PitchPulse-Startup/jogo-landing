@@ -25,6 +25,13 @@ const KIT = '#0E7A43';
 const MINT = '#4ADE80';
 const HERO_H = 400;
 
+/** A saved venue doc → the preview's props (the portal shows a page that isn't live yet). */
+export const previewFromVenue = (v) => ({
+  name: v.name, bio: v.bio, address: v.address, city: v.city || '', location: v.location, hours: v.hours,
+  fieldCount: v.fieldCount, instagram: v.instagram, tiktok: v.tiktok, website: v.website,
+  bannerSrc: v.bannerUrl, logoSrc: v.logoUrl, photoSrcs: v.photos || [],
+});
+
 // TikTok isn't in lucide; a small mark in the same weight.
 const TikTok = ({ size = 15 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

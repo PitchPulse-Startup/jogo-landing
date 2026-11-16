@@ -24,6 +24,7 @@ import Blocks from './indoor/Blocks.jsx';
 import { CancelBooking, CreateButton, CreateGame, DeleteIndoor, RequestCard, SplitCard } from './indoor/Answers.jsx';
 import Toaster, { toast } from './indoor/Toast.jsx';
 import { FillCountdown, PayCountdown } from './indoor/Countdown.jsx';
+import VenuePreview, { previewFromVenue } from './indoor/VenuePreview.jsx';
 
 const money = (c) => `$${((c || 0) / 100).toFixed((c || 0) % 100 ? 2 : 0)}`;
 const asDate = (t) => (t?.toDate ? t.toDate() : t ? new Date(t) : null);
@@ -458,5 +459,52 @@ export default function IndoorPortal() {
       </div>
     );
   }
+  // The desk (schedule, bookings, payouts) opens once Jogo approves them. Before
+  // that: their page as players will see it, and where the review stands.
+  if (venue.status !== 'approved') return <NotLive user={user} venue={venue} />;
   return <Desk user={user} venue={venue} />;
+}
+
+function NotLive({ user, venue }) {
+  const denied = venue.status === 'denied';
+  return (
+    <div style={BODY} className="min-h-screen bg-[#0B0D10] text-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-14 grid lg:grid-cols-[minmax(0,1fr)_400px] gap-10 lg:gap-16 items-center">
+        <div className="min-w-0">
+          <img src={jogoLogoWhite} alt="Jogo" className="h-7" />
+          <div className={`mt-10 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-extrabold tracking-[0.16em] uppercase ${denied ? 'bg-[#BE123C]/15 text-[#FDA4AF]' : 'bg-[#F59E0B]/15 text-[#FCD34D]'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${denied ? 'bg-[#FB7185]' : 'bg-[#F59E0B]'}`} />
+            {denied ? 'Not approved yet' : 'In review'}
+          </div>
+          <h1 style={DISPLAY} className="uppercase text-5xl sm:text-6xl leading-[1.15] mt-4">
+            {denied ? <>{venue.name}<br /><span className="text-[#FB7185]">needs a fix</span></> : <>{venue.name}<br /><span className="text-[#4ADE80]">is in review</span></>}
+          </h1>
+          {denied ? (
+            <>
+              <div className="mt-6 bg-white/[0.06] border border-white/10 rounded-2xl p-5 max-w-lg">
+                <div className="text-xs font-extrabold tracking-[0.16em] uppercase text-white/50 mb-1.5">What to fix</div>
+                <p className="font-semibold text-white/90 text-lg whitespace-pre-wrap">{venue.denyReason || 'Check your photos, name and address, then send it again.'}</p>
+              </div>
+              <a href="/indoors/apply" className="mt-6 inline-flex items-center gap-2 h-12 px-6 rounded-full bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold">Fix and send again</a>
+            </>
+          ) : (
+            <p className="mt-5 text-white/65 font-semibold text-lg max-w-lg">
+              We look at every indoor by hand, usually within a day. Your schedule, bookings and payouts open here the moment you’re approved.
+            </p>
+          )}
+          <p className="mt-10 text-sm font-semibold text-white/40">
+            Signed in as {user.email} · <button type="button" onClick={() => signOut(auth)} className="underline underline-offset-2 hover:text-white/70">Sign out</button>
+          </p>
+        </div>
+        <div className="hidden lg:block">
+          <div className="text-center mb-4 text-xs font-extrabold tracking-[0.18em] uppercase text-white/45">Your page, once you’re live</div>
+          <div style={{ height: 720 }}>
+            <div style={{ transform: 'scale(0.9)', transformOrigin: 'top center' }}>
+              <VenuePreview venue={previewFromVenue(venue)} ring={false} height={760} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

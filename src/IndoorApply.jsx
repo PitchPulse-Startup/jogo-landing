@@ -366,6 +366,29 @@ export default function IndoorApply() {
   useEffect(() => onAuthStateChanged(auth, setUser), []);
   useEffect(() => { document.title = 'Apply · Jogo for indoors'; }, []);
 
+  // Already signed in (e.g. "Fix and send again" from the portal): a denied
+  // indoor's form comes back filled in with what it sent, plus the reason; an
+  // indoor that's in review or live isn't asked to apply again.
+  const [denied, setDenied] = useState(null);
+  const sending = useRef(false); // a login made by Send itself isn't a returning owner
+  useEffect(() => {
+    if (!user) { setDenied(null); return undefined; }
+    if (sending.current) return undefined;
+    let stale = false;
+    getVenue(user.uid).then((v) => {
+      if (stale || !v || sending.current) return;
+      if (v.status !== 'denied') { setSent({ already: true }); return; }
+      const img = (url) => (url ? { file: url, url } : null); // already uploaded: saved as-is
+      setDenied(v);
+      setBanner(img(v.bannerUrl)); setLogo(img(v.logoUrl)); setPhotos((v.photos || []).map(img).filter(Boolean));
+      setName(v.name || ''); setBio(v.bio || ''); setAddress(v.address || ''); setLocation(v.location || null);
+      setHours(v.hours || null); setFieldCount(v.fieldCount || 1);
+      setCancelHours(v.cancelHours || 48); setCancelKeepPct(v.cancelKeepPct || 50);
+      setInstagram(v.instagram || ''); setTiktok(v.tiktok || ''); setWebsite(v.website || '');
+    }).catch(() => {});
+    return () => { stale = true; };
+  }, [user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Object URLs are freed when a photo is replaced or removed.
   const takeImage = async (file) => {
     setPhotoError(null);
@@ -425,6 +448,7 @@ export default function IndoorApply() {
       if (!email.trim() || !password) { setError('Add your email and a password.'); return; }
       if (mode === 'signup' && !strongEnough(password)) { setError('Use 8+ characters with uppercase, lowercase and a number.'); return; }
     }
+    sending.current = true;
     try {
       if (!who) {
         setBusy(mode === 'signup' ? 'Creating your login…' : 'Signing in…');
@@ -439,6 +463,7 @@ export default function IndoorApply() {
     } catch (err) {
       setError(authError(err, mode));
       setBusy(null);
+      sending.current = false;
       return;
     }
     try {
@@ -502,6 +527,12 @@ export default function IndoorApply() {
                   We review every indoor, usually within a day.
                 </p>
               </div>
+              {denied ? (
+                <div className="bg-[#FFF1F2] border border-[#FECDD3] rounded-3xl p-5 sm:p-6">
+                  <div className="text-xs font-extrabold tracking-[0.16em] uppercase text-[#BE123C]">What to fix</div>
+                  <p className="mt-1.5 font-semibold text-[#0B0D10] text-lg whitespace-pre-wrap">{denied.denyReason || 'Check your photos, name and address, then send it again.'}</p>
+                </div>
+              ) : null}
 
               <Section n={1} title="Your look" sub="The first thing players see">
                 <div>
@@ -643,7 +674,7 @@ export default function IndoorApply() {
                   disabled={!!busy}
                   className="w-full h-14 rounded-full bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold text-lg flex items-center justify-center gap-2 disabled:opacity-70 transition-colors"
                 >
-                  {busy ? <><Loader2 size={20} className="animate-spin" /> {busy}</> : <>Send for review <ArrowRight size={20} /></>}
+                  {busy ? <><Loader2 size={20} className="animate-spin" /> {busy}</> : <>{denied ? 'Send again' : 'Send for review'} <ArrowRight size={20} /></>}
                 </button>
                 {missing && !error ? <p className="text-sm font-semibold text-[#9AA0AB] text-center -mt-2">{missing}</p> : null}
                 <p className="text-xs font-semibold text-[#9AA0AB] text-center">
