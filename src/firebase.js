@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -33,3 +34,8 @@ export const auth = getAuth(app);
 // handle private crews, skips double-joins, blocks kicked members, and
 // notifies the crew's admins.
 export const functions = getFunctions(app);
+
+// The same bucket the app uploads to (jogo-APP firebase.js), named outright
+// because the config above still says appspot.com. Used by the indoor
+// application (src/indoor/applyKit.js) for banners, logos and photos.
+export const storage = getStorage(app, 'gs://field-heatmap.firebasestorage.app');

@@ -3,7 +3,7 @@
 // The link we send to facility owners (DMs, Instagram bio, a text to a
 // manager). Same Matchday language as the homepage, built around real app
 // screenshots (src/assets/indoors/web, 640px webp copies of the PNGs next to it).
-// Applying happens in the app (soccer-ball button in the middle of the tab bar → Create game → "Own an indoor?"), reviewed by
+// Applying happens on the web (/indoors/apply, src/IndoorApply.jsx) or in the app (soccer-ball button → Create game → "Own an indoor?"), reviewed by
 // hand in Jogo-admin.
 //
 // Money copy: "you set the price, you get your cut; fees are included in the
@@ -27,7 +27,7 @@ import {
 import jogoLogoWhite from './assets/jogo-logo-2026-white.png';
 import jogoLogo from './assets/jogo-logo-2026.png';
 import appIcon from './assets/jogo-app-icon.png';
-import { EASE, DISPLAY, BODY, useMatchdayFonts, Reveal, Band, StoreRow, Phone } from './App.jsx';
+import { EASE, DISPLAY, BODY, useMatchdayFonts, Reveal, Band, Phone } from './App.jsx';
 
 import shotApply from './assets/indoors/web/indoor1.webp';
 import shotApplyRules from './assets/indoors/web/indoor2.webp';
@@ -49,6 +49,7 @@ import shotRent from './assets/indoors/web/indoor21.webp';
 
 const CONTACT = 'mailto:jogo.tech@outlook.com?subject=' + encodeURIComponent('Hosting my indoor on Jogo');
 const PORTAL = '/indoors/portal';
+const APPLY = '/indoors/apply';
 
 const NAV = [
   { href: '#seen', label: 'Get seen' },
@@ -829,7 +830,7 @@ export default function Indoors() {
               <a href={PORTAL} className="hidden sm:inline-flex px-3 py-2 rounded-xl text-sm font-bold text-white/70 hover:text-white hover:bg-white/10 transition-colors">
                 Owner sign in
               </a>
-              <a href="#apply" className="bg-white text-[#0B0D10] rounded-xl px-4 py-2 text-sm font-extrabold hover:bg-white/90 transition-colors">
+              <a href={APPLY} className="bg-white text-[#0B0D10] rounded-xl px-4 py-2 text-sm font-extrabold hover:bg-white/90 transition-colors">
                 Apply now
               </a>
             </div>
@@ -890,7 +891,7 @@ export default function Indoors() {
                   transition={{ duration: 0.5, delay: 0.28 }}
                   className="mt-8 flex flex-wrap items-center gap-3"
                 >
-                  <a href="#apply" className="inline-flex items-center gap-2 bg-[#16A34A] text-white rounded-xl px-6 py-3.5 font-extrabold text-base hover:bg-[#15803D] transition-colors">
+                  <a href={APPLY} className="inline-flex items-center gap-2 bg-[#16A34A] text-white rounded-xl px-6 py-3.5 font-extrabold text-base hover:bg-[#15803D] transition-colors">
                     Apply now <ArrowRight size={18} />
                   </a>
                   <a href="#how" className="inline-flex items-center gap-2 border border-white/20 text-white rounded-xl px-6 py-3.5 font-extrabold text-base hover:bg-white/10 transition-colors">
@@ -1199,9 +1200,11 @@ export default function Indoors() {
                   Fill your<br /><span className="text-[#16A34A]">next empty hour.</span>
                 </h2>
                 <p className="mt-6 text-base sm:text-lg leading-relaxed max-w-xl text-white/65">
-                  Download, apply, start. No paperwork, no sales calls, and you’re usually live within a day.
+                  Build your page right here and watch it come together. No paperwork, no sales calls, and you’re usually live within a day.
                 </p>
-                <StoreRow invert className="mt-8" />
+                <a href={APPLY} className="mt-8 inline-flex items-center gap-2 bg-[#16A34A] text-white rounded-xl px-6 py-3.5 font-extrabold text-base hover:bg-[#15803D] transition-colors">
+                  Start your page <ArrowRight size={18} />
+                </a>
                 <a href={CONTACT} className="mt-6 inline-flex items-center gap-2 font-extrabold text-white/80 hover:text-[#4ADE80] transition-colors">
                   Rather talk first? Email us <ArrowRight size={18} />
                 </a>
@@ -1210,8 +1213,8 @@ export default function Indoors() {
               <Reveal delay={0.1}>
                 <ol className="bg-white text-[#0B0D10] rounded-3xl p-6 sm:p-8">
                   {[
-                    { t: 'Download', b: 'Get Jogo on iPhone or Android.' },
-                    { t: 'Apply', b: 'Tap the soccer ball at the bottom of the app, then Create game, then “Own an indoor?” Add your photos and hours.' },
+                    { t: 'Apply', b: 'Build your page on this site: photos, hours, address. Or in the app: soccer ball, then Create game, then “Own an indoor?”' },
+                    { t: 'Get the app', b: 'Sign in on iPhone or Android with the same login. We review every indoor, usually within a day.' },
                     { t: 'Start', b: 'Get the green light and post your first game.' },
                   ].map((s, i) => (
                     <li key={s.t} className={`flex items-center gap-4 sm:gap-5 py-5 ${i ? 'border-t border-[#EEF0F2]' : 'pt-1'} ${i === 2 ? 'pb-1' : ''}`}>

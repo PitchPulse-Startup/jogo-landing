@@ -20,6 +20,7 @@ import Event from './Event.jsx'
 import WhatsNew from './WhatsNew.jsx'
 import Indoors from './Indoors.jsx'
 import IndoorPortal from './IndoorPortal.jsx'
+import IndoorApply from './IndoorApply.jsx'
 import './index.css'
 
 // --- ADD THESE TWO LINES ---
@@ -48,6 +49,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/whats-new" element={<WhatsNew />} />
         <Route path="/indoors" element={<Indoors />} />
         <Route path="/indoors/portal" element={<IndoorPortal />} />
+        <Route path="/indoors/apply" element={<IndoorApply />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

@@ -449,8 +449,11 @@ export default function IndoorPortal() {
       <div style={BODY} className="min-h-screen bg-[#0B0D10] flex items-center justify-center px-4 text-center">
         <div className="max-w-md">
           <h1 style={DISPLAY} className="text-white text-4xl leading-[1.35]">NO INDOOR ON THIS ACCOUNT</h1>
-          <p className="text-white/60 font-semibold mt-2">{user.email} doesn't have an indoor. Sign in with the account you applied with, or apply in the Jogo app.</p>
-          <button type="button" onClick={() => signOut(auth)} className="mt-6 h-12 px-6 rounded-full bg-white text-[#0B0D10] font-extrabold">Sign out</button>
+          <p className="text-white/60 font-semibold mt-2">{user.email} doesn't have an indoor. Sign in with the account you applied with, or apply now.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <a href="/indoors/apply" className="h-12 px-6 rounded-full bg-[#16A34A] text-white font-extrabold inline-flex items-center">Apply</a>
+            <button type="button" onClick={() => signOut(auth)} className="h-12 px-6 rounded-full bg-white text-[#0B0D10] font-extrabold">Sign out</button>
+          </div>
         </div>
       </div>
     );
